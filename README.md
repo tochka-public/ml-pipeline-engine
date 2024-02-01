@@ -1,93 +1,287 @@
-# ml-pipeline-engine
+# ML Pipeline Engine
+
+Графовый движок для конвейеров ML-моделей
 
 
+## Что нужно, чтобы сделать свой пайплайн?
 
-## Getting started
+1. Написать классы узлов
+2. Связать узлы посредством указания зависимости
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Поддерживаемые типы узлов
 
-## Add your files
+[Протоколы](ml_pipeline_engine/types.py)
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+1. [DataSource](ml_pipeline_engine/base_nodes/datasources.py)
+2. [FeatureBase](ml_pipeline_engine/base_nodes/feature.py)
+3. [MLModelBase](ml_pipeline_engine/base_nodes/ml_model.py)
+4. [ProcessorBase](ml_pipeline_engine/base_nodes/processors.py)
+5. [FeatureVectorizerBase](ml_pipeline_engine/base_nodes/vectorizer.py)
+
+
+## Примеры
+
+#### Простейший пример на основе функций
+
+```python
+def invert_number(num: float):
+    return -num
+
+def add_const(num: Input(invert_number), const: float = 0.1):
+    return num + const
+
+def double_number(num: Input(add_const)):
+    return num * 2
+
+build_dag(input_node=invert_number, output_node=double_number).run(pipeline_context(num=2.5))
+```
+
+#### Пример, который реализует переключение нод по условию (Аналог switch)
+
+```python
+ def ident(num: float):
+     return num
+
+ def switch_node(num: Input(ident)):
+     if num < 0.0:
+         return 'invert'
+     if num == 0.0:
+         return 'const'
+     if num == 1.0:
+         return 'double'
+     return 'add_sub_chain'
+
+ def const_noinput():
+     return 10.0
+
+ def add_100(num: Input(ident)):
+     return num + 100
+
+ def add_some_const(num: Input(ident), const: float = 9.0):
+     return num + const
+
+ def invert_number(num: Input(ident)):
+     return -num
+
+ def sub_ident(num: Input(add_some_const), num_ident: Input(ident)):
+     return num - num_ident
+
+ def double_number(num: Input(ident)):
+     return num * 2
+
+ SomeSwitchCase = SwitchCase(
+     switch=switch_node,
+     cases=[
+         ('const', const_noinput),
+         ('double', double_number),
+         ('invert', invert_number),
+         ('add_sub_chain', sub_ident),
+     ],
+ )
+
+ def case_node(num: SomeSwitchCase, num2: Input(ident), num3: Input(add_100)):
+     return num + num2 + num3
+
+ def out(num: Input(case_node)):
+     return num
+
+build_dag(input_node=ident, output_node=out).run(pipeline_context(num=input_num))
+```
+
+#### Пример с использованием классов как узлов графа
+
+```python
+class SomeInput(NodeBase):
+    name = 'input'
+
+    def process(self, base_num: int, other_num: int) -> dict:
+        return {
+            'base_num': base_num,
+            'other_num': other_num,
+        }
+
+class SomeDataSource(NodeBase):
+    name = 'some_data_source'
+
+    def collect(self, inp: Input(SomeInput)) -> int:
+        return inp['base_num'] + 100
+
+class SomeFeature(NodeBase):
+    name = 'some_feature'
+
+    def extract(self, ds_value: Input(SomeDataSource), inp: Input(SomeInput)) -> int:
+        return ds_value + inp['other_num'] + 10
+
+class SomeVectorizer(NodeBase):
+    name = 'some_vectorizer'
+
+    def vectorize(self, feature_value: Input(SomeFeature)) -> int:
+        return feature_value + 20
+
+class SomeMLModel(NodeBase):
+    name = 'some_model'
+
+    def predict(self, vec_value: Input(SomeVectorizer)):
+        return (vec_value + 30) / 100
+
+
+build_dag(input_node=SomeInput, output_node=SomeMLModel).run(pipeline_context(base_num=10, other_num=5))
+```
+
+
+#### Пример с использованием Generic-нод, которые под собой хранят общее поведение и не зависимы от конкретной модели
+
+```python
+class SomeInput(NodeBase):
+    name = 'input'
+
+    def process(self, base_num: int, other_num: int) -> dict:
+        return {
+            'base_num': base_num,
+            'other_num': other_num,
+        }
+
+class SomeDataSource(NodeBase):
+    name = 'some_data_source'
+
+    def collect(self, inp: Input(SomeInput)) -> int:
+        return inp['base_num'] + 100
+
+class SomeCommonFeature(NodeBase):
+    name = 'some_feature'
+
+    def extract(self, ds_value: Input(SomeDataSource), inp: Input(SomeInput)) -> int:
+        return ds_value + inp['other_num'] + 10
+
+# Пример Generic-ноды
+class GenericVectorizer(NodeBase):
+    name = 'some_vectorizer'
+
+    def vectorize(self, feature_value: InputGeneric(NodeLike)) -> int:
+        return feature_value + 20
+
+class AnotherFeature(NodeBase):
+    name = 'another_feature'
+
+    def extract(self, inp: Input(SomeInput)) -> int:
+        return inp['base_num'] + 100_000
+
+# Первый переопределенный подграф
+SomeParticularVectorizer = build_node(  # noqa
+    GenericVectorizer,
+    feature_value=Input(SomeCommonFeature),
+)
+
+# Второй переопределенный подграф
+AnotherParticularVectorizer = build_node(  # noqa
+    GenericVectorizer,
+    feature_value=Input(AnotherFeature),
+)
+
+class SomeMLModel(NodeBase):
+    name = 'some_model'
+
+    def predict(self, vec_value: Input(SomeParticularVectorizer)):
+        return (vec_value + 30) / 100
+
+class AnotherMlModel(NodeBase):
+    name = 'another_model'
+
+    def predict(self, vec_value: Input(AnotherParticularVectorizer)):
+        return (vec_value + 30) / 100
+
+# Первый граф
+build_dag(input_node=SomeInput, output_node=SomeMLModel).run(pipeline_context(base_num=10, other_num=5))
+
+# Второй граф
+build_dag(input_node=SomeInput, output_node=AnotherMlModel).run(pipeline_context(base_num=10, other_num=5))
+```
+
+#### Пример указания ретрая
+
+```python
+class HierarchyException(Exception):
+    pass
+
+
+class SecondHierarchyException(Exception):
+    pass
+
+
+class SomeMlModel(NodeBase):
+
+    node_type = 'ml_model'
+    delay = 1.1
+    attempts = 5
+    exceptions = (SecondHierarchyException, )
+
+    def predict(self, *args, **kwargs):
+        ...
+```
+
+
+#### Пример запуска чарта с хранилищем артефактов
+
+```python
+from ml_pipeline_engine.artifact_store.store.filesystem import FileSystemArtifactStore
+
+
+def invert_number(num: float):
+    return -num
+
+def add_const(num: Input(invert_number), const: float = 0.1):
+    return num + const
+
+def double_number(num: Input(add_const)):
+    return num * 2
+
+dag = build_dag(input_node=invert_number, output_node=double_number)
+
+chart = PipelineChart(
+   model_name='name',
+   entrypoint=dag,
+   # Тут может быть указан артефакт стор, который пишет данные в S3
+   artifact_store=... if not is_local() else FileSystemArtifactStore,
+   # Добавление эвентов позволяет отслеживать полезную нагрузку, результаты и ошибки узлов для построения графиков
+   event_managers=[DatabaseEventManager],
+)
+
+result = chart.run(
+   input_kwargs=dict(
+      ...,
+   ),
+)
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.tochka-tech.com/tochka/tochka-public/ml-pipeline-engine.git
-git branch -M master
-git push -uf origin master
-```
 
-## Integrate with your tools
+## Установка либы для разработки
 
-- [ ] [Set up project integrations](https://gitlab.tochka-tech.com/tochka/tochka-public/ml-pipeline-engine/-/settings/integrations)
+### Первоначальная настройка
 
-## Collaborate with your team
+1. Устанавливаем Python>=3.8
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+2. Устанавливаем зависимости для тестирования:
 
-## Test and Deploy
+    ```bash
+    pip3 install -e ".[tests]"
+    ```
 
-Use the built-in continuous integration in GitLab.
+3. Подключаем pre-commit hooks
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+    ```bash
+    pre-commit install -f
+    ```
 
-***
+4. Запуск тестов
 
-# Editing this README
+    ```bash
+    python -m pytest tests
+    ```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Правила семантического релиза
 
-## Suggestions for a good README
+1. Для сборки в ci используется библиотека `go-semrel-gitlab-release`
+2. В каждом реквесте должно быть хотя бы одно сообщение коммита оформленное по [формату](https://juhani.gitlab.io/go-semrel-gitlab/commit-message/)
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Более подробно про библиотеку можно почитать [здесь](https://juhani.gitlab.io/go-semrel-gitlab/)
