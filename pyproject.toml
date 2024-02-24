@@ -1,8 +1,8 @@
 [project]
 name = "ml-pipeline-engine"
 readme = "README.md"
-dynamic = ["version"]
 requires-python = ">= 3.8"
+version = "0.0.1"
 dependencies = [
   "networkx>=3.1,<4.0",
   "python-ulid>=1.1.0,<2.0",
@@ -36,9 +36,6 @@ tests = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = "-s -vv"
-
-[tool.setuptools.dynamic]
-version = {attr = "version.version"}
 
 [build-system]
 requires = ["setuptools >= 69.0"]  # nice
