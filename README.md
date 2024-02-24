@@ -278,10 +278,3 @@ result = chart.run(
     ```bash
     python -m pytest tests
     ```
-
-### Правила семантического релиза
-
-1. Для сборки в ci используется библиотека `go-semrel-gitlab-release`
-2. В каждом реквесте должно быть хотя бы одно сообщение коммита оформленное по [формату](https://juhani.gitlab.io/go-semrel-gitlab/commit-message/)
-
-Более подробно про библиотеку можно почитать [здесь](https://juhani.gitlab.io/go-semrel-gitlab/)
