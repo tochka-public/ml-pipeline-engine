@@ -34,7 +34,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip3 install -e ".[tests]"
+          python -m pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
+          poetry install --no-root
 
       - name: Test with pytest
         run: |
