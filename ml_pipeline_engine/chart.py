@@ -50,7 +50,6 @@ class PipelineChart(PipelineChartBase):
             pipeline_id=pipeline_id,
             input_kwargs=input_kwargs,
             meta=meta if meta is not None else {},
-            run_type=self.entrypoint.run_type,  # noqa
         )
 
         await ctx.emit_on_pipeline_start()

@@ -19,7 +19,7 @@ class InvertNumber(RecurrentProcessor):
     attempts = 2
     use_default = True
 
-    def get_default(self) -> int:
+    def get_default(self, **kwargs) -> int:
         return -5
 
     @invert_process_mocker
@@ -40,8 +40,8 @@ class DoubleNumber(RecurrentProcessor):
     use_default = True
 
     @double_default_mocker
-    def get_default(self):
-        return -6
+    def get_default(self, **kwargs):
+        return -1 + kwargs['num']
 
     async def process(self, num: Input(AddZero)):
 
@@ -68,7 +68,7 @@ class AddNumbers(ProcessorBase):
         return num1 + num2
 
 
-async def test_dag(build_dag, pipeline_context):
+async def test_dag(build_dag, pipeline_context, caplog):
     assert await build_dag(input_node=InvertNumber, output_node=AddNumbers).run(pipeline_context(num=3.0)) == -8.8
 
     assert double_default_mocker.mock.get_default.call_count == 1

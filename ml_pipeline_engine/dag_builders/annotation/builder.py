@@ -3,7 +3,7 @@ import inspect
 import typing as t
 from collections import deque
 
-from ml_pipeline_engine.dag import DAG, EdgeField, NodeField, RunType
+from ml_pipeline_engine.dag import DAG, EdgeField, NodeField
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.utils import get_connected_subgraph
 from ml_pipeline_engine.dag_builders.annotation import errors
@@ -20,10 +20,6 @@ from ml_pipeline_engine.node import (
     generate_node_id,
     get_callable_run_method,
     get_node_id,
-)
-from ml_pipeline_engine.parallelism import (
-    process_pool_registry,
-    threads_pool_registry,
 )
 from ml_pipeline_engine.types import (
     DAGLike,
@@ -47,12 +43,11 @@ NodeResultT = t.TypeVar('NodeResultT')
 
 
 class AnnotationDAGBuilder:
-    def __init__(self, run_type: RunType):
+    def __init__(self):
         self._dag = DiGraph()
         self._node_map: t.Dict[NodeId, NodeSerializerLike] = dict()
         self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
         self._synthetic_nodes: t.List[NodeId] = []
-        self.run_type = run_type
 
     @staticmethod
     def _check_annotations(obj: t.Any) -> None:
@@ -91,23 +86,6 @@ class AnnotationDAGBuilder:
                 f'У объекта не существует корректного базового класса, пригодного для графа. node={node}',
             )
 
-    @staticmethod
-    def _check_tags(obj: t.Any) -> None:
-        """
-        Проверка наличия необходимых зависимостей для использования тегов узлов
-        """
-
-        obj = get_callable_run_method(obj)
-        tags = getattr(obj, 'tags', None) or ()
-
-        if inspect.iscoroutinefunction(obj):
-            return
-
-        if NodeTag.process in tags:
-            process_pool_registry.is_ready()
-        else:
-            threads_pool_registry.is_ready()
-
     def validate_node(self, node: NodeLike) -> None:
         """
         Валидация ноды по разным правилам
@@ -115,7 +93,6 @@ class AnnotationDAGBuilder:
 
         self._check_base_class(node)
         self._check_annotations(node)
-        self._check_tags(node)
 
     @staticmethod
     def _get_input_marks_map(node: NodeLike) -> t.List[NodeInputSpec]:
@@ -324,6 +301,27 @@ class AnnotationDAGBuilder:
         self._validate_recurrent_node_base_classes()
         self._validate_recurrent_nodes_params()
 
+    def _is_executor_needed(self) -> t.Tuple[bool, bool]:
+        """
+        Проверяем надобность пулов для узлов
+        """
+
+        is_thread_pool_needed = False
+        is_process_pool_needed = False
+
+        for node in self._node_map.values():
+            node = node.get_node()
+
+            if inspect.iscoroutinefunction(get_callable_run_method(node)):
+                continue
+
+            if NodeTag.process in node.tags:
+                is_process_pool_needed = True
+            else:
+                is_thread_pool_needed = True
+
+        return is_process_pool_needed, is_thread_pool_needed
+
     def build(self, input_node: NodeLike, output_node: NodeLike = None) -> DAGLike:
         """
         Построить граф путем сборки зависимостей по аннотациям типа (меткам входов)
@@ -339,19 +337,21 @@ class AnnotationDAGBuilder:
 
         self._validate_graph()
 
+        is_process_pool_needed, is_thread_pool_needed = self._is_executor_needed()
+
         return DAG(
             graph=self._dag.copy(),
             input_node=get_node_id(input_node),
             output_node=get_node_id(output_node),
             node_map=copy.deepcopy(self._node_map),
-            run_type=self.run_type,
+            is_process_pool_needed=is_process_pool_needed,
+            is_thread_pool_needed=is_thread_pool_needed,
         )
 
 
 def build_dag(
     input_node: NodeLike[t.Any],
     output_node: NodeLike[NodeResultT],
-    run_type: t.Optional[RunType] = None,
 ) -> DAGLike[NodeResultT]:
     """
     Построить граф путем сборки зависимостей по аннотациям типа (меткам входов)
@@ -359,19 +359,13 @@ def build_dag(
     Args:
         input_node: Входной узел
         output_node: Выходной узел
-        run_type: Тип запуска для DAG
 
     Returns:
         Граф
     """
 
-    run_type = run_type or RunType.single_process
-
-    if run_type == RunType.multi_process:
-        process_pool_registry.is_ready()
-
     return (
-        AnnotationDAGBuilder(run_type=run_type)
+        AnnotationDAGBuilder()
         .build(input_node=input_node, output_node=output_node)
     )
 
@@ -386,4 +380,4 @@ def build_dag_single(node: NodeLike[NodeResultT]) -> DAGLike[NodeResultT]:
     Returns:
         Граф
     """
-    return AnnotationDAGBuilder(run_type=RunType.single_process).build(input_node=node, output_node=None)
+    return AnnotationDAGBuilder().build(input_node=node, output_node=None)

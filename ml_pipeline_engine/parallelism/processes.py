@@ -19,7 +19,9 @@ class PoolExecutorRegistry(BasePoolExecutorRegistry):
         self._process_manager: Optional[Manager] = None
 
     def is_ready(self) -> None:
-        super().is_ready()
+
+        if not self._pool_executor or self._pool_executor._shutdown_thread:  # noqa
+            raise RuntimeError('Исполнение невозможно без указания пула процессов')
 
         if not self._process_manager:
             raise RuntimeError('Исполнение невозможно без указания менеджера данных для процессов')

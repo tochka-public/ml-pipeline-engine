@@ -15,8 +15,3 @@ class EdgeField(str, Enum):
     is_switch = 'is_switch'
     case_branch = 'case_branch'
     is_first_success = 'is_first_success'
-
-
-class RunType(str, Enum):
-    single_process = 'single_process'
-    multi_process = 'multi_process'
