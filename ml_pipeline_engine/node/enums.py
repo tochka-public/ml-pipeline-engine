@@ -16,3 +16,4 @@ class NodeTag(str, enum.Enum):
 
     process = 'process'
     thread = 'thread'
+    non_async = 'non_async'

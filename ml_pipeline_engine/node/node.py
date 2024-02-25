@@ -83,14 +83,18 @@ async def run_node(node: NodeLike[NodeResultT], *args, **kwargs) -> t.Type[NodeR
 
     run_method = get_callable_run_method(node)
     loop = asyncio.get_running_loop()
+    tags = node.tags or ()
 
     if inspect.iscoroutinefunction(run_method):
         result = await run_method(*args, **kwargs)
 
+    elif NodeTag.non_async in tags:
+        result = run_method(*args, **kwargs)
+
     else:
         executor = (
             process_pool_registry.get_pool_executor()
-            if NodeTag.process in (node.tags or ())
+            if NodeTag.process in tags
             else threads_pool_registry.get_pool_executor()
         )
 
