@@ -1,14 +1,13 @@
-import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Type
 
-from ml_pipeline_engine.dag.enums import RunType
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.manager import (
-    DAGRunManagerMultiprocess,
-    DAGRunManagerSingleProcess,
-)
+from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
+from ml_pipeline_engine.parallelism import (
+    process_pool_registry,
+    threads_pool_registry,
+)
 from ml_pipeline_engine.types import (
     DAGLike,
     DAGRunManagerLike,
@@ -19,30 +18,30 @@ from ml_pipeline_engine.types import (
     RetryPolicyLike,
 )
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass()
 class DAG(DAGLike):
     graph: DiGraph
     input_node: NodeId
     output_node: NodeId
+    is_process_pool_needed: bool
+    is_thread_pool_needed: bool
     node_map: Dict[NodeId, NodeSerializerLike]
-    run_type: RunType
     retry_policy: Type[RetryPolicyLike] = DagRetryPolicy
-    run_manager: Type[DAGRunManagerLike] = field(init=False)
+    run_manager: Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        self._start_runtime_validation()
 
-        if self.run_type == RunType.single_process:
-            self.run_manager = DAGRunManagerSingleProcess
+    def _start_runtime_validation(self) -> None:
+        self._validate_pool_executors()
 
-        elif self.run_type == RunType.multi_process:
-            self.run_manager = DAGRunManagerMultiprocess
+    def _validate_pool_executors(self) -> None:
+        if self.is_thread_pool_needed:
+            threads_pool_registry.is_ready()
 
-        else:
-            raise RuntimeError(f'Указанный тип запуска не поддерживается. {self.run_type=}')
+        if self.is_process_pool_needed:
+            process_pool_registry.is_ready()
 
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
-        logger.debug('Начало запуска DAG. run_type=%s', self.run_type)
         return await self.run_manager(dag=self).run(ctx)

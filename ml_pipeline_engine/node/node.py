@@ -62,11 +62,11 @@ def get_callable_run_method(node: NodeLike) -> t.Callable:
     return node
 
 
-def run_node_default(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:
+def run_node_default(node: NodeLike[NodeResultT], **kwargs) -> t.Type[NodeResultT]:
     """
     Запуск получения дефолтного значения узла
     """
-    return get_instance(node).get_default()
+    return get_instance(node).get_default(**kwargs)
 
 
 async def run_node(node: NodeLike[NodeResultT], *args, **kwargs) -> t.Type[NodeResultT]:

@@ -1,3 +1,4 @@
+import abc
 import logging
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import Optional, Union
@@ -33,9 +34,9 @@ class PoolExecutorRegistry(metaclass=SingletonMeta):
     def __init__(self):
         self._pool_executor: Optional[PoolExecutorT] = None
 
+    @abc.abstractmethod
     def is_ready(self) -> None:
-        if not self._pool_executor:
-            raise RuntimeError('Исполнение невозможно без указания пула')
+        ...
 
     def register_pool_executor(self, pool_executor: PoolExecutorT) -> None:
         if self._pool_executor:

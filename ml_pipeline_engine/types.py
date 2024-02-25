@@ -19,7 +19,6 @@ PipelineId = t.Union[UUID, str]
 NodeId = str
 ModelName = str
 CaseLabel = str
-RunType = str
 SerializationNodeKind = str
 NodeTag = str
 
@@ -35,7 +34,7 @@ class RetryProtocol(t.Protocol):
     exceptions: t.ClassVar[t.Optional[t.Tuple[t.Type[BaseException], ...]]] = None
     use_default: t.ClassVar[bool] = False
 
-    def get_default(self) -> NodeResultT:
+    def get_default(self, **kwargs) -> NodeResultT:
         ...
 
 
@@ -268,6 +267,9 @@ class PipelineContextLike(t.Protocol):
     async def remove_recurrence_subgraph(self, source: NodeId, dest: NodeId) -> None:
         ...
 
+    def delete_node_results(self, node_ids: t.Iterable[NodeId]) -> None:
+        ...
+
     @property
     def model_name(self) -> ModelName:  # noqa
         ...
@@ -367,9 +369,10 @@ class DAGLike(t.Protocol[NodeResultT]):
     input_node: NodeId
     output_node: NodeId
     node_map: t.Dict[NodeId, NodeSerializerLike]
-    run_type: RunType
     run_manager: DAGRunManagerLike
     retry_policy: RetryPolicyLike
+    is_process_pool_needed: bool
+    is_thread_pool_needed: bool
 
     @abc.abstractmethod
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:

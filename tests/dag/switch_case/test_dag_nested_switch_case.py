@@ -66,20 +66,6 @@ class CaseNode(ProcessorBase):
         return num + num2
 
 
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-@pytest.mark.parametrize(
-    'input_num, expect',
-    [
-        (-1.0, 0.0),
-        (1.0, 3.0),
-        (2.0, 8.0),
-    ],
-)
-def test_dag_nested_switch_case_multiprocess(input_num, expect, build_multiprocess_dag, pipeline_multiprocess_context):
-    dag = build_multiprocess_dag(input_node=Ident, output_node=CaseNode)
-    assert dag.run(pipeline_multiprocess_context(num=input_num)) == expect
-
-
 @pytest.mark.parametrize(
     'input_num, expect',
     [
