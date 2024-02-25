@@ -110,7 +110,8 @@ def build_node(
     node: NodeLike,
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
-    atts: t.Dict[str, t.Any] = None,
+    atts: t.Optional[t.Dict[str, t.Any]] = None,
+    dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
     **target_dependencies,
 ) -> t.Type[NodeLike]:
     """
@@ -122,6 +123,7 @@ def build_node(
         class_name: Название класса узла
         node_name: Название ноды для соблюдения протокола
         atts: Дополнительные атрибуты нового объекта
+        dependencies_default: Дефолтные значения для зависимостей
         **target_dependencies: Целевые зависимости generic-зависимостей
     """
 
@@ -137,11 +139,11 @@ def build_node(
     if inspect.iscoroutinefunction(getattr(node, run_method)):
 
         async def class_method(*args, **kwargs):
-            return await getattr(node, run_method)(*args, **kwargs)
+            return await getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
 
     else:
         def class_method(*args, **kwargs):
-            return getattr(node, run_method)(*args, **kwargs)
+            return getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
 
     class_name = class_name or f'Generic{node.__name__}'
     created_node = type(
