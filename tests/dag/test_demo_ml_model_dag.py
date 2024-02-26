@@ -1,5 +1,3 @@
-import pytest
-
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.types import NodeBase
 
@@ -45,9 +43,3 @@ class SomeMLModel(NodeBase):
 async def test_demo_ml_model_dag(pipeline_context, build_dag):
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75
-
-
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-def test_demo_ml_model_dag_multiprocess(build_multiprocess_dag, pipeline_multiprocess_context):
-    dag = build_multiprocess_dag(input_node=SomeInput, output_node=SomeMLModel)
-    assert dag.run(pipeline_multiprocess_context(base_num=10, other_num=5)) == 1.75

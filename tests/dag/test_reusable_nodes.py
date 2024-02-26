@@ -1,5 +1,3 @@
-import pytest
-
 from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputGeneric
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.types import NodeBase, NodeLike
@@ -33,8 +31,8 @@ class SomeCommonFeature(NodeBase):
 class GenericVectorizer(NodeBase):
     name = 'some_vectorizer'
 
-    async def vectorize(self, feature_value: InputGeneric(NodeLike)) -> int:
-        return feature_value + 20
+    async def vectorize(self, feature_value: InputGeneric(NodeLike), const: int) -> int:
+        return feature_value + 20 + const
 
 
 class AnotherFeature(NodeBase):
@@ -48,12 +46,18 @@ class AnotherFeature(NodeBase):
 SomeParticularVectorizer = build_node(  # noqa
     GenericVectorizer,
     feature_value=Input(SomeCommonFeature),
+    dependencies_default=dict(
+        const=1,
+    ),
 )
 
 # Второй переопределенный подграф
 AnotherParticularVectorizer = build_node(  # noqa
     GenericVectorizer,
     feature_value=Input(AnotherFeature),
+    dependencies_default=dict(
+        const=0,
+    ),
 )
 
 
@@ -75,20 +79,8 @@ async def test_reusable_nodes(build_dag, pipeline_context):
 
     # Проверяем корректность первого графа
     some_dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
-    assert await some_dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75
+    assert await some_dag.run(pipeline_context(base_num=10, other_num=5)) == 1.76
 
     # Проверяем корректность второго графа
     some_dag = build_dag(input_node=SomeInput, output_node=AnotherMlModel)
     assert await some_dag.run(pipeline_context(base_num=10, other_num=5)) == 1_000.6
-
-
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-def test_reusable_nodes_multiprocess(pipeline_multiprocess_context, build_multiprocess_dag):
-
-    # Проверяем корректность первого графа
-    some_dag = build_multiprocess_dag(input_node=SomeInput, output_node=SomeMLModel)
-    assert some_dag.run(pipeline_multiprocess_context(base_num=10, other_num=5)) == 1.75
-
-    # Проверяем корректность второго графа
-    some_dag = build_multiprocess_dag(input_node=SomeInput, output_node=AnotherMlModel)
-    assert some_dag.run(pipeline_multiprocess_context(base_num=10, other_num=5)) == 1_000.6

@@ -71,21 +71,6 @@ class Out(ProcessorBase):
         return num
 
 
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-@pytest.mark.parametrize(
-    'input_num, expect',
-    [
-        (-1.0, 99.0),
-        (0.0, 110.0),
-        (1.0, 104.0),
-        (3.0, 115),
-    ],
-)
-def test_dag_switch_case_multiprocess(input_num, expect, build_multiprocess_dag, pipeline_multiprocess_context):
-    dag = build_multiprocess_dag(input_node=Ident, output_node=Out)
-    assert dag.run(pipeline_multiprocess_context(num=input_num)) == expect
-
-
 @pytest.mark.parametrize(
     'input_num, expect',
     [

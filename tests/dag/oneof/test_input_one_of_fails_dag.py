@@ -75,11 +75,3 @@ async def test_input_one_of_fails_dag(pipeline_context, build_dag):
 
     with pytest.raises(TypeError):
         await build_dag(input_node=SomeInput, output_node=SomeMLModel).run(pipeline_context(base_num=10, other_num=5))
-
-
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-def test_input_one_of_fails_dag_multiprocess(pipeline_multiprocess_context, build_multiprocess_dag):
-
-    with pytest.raises(TypeError):
-        dag = build_multiprocess_dag(input_node=SomeInput, output_node=SomeMLModel)
-        dag.run(pipeline_multiprocess_context(base_num=10, other_num=5))

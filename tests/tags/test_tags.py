@@ -32,7 +32,7 @@ class SomeFeature(NodeBase):
 
 class SomeVectorizer(NodeBase):
     name = 'some_vectorizer'
-    tags = (NodeTag.thread,)
+    tags = (NodeTag.non_async,)
 
     def vectorize(self, feature_value: Input(SomeFeature)) -> int:
         return feature_value + 20
@@ -56,5 +56,5 @@ async def test_tags__with_thread_process(
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75
 
-    assert threads_get_pool_executor.call_count == 2
+    assert threads_get_pool_executor.call_count == 1
     assert processes_get_pool_executor.call_count == 2

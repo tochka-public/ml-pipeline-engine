@@ -1,12 +1,10 @@
 import typing as t
 
 from ml_pipeline_engine.artifact_store.store.no_op import NoOpArtifactStore
-from ml_pipeline_engine.cache import Cache, MultiprocessCache
-from ml_pipeline_engine.dag.enums import RunType
+from ml_pipeline_engine.cache import Cache
 from ml_pipeline_engine.events import EventSourceMixin
 from ml_pipeline_engine.module_loading import get_instance
 from ml_pipeline_engine.node import generate_pipeline_id
-from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.types import (
     ArtifactStoreLike,
     CaseResult,
@@ -33,24 +31,20 @@ class DAGPipelineContext(EventSourceMixin):
         self.chart = chart
         self.pipeline_id = pipeline_id if pipeline_id is not None else generate_pipeline_id()
         self.input_kwargs = input_kwargs if input_kwargs is not None else {}
-        self.meta = meta if meta is not None else self.get_dict_object()
+        self.meta = meta if meta is not None else {}
         self.artifact_store: ArtifactStoreLike = get_instance(
             cls=self.chart.artifact_store or NoOpArtifactStore, ctx=self
         )
 
         self._local_cache = self.get_cache_object()
         self._event_managers = [get_instance(cls) for cls in self.chart.event_managers]
-        self._case_results = self.get_dict_object()
-        self._nodes_in_run = self.get_dict_object()
-        self._active_recurrence_subgraph = self.get_dict_object()
+        self._case_results = {}
+        self._nodes_in_run = set()
+        self._active_recurrence_subgraph = {}
 
     @classmethod
     def get_cache_object(cls):
         return Cache()
-
-    @classmethod
-    def get_dict_object(cls):
-        return dict()
 
     async def save_node_result(self, node_id: NodeId, data: t.Any) -> None:
         self._local_cache.save(node_id=node_id, data=data)
@@ -66,7 +60,7 @@ class DAGPipelineContext(EventSourceMixin):
         return self._case_results[switch_node_id]
 
     async def add_node_in_run(self, node_id: NodeId) -> None:
-        self._nodes_in_run[node_id] = 1
+        self._nodes_in_run.add(node_id)
 
     async def is_node_in_run(self, node_id: NodeId) -> bool:
         return node_id in self._nodes_in_run
@@ -83,6 +77,15 @@ class DAGPipelineContext(EventSourceMixin):
     async def remove_recurrence_subgraph(self, source: NodeId, dest: NodeId) -> None:
         self._active_recurrence_subgraph.pop((source, dest))
 
+    def delete_node_results(self, node_ids: t.Iterable[NodeId]) -> None:
+        """
+        Удаление всей информации, связанной с узлами
+        """
+
+        for node_id in node_ids:
+            self._local_cache.remove(node_id)
+            self._nodes_in_run.discard(node_id)
+
     @property
     def model_name(self) -> ModelName:
         return self.chart.model_name
@@ -94,21 +97,9 @@ class DAGPipelineContext(EventSourceMixin):
         return f'<{self.__class__.__name__} model_name="{self.chart.model_name}" pipeline_id="{self.pipeline_id}">'
 
 
-class DAGPipelineMultiprocessContext(DAGPipelineContext):
-
-    @classmethod
-    def get_cache_object(cls):
-        return MultiprocessCache()
-
-    @classmethod
-    def get_dict_object(cls):
-        return process_pool_registry.get_manager().dict()
-
-
 def create_context_from_chart(
     chart: PipelineChartLike,
     input_kwargs: t.Dict[str, t.Any],
-    run_type: RunType,
     pipeline_id: PipelineId = None,
     meta: t.Dict[str, t.Any] = None,
 ) -> DAGPipelineContext:
@@ -116,15 +107,6 @@ def create_context_from_chart(
     Создать контекст выполнения пайплайна ML-модели
     """
 
-    if run_type == RunType.single_process:
-        context_factory = DAGPipelineContext
-
-    elif run_type == RunType.multi_process:
-        context_factory = DAGPipelineMultiprocessContext
-
-    else:
-        raise RuntimeError('Указанный тип запуска не поддерживается контекстным менеджером пайплайнов')
-
-    return context_factory(
+    return DAGPipelineContext(
         pipeline_id=pipeline_id, chart=chart, input_kwargs=input_kwargs, meta=meta,
     )

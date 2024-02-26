@@ -1,5 +1,3 @@
-import pytest
-
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.dag_builders.annotation.marks import (
     Input,
@@ -69,13 +67,4 @@ async def test_fail_node(pipeline_context, build_dag, mocker):
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
 
     assert await dag.run(pipeline_context(base_num=10)) == 777_777
-    assert extract_patch.call_count == 0
-
-
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-def test_fail_node_multiprocess(pipeline_multiprocess_context, build_multiprocess_dag, mocker):
-    extract_patch = mocker.patch.object(SomeFeatureGeneric, 'extract')
-    dag = build_multiprocess_dag(input_node=SomeInput, output_node=SomeMLModel)
-
-    assert dag.run(pipeline_multiprocess_context(base_num=10)) == 777_777
     assert extract_patch.call_count == 0

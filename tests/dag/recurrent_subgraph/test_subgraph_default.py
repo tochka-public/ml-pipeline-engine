@@ -35,7 +35,7 @@ class DoubleNumber(RecurrentProcessor):
     use_default = True
 
     @double_default_mocker
-    def get_default(self):
+    def get_default(self, **kwargs):
         return -6
 
     async def process(self, num: Input(AddZero)):

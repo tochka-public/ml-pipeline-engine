@@ -1,5 +1,3 @@
-import pytest
-
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
@@ -79,9 +77,3 @@ class SomeMLModel(NodeBase):
 async def test_input_one_of_first_success_dag(pipeline_context, build_dag):
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75
-
-
-@pytest.mark.skip('Мультипроцессинг временно не поддерживается')
-def test_input_one_of_first_success_dag_multiprocess(pipeline_multiprocess_context, build_multiprocess_dag):
-    dag = build_multiprocess_dag(input_node=SomeInput, output_node=SomeMLModel)
-    assert dag.run(pipeline_multiprocess_context(base_num=10, other_num=5)) == 1.75
