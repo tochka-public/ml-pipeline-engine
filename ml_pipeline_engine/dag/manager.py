@@ -231,7 +231,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 return await run_node(**kwargs, node=node)
 
             except retry_policy.exceptions as error:
-                logger.debug('%s retrying in %s seconds... error=%s', node_id, retry_policy.delay, str(error))
+                logger.debug(
+                    'Node %s will be restarted in %s seconds...',
+                    node_id,
+                    retry_policy.delay,
+                    exc_info=error,
+                )
 
                 if n_attempts == retry_policy.attempts:
 
