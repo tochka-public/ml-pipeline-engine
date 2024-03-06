@@ -1,6 +1,5 @@
 import typing as t
 
-from tests.helpers import FactoryMocker
 from ml_pipeline_engine.base_nodes.processors import (
     ProcessorBase,
     RecurrentProcessor,
@@ -11,12 +10,9 @@ from ml_pipeline_engine.dag_builders.annotation.marks import (
 )
 from ml_pipeline_engine.types import AdditionalDataT
 
-invert_process_mocker = FactoryMocker()
-
 
 class InvertNumber(RecurrentProcessor):
 
-    @invert_process_mocker
     def process(
         self,
         num: float,
