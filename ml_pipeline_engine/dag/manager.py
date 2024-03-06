@@ -415,15 +415,11 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             recurrent_subgraph = get_connected_subgraph(
                                 self.dag.graph, start_from_node_id, node_result_id, is_recurrent=True,
                             )
-                            additional_data = node_result.data
 
                             for current_iter in range(max_iterations):
-                                self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = additional_data
+                                self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
 
-                                node_result = await self._run_dag(
-                                    dag=recurrent_subgraph,
-                                    ctx=ctx,
-                                )
+                                node_result = await self._run_dag(dag=recurrent_subgraph, ctx=ctx)
 
                                 if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
                                     node_result = await self._run_node(
