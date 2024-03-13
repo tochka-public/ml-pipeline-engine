@@ -32,7 +32,7 @@ class AddZero(RecurrentProcessor):
 class AnotherDoubleNumber(RecurrentProcessor):
     use_default = True
 
-    def get_default(self):
+    def get_default(self, **__):
         return 1
 
     def process(self, num: Input(InvertNumber)):
@@ -49,7 +49,7 @@ another_recurrent_double_number = RecurrentSubGraph(
 class DoubleNumber(RecurrentProcessor):
     use_default = True
 
-    def get_default(self):
+    def get_default(self, **__):
         return {}
 
     async def process(self, num: Input(AddZero), num2: another_recurrent_double_number):

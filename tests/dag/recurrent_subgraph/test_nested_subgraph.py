@@ -36,7 +36,7 @@ class DifferentSubgraph(RecurrentProcessor):
 class PseudoInfiniteProcess(RecurrentProcessor):
     use_default = True
 
-    def get_default(self):
+    def get_default(self, **__):
         return 0
 
     @pseudo_process_mocker
@@ -59,7 +59,7 @@ class AddZero(RecurrentProcessor):
 class DoubleNumber(RecurrentProcessor):
     use_default = True
 
-    def get_default(self):
+    def get_default(self, **__):
         return 10
 
     @double_process_mocker
