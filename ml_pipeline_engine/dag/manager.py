@@ -241,7 +241,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 if n_attempts == retry_policy.attempts:
 
                     if retry_policy.use_default:
-                        return run_node_default(node)
+                        return run_node_default(node, **kwargs)
 
                     raise error
 
@@ -252,7 +252,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             except Exception:
                 if retry_policy.use_default:
-                    return run_node_default(node)
+                    return run_node_default(node, **kwargs)
                 raise
 
     @staticmethod
