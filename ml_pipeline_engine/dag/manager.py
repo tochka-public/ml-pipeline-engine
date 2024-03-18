@@ -300,6 +300,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Метод проверяет возможность запуска узла
         """
 
+        # Switch context to collect any predecessors' results to approve the function for running.
+        await asyncio.sleep(0)
+
         if await ctx.is_node_in_run(node_id):
             return False
 
@@ -333,137 +336,139 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         list_node_ids = deque(list_node_ids)
 
         awaitable_nodes = []
-        awaitable_nodes_ids = []
 
         while list_node_ids:
-
             node_id = list_node_ids.popleft()
-            logger.debug('Обработка узла node_id=%s', node_id)
 
-            if (
-                await self._is_ready_to_run(dag, ctx, node_id)
-                and node_id not in awaitable_nodes_ids
-            ):
+            # Sometimes we can encounter situations when we have a result of the node-id.
+            # In that case, we simply skip the node because:
+            #   1. If it's a recurrent subgraph, the result would be deleted for each node in the subgraph
+            #      and this if-statement won't be executed.
+            #   2. If it's a non-recurrent execution, we just assume that the node's done before in any other graphs.
+            if await ctx.is_node_in_run(node_id):
+                continue
+
+            elif await self._is_ready_to_run(dag, ctx, node_id):
                 logger.debug('Узел готов к обработке node_id=%s', node_id)
 
-                # Как только доходим до оператора Switch, находим подграф выбранной ветки Case
-                # и рекурсивно выполняем его
                 if self._is_switch(dag, node_id):
                     logger.debug('Узел является switch-кейсом node_id=%s', node_id)
                     await self._add_case_result(ctx, node_id)
-                    await self._run_dag(
-                        ctx=ctx,
-                        dag=self._get_reduced_dag(
-                            self.dag.input_node,
-                            (await ctx.get_case_result(switch_node_id=node_id)).node_id,
+
+                    coro_to_run = asyncio.create_task(
+                        self._run_dag(
+                            ctx=ctx,
+                            dag=self._get_reduced_dag(
+                                self.dag.input_node,
+                                (await ctx.get_case_result(switch_node_id=node_id)).node_id,
+                            ),
                         ),
+                        name=node_id,
                     )
 
-                # Запускаем рекурсию, если нода является родителем InputOneOf пула
                 elif dag.nodes[node_id].get(NodeField.is_first_success):
                     logger.debug('Узел является InputOneOf node_id=%s', node_id)
-                    await self._run_dag(
-                        ctx=ctx,
-                        dag=self._get_reduced_dag_input_one_of(
-                            self.dag.input_node,
-                            node_id,
+
+                    coro_to_run = asyncio.create_task(
+                        self._run_dag(
+                            ctx=ctx,
+                            dag=self._get_reduced_dag_input_one_of(
+                                self.dag.input_node,
+                                node_id,
+                            ),
                         ),
+                        name=node_id,
                     )
 
                 else:
                     logger.debug('Узел может быть обработан, отправляем его в обработку node_id=%s', node_id)
-
-                    awaitable_nodes_ids.append(node_id)
-                    awaitable_nodes.append(
+                    coro_to_run = asyncio.create_task(
                         self._run_node(
                             ctx,
                             node_id,
                             # Добавляем флаг, что выполняется нода из InputOneOf пула
                             is_node_from_success_pool=self._is_node_in_oneof(dag, node_id),
-                        )
+                        ),
+                        name=node_id,
                     )
+
+                awaitable_nodes.append(coro_to_run)
 
                 # Если мы только запустили последний узел, то результат необходимо получить из соседнего процесса,
                 # по этой причине перезапускаем узел для повторной обработки
                 if node_id == dag_output_node:
                     list_node_ids.appendleft(node_id)
 
-            elif await ctx.is_node_in_run(node_id):
-
-                with suppress(ValueError, IndexError):
-                    node_id_index: int = awaitable_nodes_ids.index(node_id)
-                    del awaitable_nodes[node_id_index]
-                    del awaitable_nodes_ids[node_id_index]
-
             else:
-                # В случае, если существуют не все зависимости, то ожидаем результатов исполнения зависимых узлов.
-                # Топологическая сортировка дает гарантию, что здесь мы будем всегда ожидать необходимое количество
-                # зависимостей для исполнения текущего узла, который после получения зависимостей будет отправлен
-                # на повторную обработку
-                nodes_result = await asyncio.gather(*awaitable_nodes)
+                pending_nodes = awaitable_nodes
 
-                for idx, node_result in enumerate(nodes_result):
-                    node_result_id = awaitable_nodes_ids[idx]
-
-                    if isinstance(node_result, Recurrent):
-                        max_iterations = dag.nodes[node_result_id].get(NodeField.max_iterations)
-                        start_from_node_id = dag.nodes[node_result_id].get(NodeField.start_node)
-
-                        if not await ctx.is_active_recurrence_subgraph(start_from_node_id, node_result_id):
-                            await ctx.set_active_recurrence_subgraph(start_from_node_id, node_result_id)
-
-                            recurrent_subgraph = get_connected_subgraph(
-                                self.dag.graph, start_from_node_id, node_result_id, is_recurrent=True,
-                            )
-
-                            for current_iter in range(max_iterations):
-                                self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
-
-                                node_result = await self._run_dag(dag=recurrent_subgraph, ctx=ctx)
-
-                                if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
-                                    node_result = await self._run_node(
-                                        ctx,
-                                        node_result_id,
-                                        self._is_node_in_oneof(dag, node_result_id),
-                                        force_default=True,
-                                    )
-
-                                elif not isinstance(node_result, Recurrent):
-                                    break
-
-                            await ctx.remove_recurrence_subgraph(start_from_node_id, node_result_id)
-
-                        else:
-                            # В случае, если исполняемый узел рекуррентного подграфа не завершается ожидаемым образом,
-                            # то его нужно вернуть обратно к управляющей конструкции
-                            return node_result
-
-                    # Если нода из списка InputOneOf выполнилась успешно, то проходить остальные не нужно.
-                    # При этом, результат сохраняется под выходным узлом
-                    if (
-                        not isinstance(node_result, NodeErrorType)
-                        and self._is_node_in_oneof(dag, node_result_id)
-                    ):
-                        await ctx.save_node_result(dag_output_node, node_result)
-                        # Для искусственной остановки пайплайна помечаем текущий узел как выходной
-                        node_result_id = dag_output_node
-
-                    else:
-                        # Если узел обычный, то сохраняем результат в обычном режиме под оригинальным node_id
-                        await ctx.save_node_result(node_result_id, node_result)
-
-                    logger.debug(
-                        'Получен результат узла node_id=%s, от которого зависит исполнение узла node_id=%s',
-                        node_result_id,
-                        node_id,
+                while pending_nodes:
+                    node_results, pending_nodes = await asyncio.wait(
+                        pending_nodes, return_when=asyncio.FIRST_COMPLETED,
                     )
 
-                    if node_result_id == dag_output_node:
-                        return await ctx.load_node_result(node_result_id)
+                    for node_result in node_results:
+                        node_result_id = node_result.get_name()
+                        node_result = await node_result
+
+                        if isinstance(node_result, Recurrent):
+                            max_iterations = dag.nodes[node_result_id].get(NodeField.max_iterations)
+                            start_from_node_id = dag.nodes[node_result_id].get(NodeField.start_node)
+
+                            if not await ctx.is_active_recurrence_subgraph(start_from_node_id, node_result_id):
+                                await ctx.set_active_recurrence_subgraph(start_from_node_id, node_result_id)
+
+                                recurrent_subgraph = get_connected_subgraph(
+                                    self.dag.graph, start_from_node_id, node_result_id, is_recurrent=True,
+                                )
+
+                                for current_iter in range(max_iterations):
+                                    self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
+
+                                    node_result = await self._run_dag(dag=recurrent_subgraph, ctx=ctx)
+
+                                    if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
+                                        node_result = await self._run_node(
+                                            ctx,
+                                            node_result_id,
+                                            self._is_node_in_oneof(dag, node_result_id),
+                                            force_default=True,
+                                        )
+
+                                    elif not isinstance(node_result, Recurrent):
+                                        break
+
+                                await ctx.remove_recurrence_subgraph(start_from_node_id, node_result_id)
+
+                            else:
+                                # В случае, если исполняемый узел рекуррентного подграфа не завершается ожидаемым образом,
+                                # то его нужно вернуть обратно к управляющей конструкции
+                                return node_result
+
+                        # Если нода из списка InputOneOf выполнилась успешно, то проходить остальные не нужно.
+                        # При этом, результат сохраняется под выходным узлом
+                        if (
+                            not isinstance(node_result, NodeErrorType)
+                            and self._is_node_in_oneof(dag, node_result_id)
+                        ):
+                            await ctx.save_node_result(dag_output_node, node_result)
+                            # Для искусственной остановки пайплайна помечаем текущий узел как выходной
+                            node_result_id = dag_output_node
+
+                        else:
+                            # Если узел обычный, то сохраняем результат в обычном режиме под оригинальным node_id
+                            await ctx.save_node_result(node_result_id, node_result)
+
+                        logger.debug(
+                            'Получен результат узла node_id=%s, от которого зависит исполнение узла node_id=%s',
+                            node_result_id,
+                            node_id,
+                        )
+
+                        if node_result_id == dag_output_node:
+                            return await ctx.load_node_result(node_result_id)
 
                 awaitable_nodes.clear()
-                awaitable_nodes_ids.clear()
                 list_node_ids.appendleft(node_id)
 
     def __repr__(self):
