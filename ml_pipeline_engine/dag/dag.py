@@ -30,9 +30,6 @@ class DAG(DAGLike):
     retry_policy: Type[RetryPolicyLike] = DagRetryPolicy
     run_manager: Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
-    def __post_init__(self) -> None:
-        self._start_runtime_validation()
-
     def _start_runtime_validation(self) -> None:
         self._validate_pool_executors()
 
@@ -44,4 +41,5 @@ class DAG(DAGLike):
             process_pool_registry.is_ready()
 
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
+        self._start_runtime_validation()
         return await self.run_manager(dag=self).run(ctx)
