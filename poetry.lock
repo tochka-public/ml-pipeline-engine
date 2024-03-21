@@ -52,17 +52,6 @@ files = [
 ]
 
 [[package]]
-name = "cloudpickle"
-version = "2.2.1"
-description = "Extended pickling support for Python objects"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "cloudpickle-2.2.1-py3-none-any.whl", hash = "sha256:61f594d1f4c295fa5cd9014ceb3a1fc4a70b0de1164b94fbc2d854ccba056f9f"},
-    {file = "cloudpickle-2.2.1.tar.gz", hash = "sha256:d89684b8de9e34a2a43b3460fbca07d09d6e25ce858df4d5a44240403b6178f5"},
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -917,4 +906,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "b7c332ae28348de8db72443bfcb279d9d4b95baa6490a496c785494b846b0e1f"
+content-hash = "cdfc53d82e619d902a4949c996228c2d9cabc7078671a082ef33d856b76624ab"

@@ -1,10 +1,8 @@
 import functools
-import logging
 
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.exceptions import DataSourceCollectError
-
-logger = logging.getLogger(__name__)
+from ml_pipeline_engine.logs import logger_decorators as logger
 
 
 def guard_datasource_error(name=None, title=None):

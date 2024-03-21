@@ -1,5 +1,10 @@
+import logging
+import logging.config
+import logging.handlers
+
 import pytest
 
+from ml_pipeline_engine import logs
 from ml_pipeline_engine.chart import NullPipelineChart
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation import (
@@ -14,6 +19,24 @@ from ml_pipeline_engine.parallelism import (
 def pytest_sessionstart(session):  # noqa
     threads_pool_registry.auto_init()
     process_pool_registry.auto_init()
+
+    for logger in (
+        logs.logger_manager,
+        logs.logger_decorators,
+        logs.logger_parallelism,
+    ):
+        logger.setLevel(logging.DEBUG)
+
+        handler = logging.handlers.SysLogHandler()
+        handler.setLevel(logging.DEBUG)
+
+        logger.addHandler(handler)
+
+
+@pytest.fixture
+def caplog_debug(caplog):
+    caplog.set_level(logging.DEBUG)
+    yield caplog
 
 
 @pytest.fixture

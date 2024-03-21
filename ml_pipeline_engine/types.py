@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import typing as t
 from dataclasses import dataclass
 from uuid import UUID
@@ -147,22 +148,6 @@ NodeLike = t.Union[
     t.Type[FeatureVectorizerLike[NodeResultT]],
     t.Type[MLModelLike[NodeResultT]],
 ]
-
-
-class NodeSerializerLike(t.Protocol):
-    node: t.Union[bytes]
-    serialization_kind: SerializationNodeKind
-
-    @classmethod
-    def serialize(
-        cls,
-        node: NodeLike,
-        serialization_kind: t.Optional[SerializationNodeKind] = None,
-    ) -> 'NodeSerializerLike':
-        ...
-
-    def get_node(self) -> NodeLike:
-        ...
 
 
 @dataclass(frozen=True)
@@ -348,11 +333,24 @@ class RetryPolicyLike(t.Protocol):
         ...
 
 
+class DAGRunLockManagerLike(t.Protocol):
+    """
+    A manager object to store and manage locks related to NodeIds
+    """
+
+    lock_store: t.Dict[str, asyncio.Event] = {}
+
+    @abc.abstractmethod
+    def get_lock(self, node_id: NodeId) -> asyncio.Event:
+        ...
+
+
 class DAGRunManagerLike(t.Protocol):
     """
     Менеджер управлением запуска графа
     """
 
+    lock_manager: DAGRunLockManagerLike
     dag: 'DAGLike'
 
     @abc.abstractmethod
@@ -368,7 +366,7 @@ class DAGLike(t.Protocol[NodeResultT]):
     graph: [t.Type[nx.DiGraph], nx.DiGraph]
     input_node: NodeId
     output_node: NodeId
-    node_map: t.Dict[NodeId, NodeSerializerLike]
+    node_map: t.Dict[NodeId, NodeLike]
     run_manager: DAGRunManagerLike
     retry_policy: RetryPolicyLike
     is_process_pool_needed: bool

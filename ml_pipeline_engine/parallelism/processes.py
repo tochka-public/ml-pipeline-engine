@@ -1,13 +1,11 @@
-import logging
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import Manager, get_context
 from typing import Optional
 
+from ml_pipeline_engine.logs import logger_parallelism as logger
 from ml_pipeline_engine.parallelism.basic import (
     PoolExecutorRegistry as BasePoolExecutorRegistry,
 )
-
-logger = logging.getLogger(__name__)
 
 __all__ = ('process_pool_registry', )
 

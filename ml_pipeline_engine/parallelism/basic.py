@@ -1,9 +1,8 @@
 import abc
-import logging
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import Optional, Union
 
-logger = logging.getLogger(__name__)
+from ml_pipeline_engine.logs import logger_parallelism as logger
 
 
 class SingletonMeta(type):
