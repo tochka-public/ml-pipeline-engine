@@ -443,17 +443,36 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                             if not await ctx.is_active_recurrence_subgraph(start_from_node_id, node_result_id):
                                 await ctx.set_active_recurrence_subgraph(start_from_node_id, node_result_id)
+                                logger.debug(
+                                    'Start the process of the recurrent subgraph for nodes start_node=%s, dest_node=%s',
+                                    start_from_node_id,
+                                    node_result_id,
+                                )
 
                                 recurrent_subgraph = get_connected_subgraph(
                                     self.dag.graph, start_from_node_id, node_result_id, is_recurrent=True,
                                 )
 
                                 for current_iter in range(max_iterations):
+                                    logger.debug(
+                                        'Executing the %s attempt of the recurrent subgraph start_node=%s, dest_node=%s',
+                                        current_iter,
+                                        start_from_node_id,
+                                        node_result_id,
+                                    )
                                     self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
 
                                     node_result = await self._run_dag(dag=recurrent_subgraph, ctx=ctx)
 
                                     if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
+
+                                        logger.debug(
+                                            'Attempts to run a recurrent subgraph have been exceeded. '
+                                            'Will be used the default value start_node=%s, dest_node=%s',
+                                            start_from_node_id,
+                                            node_result_id,
+                                        )
+
                                         ctx.delete_node_results((node_result_id,))
                                         node_result = await self._run_node(
                                             ctx,
@@ -471,6 +490,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             else:
                                 # В случае, если исполняемый узел рекуррентного подграфа не завершается ожидаемым образом,
                                 # то его нужно вернуть обратно к управляющей конструкции
+                                logger.debug(
+                                    'Finish the process of the recurrent subgraph for nodes '
+                                    'start_node=%s, dest_node=%s',
+                                    start_from_node_id,
+                                    node_result_id,
+                                )
                                 return node_result
 
                         # Если нода из списка InputOneOf выполнилась успешно, то проходить остальные не нужно.
