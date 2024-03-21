@@ -68,11 +68,12 @@ class JustANode(ProcessorBase):
         return num2
 
 
-
-
 async def test_dag(build_dag, pipeline_context, caplog_debug):
     assert await build_dag(input_node=InvertNumber, output_node=JustANode).run(pipeline_context(num=3)) == 11
 
-    f = 1
+    log_message = (
+        'Node processor__tests_dag_recurrent_subgraph_test_subgraph_with_several_calls_JustANode '
+        'has been executed. Stop new execution'
+    )
 
-
+    assert log_message in caplog_debug.messages
