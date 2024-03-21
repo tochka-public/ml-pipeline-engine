@@ -22,6 +22,8 @@ def pytest_sessionstart(session):  # noqa
 
     for logger in (
         logs.logger_manager,
+        logs.logger_decorators,
+        logs.logger_parallelism,
     ):
         logger.setLevel(logging.DEBUG)
 
