@@ -15,7 +15,6 @@ from ml_pipeline_engine.dag_builders.annotation.marks import (
     SwitchCaseMark,
 )
 from ml_pipeline_engine.node import (
-    NodeSerializer,
     NodeTag,
     generate_node_id,
     get_callable_run_method,
@@ -26,7 +25,6 @@ from ml_pipeline_engine.types import (
     NodeBase,
     NodeId,
     NodeLike,
-    NodeSerializerLike,
     RecurrentProtocol,
 )
 
@@ -45,7 +43,7 @@ NodeResultT = t.TypeVar('NodeResultT')
 class AnnotationDAGBuilder:
     def __init__(self):
         self._dag = DiGraph()
-        self._node_map: t.Dict[NodeId, NodeSerializerLike] = dict()
+        self._node_map: t.Dict[NodeId, NodeLike] = dict()
         self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
         self._synthetic_nodes: t.List[NodeId] = []
 
@@ -123,7 +121,7 @@ class AnnotationDAGBuilder:
         Добавление узла в мэппинг "Имя узла -> Класс/функция узла"
         """
 
-        self._node_map[get_node_id(node)] = NodeSerializer.serialize(node=node)
+        self._node_map[get_node_id(node)] = node
 
     def _add_node_pair_to_dag(self, source_node_id: NodeId, dest_node_id: NodeId, **edge_data) -> None:
         """
@@ -261,7 +259,7 @@ class AnnotationDAGBuilder:
                 if node_id in self._synthetic_nodes:
                     continue
 
-                node = self._node_map[node_id].get_node()
+                node = self._node_map[node_id]
 
                 if RecurrentProtocol not in inspect.getmro(node):
                     raise errors.IncorrectRecurrentMixinClass(
@@ -278,7 +276,7 @@ class AnnotationDAGBuilder:
             if source in self._synthetic_nodes or dest in self._synthetic_nodes:
                 continue
 
-            method = get_callable_run_method(self._node_map[source].get_node())
+            method = get_callable_run_method(self._node_map[source])
 
             if 'additional_data' not in method.__annotations__:  # noqa
                 raise errors.IncorrectParamsRecurrentNode(
@@ -286,7 +284,7 @@ class AnnotationDAGBuilder:
                     'который может перезапустить подграф',
                 )
 
-            dest_node = self._node_map[dest].get_node()
+            dest_node = self._node_map[dest]
             if not dest_node.use_default:
                 raise errors.IncorrectParamsRecurrentNode(
                     f'Для участия в рекуррентном подграфе {dest_node} должен устанавливать параметр use_default=True. '
@@ -310,7 +308,6 @@ class AnnotationDAGBuilder:
         is_process_pool_needed = False
 
         for node in self._node_map.values():
-            node = node.get_node()
 
             if inspect.iscoroutinefunction(get_callable_run_method(node)):
                 continue

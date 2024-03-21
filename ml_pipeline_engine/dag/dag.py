@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, Type
 
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager
+from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager, DAGConcurrentManagerLock
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
 from ml_pipeline_engine.parallelism import (
     process_pool_registry,
@@ -13,7 +13,7 @@ from ml_pipeline_engine.types import (
     DAGRunManagerLike,
     NodeId,
     NodeResultT,
-    NodeSerializerLike,
+    NodeLike,
     PipelineContextLike,
     RetryPolicyLike,
 )
@@ -26,7 +26,7 @@ class DAG(DAGLike):
     output_node: NodeId
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
-    node_map: Dict[NodeId, NodeSerializerLike]
+    node_map: Dict[NodeId, NodeLike]
     retry_policy: Type[RetryPolicyLike] = DagRetryPolicy
     run_manager: Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
@@ -42,4 +42,12 @@ class DAG(DAGLike):
 
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         self._start_runtime_validation()
-        return await self.run_manager(dag=self).run(ctx)
+
+        run_manager = self.run_manager(
+            lock_manager=DAGConcurrentManagerLock(
+                self.node_map.keys(),
+            ),
+            dag=self,
+        )
+
+        return await run_manager.run(ctx)
