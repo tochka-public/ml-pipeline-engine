@@ -28,8 +28,8 @@ class GraphConfigImpl:
         """
         return self._dag.node_map.get(node_id)
 
-    # @staticmethod
-    def _get_node_relative_path(self,node: Type[NodeLike]) -> str:
+    @staticmethod
+    def _get_node_relative_path(node: Type[NodeLike]) -> str:
         """
         Generate relative path for a node
         """
@@ -42,7 +42,7 @@ class GraphConfigImpl:
                 'Cannot parse lines, because the node is generic. '
                 'The first predecessor will be used as the source',
             )
-            line_number = inspect.getsourcelines(inspect.getmro(node)[1])
+            line_number = inspect.getsourcelines(inspect.getmro(node)[1])[-1]
 
         return f'{file_path}.py#L{line_number}'
 
@@ -55,14 +55,13 @@ class GraphConfigImpl:
 
         for node_id in self._dag.graph.nodes:
             node = self._get_node(node_id)
-            is_generic = NodeType.is_generic(node_id)
 
             if node is None:
                 nodes.append(
                     schema.Node(
                         id=node_id,
                         is_virtual=True,
-                        is_generic=is_generic,
+                        is_generic=False,
                     ),
                 )
 
@@ -74,10 +73,10 @@ class GraphConfigImpl:
                         id=node_id,
                         type=node.node_type,
                         is_virtual=False,
-                        is_generic=is_generic,
+                        is_generic=NodeType.is_generic(node.__name__),
                         data=schema.NodeAttributes(
                             name=node.name,
-                            verbose_name=node.title,
+                            verbose_name=node.verbose_name,
                             doc=inspect.getdoc(method) or inspect.getdoc(node),
                             code_source=self._get_node_relative_path(node),
                         ),
@@ -128,7 +127,8 @@ class GraphConfigImpl:
 
     def generate(
         self,
-        title: str,
+        name: str,
+        verbose_name: Optional[str] = None,
         repo_link: Optional[str] = None,
         node_colors: Optional[_NodeColorsT] = None,
         **kwargs,
@@ -137,7 +137,8 @@ class GraphConfigImpl:
         Generate a config for graph visualizer
 
         Args:
-            title: Name for the graph
+            name: Tech name for the graph
+            verbose_name: Name for the graph
             repo_link: Repo link with commit or without
             node_colors: Mapping of node type colors
             **kwargs: Attrs for the graph
@@ -148,8 +149,9 @@ class GraphConfigImpl:
             edges=self._generate_edges(),
             node_types=self._generate_node_types(node_colors),
             attributes=schema.GraphAttributes(
-                title=title,
+                verbose_name=verbose_name or name,
                 repo_link=repo_link,
+                name=name,
                 **kwargs,
             )
         )

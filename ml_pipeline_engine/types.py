@@ -79,7 +79,8 @@ class NodeProtocol(t.Protocol):
 
     node_type: t.ClassVar[str] = None
     name: t.ClassVar[str] = None
-    title: t.ClassVar[str] = None
+    title: t.ClassVar[str] = None  # TODO: Remove it in the future
+    verbose_name: t.ClassVar[str] = None
 
 
 class NodeBase(NodeProtocol, RetryProtocol, TagProtocol):
@@ -374,4 +375,7 @@ class DAGLike(t.Protocol[NodeResultT]):
 
     @abc.abstractmethod
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
+        ...
+
+    def visualize(self, *args, **kwargs) -> None:
         ...
