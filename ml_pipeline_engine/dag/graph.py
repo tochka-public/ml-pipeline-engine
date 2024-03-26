@@ -1,3 +1,4 @@
+import itertools
 from typing import Optional
 
 import networkx as nx
@@ -10,6 +11,9 @@ class DiGraph(nx.DiGraph):
         super().__init__(**kwargs)
 
         self.is_recurrent = is_recurrent
+
+    def __hash__(self):
+        return hash(tuple(sorted(itertools.chain(*self.nodes.keys(), *self.edges.keys()))))
 
     def create_interactive_graph(self, height: Optional[str] = None, path: Optional[str] = None) -> None:
         """

@@ -3,7 +3,7 @@ import functools
 import typing as t
 from collections import deque
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import networkx as nx
 
@@ -25,7 +25,10 @@ from ml_pipeline_engine.types import (
 )
 
 from ml_pipeline_engine.logs import logger_manager as logger
-from cachetools import cachedmethod, LRUCache, TTLCache
+from cachetools import cachedmethod
+from cachetools.keys import hashkey
+
+
 
 
 class DAGConcurrentManagerLock(DAGRunLockManagerLike):
@@ -36,8 +39,6 @@ class DAGConcurrentManagerLock(DAGRunLockManagerLike):
     def get_lock(self, node_id: NodeId) -> asyncio.Event:
         self.lock_store.setdefault(node_id, asyncio.Event())
         return self.lock_store[node_id]
-
-from cachetools.keys import methodkey
 
 
 @dataclass
@@ -50,12 +51,17 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     lock_manager: DAGRunLockManagerLike
     dag: DAGLike
 
-    def __post_init__(self):
-        self.__memo = {}
+    _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
+
+    def __hash__(self) -> int:
+        """
+        Redefine the easiest "hash" for current object, because cachetools.keys.hashkey
+        will try to cache current object
+        """
+        return 1
 
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         return await self._run_dag(ctx, self._get_reduced_dag(self.dag.input_node, self.dag.output_node))
-
 
     async def _get_node_kwargs(self, ctx: PipelineContextLike, node_id: NodeId) -> t.Dict[str, t.Any]:
         """
@@ -89,7 +95,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return kwargs
 
-    @cachedmethod(lambda self: self.__memo)
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'is_switch'))
     def _is_switch(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел switch-узлом
@@ -100,15 +106,15 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         except KeyError:
             return False
 
-    @staticmethod
-    def _is_node_in_oneof(dag: DiGraph, node_id: NodeId) -> bool:
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'node_in_oneof'))
+    def _is_node_in_oneof(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел узлом InputOneOf пула
         """
         return bool(dag.nodes[node_id].get(NodeField.is_first_success_pool))
 
-    @staticmethod
-    def _is_head_of_oneof(dag: DiGraph, node_id: NodeId) -> bool:
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'head_of_oneof'))
+    def _is_head_of_oneof(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел родителем InputOneOf пула
         """
@@ -300,6 +306,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             if (not await ctx.is_node_in_run(node_id) if not dag.is_recurrent else True)
         ]
 
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'node_dependencies'))
     def _get_node_dependencies(self, dag: DiGraph, node_id: NodeId) -> t.Set[NodeId]:
         """
         Метод возвращает узлы без которых оператор switch-case, oneof не запустится в указанном dag.

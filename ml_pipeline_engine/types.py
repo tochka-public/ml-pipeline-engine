@@ -353,6 +353,8 @@ class DAGRunManagerLike(t.Protocol):
     lock_manager: DAGRunLockManagerLike
     dag: 'DAGLike'
 
+    _memorization_store: t.Dict[t.Any, t.Any]
+
     @abc.abstractmethod
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         ...
