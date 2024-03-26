@@ -4,6 +4,7 @@ from ml_pipeline_engine.types import (
     Recurrent,
     RecurrentProtocol,
 )
+from ml_pipeline_engine.node.enums import NodeType
 
 
 class ProcessorBase(NodeBase):
@@ -11,7 +12,7 @@ class ProcessorBase(NodeBase):
     Базовый класс для обработчиков общего назначения
     """
 
-    node_type = 'processor'
+    node_type = NodeType.processor
 
     def process(self, *args, **kwargs):
         raise NotImplementedError('Method process() is not implemented')

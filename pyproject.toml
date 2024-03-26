@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ml-pipeline-engine"
 readme = "README.md"
-version = "1.4.0"
+version = "1.4.1"
 authors = [
   "Konyaev Matvey",
   "Vasiliy Pankov",
@@ -23,8 +23,12 @@ classifiers = [
 python = "^3.8"
 networkx = ">=3.1,<4.0"
 python-ulid = ">=1.1.0,<2.0"
-pyvis = "^0.3.2"
+importlib-resources = "^6.4.0"
 cachetools = "^5.3.3"
+click = "^8.1.7"
+
+[tool.poetry.scripts]
+ml_pipeline_engine = "ml_pipeline_engine.cli:main"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=4.0.0"
