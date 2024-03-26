@@ -12,7 +12,7 @@ class ProcessorBase(NodeBase):
     Базовый класс для обработчиков общего назначения
     """
 
-    node_type = NodeType.processor
+    node_type = NodeType.processor.value
 
     def process(self, *args, **kwargs):
         raise NotImplementedError('Method process() is not implemented')
