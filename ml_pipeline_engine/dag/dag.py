@@ -1,5 +1,6 @@
+import pathlib
 from dataclasses import dataclass
-from typing import Dict, Type
+from typing import Dict, Type, Optional
 
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager, DAGConcurrentManagerLock
@@ -52,3 +53,27 @@ class DAG(DAGLike):
         )
 
         return await run_manager.run()
+
+    def visualize(
+        self,
+        title: Optional[str] = None,
+        target_dir: Optional[pathlib.Path] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Create a static for graph visualization
+
+        Args:
+            title: Dag title
+            target_dir: Target dir for static
+            **kwargs: Graph config kwargs
+        """
+
+        from ml_pipeline_engine.visualization.dag import GraphConfigImpl, build_static
+
+        config = GraphConfigImpl(self).generate(title=title or 'Dag', **kwargs)
+
+        build_static(
+            config,
+            target_dir=target_dir or pathlib.Path(__file__).resolve(),
+        )
