@@ -7,7 +7,7 @@ class FeatureBase(NodeBase):
     Базовый класс для набора фичей
     """
 
-    node_type = NodeType.feature
+    node_type = NodeType.feature.value
 
     def extract(self, *args, **kwargs):
         raise NotImplementedError('Method extract() is not implemented')

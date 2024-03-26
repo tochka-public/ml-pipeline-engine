@@ -195,7 +195,7 @@ class AnnotationDAGBuilder:
 
                 if isinstance(input_mark, InputOneOfMark):
                     first_node_in_pool = input_mark.nodes[0]
-                    synthetic_node_id = generate_node_id(NodeType.input_one_of, get_node_id(first_node_in_pool))
+                    synthetic_node_id = generate_node_id(NodeType.input_one_of.value, get_node_id(first_node_in_pool))
                     self._dag.add_node(synthetic_node_id, **{NodeField.is_first_success: True})
                     self._dag.add_edge(get_node_id(input_node), synthetic_node_id)
 
@@ -233,7 +233,7 @@ class AnnotationDAGBuilder:
 
                 if isinstance(input_mark, SwitchCaseMark):
 
-                    switch_node_id = generate_node_id(NodeType.switch, input_mark.name)
+                    switch_node_id = generate_node_id(NodeType.switch.value, input_mark.name)
 
                     self._add_node_to_map(input_mark.switch)
                     self._add_switch_node(switch_node_id, get_node_id(input_mark.switch))

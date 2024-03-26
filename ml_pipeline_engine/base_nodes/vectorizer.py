@@ -7,7 +7,7 @@ class FeatureVectorizerBase(NodeBase):
     Базовый класс для векторизаторов
     """
 
-    node_type = NodeType.vectorizer
+    node_type = NodeType.vectorizer.value
 
     def vectorize(self, *args, **kwargs):
         raise NotImplementedError('Method vectorize() is not implemented')
