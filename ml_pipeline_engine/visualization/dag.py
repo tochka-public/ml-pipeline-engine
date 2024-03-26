@@ -61,6 +61,7 @@ class GraphConfigImpl:
                         id=node_id,
                         is_virtual=True,
                         is_generic=False,
+                        type=NodeType.by_prefix(node_id).value,
                     ),
                 )
 

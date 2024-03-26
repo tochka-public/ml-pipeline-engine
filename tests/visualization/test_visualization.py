@@ -181,7 +181,7 @@ async def test_basic(call_func):
                     'id': ANY,
                     'is_generic': False,
                     'is_virtual': True,
-                    'type': None
+                    'type': 'switch',
                 },
                 {
                     'data': {
