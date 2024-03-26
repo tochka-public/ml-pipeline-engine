@@ -5,7 +5,6 @@ import json
 from typing import Type, List, Dict, TypeVar, Optional, Union
 
 from ml_pipeline_engine.node import get_callable_run_method
-from ml_pipeline_engine.logs import logger_visualization as logger
 from ml_pipeline_engine.node.enums import NodeType
 from ml_pipeline_engine.types import DAGLike, NodeId, NodeLike
 from ml_pipeline_engine.visualization import schema
@@ -33,17 +32,17 @@ class GraphConfigImpl:
         """
         Generate relative path for a node
         """
-        file_path = '/'.join(node.__module__.split('.'))
 
-        try:
-            line_number = inspect.getsourcelines(node)[-1]
-        except Exception:
-            logger.debug(
-                'Cannot parse lines, because the node is generic. '
-                'The first predecessor will be used as the source',
-            )
-            line_number = inspect.getsourcelines(inspect.getmro(node)[1])[-1]
+        generic_class = getattr(node, '__generic_class__', None)
 
+        if generic_class is None:
+            file_path = '/'.join(node.__module__.split('.'))
+
+        else:
+            file_path = '/'.join(generic_class.__module__.split('.'))
+            node = generic_class
+
+        line_number = inspect.getsourcelines(node)[-1]
         return f'{file_path}.py#L{line_number}'
 
     def _generate_nodes(self) -> List[schema.Node]:

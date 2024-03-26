@@ -153,6 +153,7 @@ def build_node(
             # Меняем на lambda-функцию, чтобы убить ссылку на метод родительского класса.
             run_method: class_method,
             '__module__': __name__,
+            '__generic_class__': node,
             'name': node_name or node.name,  # noqa
             **(atts or {}),
         },
