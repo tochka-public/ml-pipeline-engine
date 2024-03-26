@@ -9,7 +9,7 @@ class DataSource(NodeBase):
     Базовый класс для источников данных
     """
 
-    node_type = NodeType.datasource
+    node_type = NodeType.datasource.value
 
     def collect(self, *args, **kwargs) -> t.Any:
         raise NotImplementedError('Method collect() is not implemented')
