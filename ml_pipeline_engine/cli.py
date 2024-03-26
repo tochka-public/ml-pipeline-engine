@@ -13,14 +13,16 @@ def main():
 
 @main.command()
 @click.option('--dag_path', help='Dotted path to a dag', required=True)
+@click.option('--dag_name', default='Dag', help='Tech name for the dag')
+@click.option('--dag_verbose_name', default='Dag', help='Title for the dag')
 @click.option('--target_dir', default='public', help='Target fir for static', type=pathlib.Path)
 @click.option('--repo_link', help='Link for your repository')
-@click.option('--title', default='Dag', help='Link for your repository')
 @click.option('--color', type=(NodeType, str), multiple=True, help='Color for node types')
 def build_static(
     dag_path: str,
+    dag_name: str,
+    dag_verbose_name: str,
     target_dir: pathlib.Path,
-    title: str,
     repo_link: Optional[str] = None,
     color: Optional[List[Tuple[NodeType, str]]] = None,
 ):
@@ -29,13 +31,14 @@ def build_static(
     import importlib
     from ml_pipeline_engine.visualization.dag import build_static, GraphConfigImpl
 
-    module, dag_name = dag_path.rsplit(':', 1)
+    module, dag_object_name = dag_path.rsplit(':', 1)
     module = importlib.import_module(module)
 
-    config = GraphConfigImpl(getattr(module, dag_name)).generate(
+    config = GraphConfigImpl(getattr(module, dag_object_name)).generate(
         node_colors=dict(color),
         repo_link=repo_link,
-        title=title,
+        verbose_name=dag_verbose_name,
+        name=dag_name,
     )
 
     build_static(config, target_dir=target_dir)

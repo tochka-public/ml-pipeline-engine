@@ -4,7 +4,8 @@ from typing import List, Optional, Dict, Any
 
 @dataclass
 class GraphAttributes:
-    title: str
+    verbose_name: str
+    name: str  # Tech name
     repo_link: Optional[str] = None
     edgesep: int = field(default=60)  # Number of pixels that separate edges horizontally in the layout.
     ranksep: int = field(default=700)  # Number of pixels between each rank in the layout.
