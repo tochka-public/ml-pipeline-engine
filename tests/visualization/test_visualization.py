@@ -221,7 +221,7 @@ async def test_basic(call_func):
                 },
                 {
                     'data': {
-                        'code_source': 'ml_pipeline_engine/node/node.py#L42',  # Line for the real source!
+                        'code_source': 'tests/visualization/test_visualization.py#L42',  # Line for the real source!
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'another_feature',
                         'verbose_name': None
