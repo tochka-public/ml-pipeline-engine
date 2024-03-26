@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import typing as t
 from collections import deque
 from contextlib import suppress
@@ -24,6 +25,7 @@ from ml_pipeline_engine.types import (
 )
 
 from ml_pipeline_engine.logs import logger_manager as logger
+from cachetools import cachedmethod, LRUCache, TTLCache
 
 
 class DAGConcurrentManagerLock(DAGRunLockManagerLike):
@@ -34,6 +36,8 @@ class DAGConcurrentManagerLock(DAGRunLockManagerLike):
     def get_lock(self, node_id: NodeId) -> asyncio.Event:
         self.lock_store.setdefault(node_id, asyncio.Event())
         return self.lock_store[node_id]
+
+from cachetools.keys import methodkey
 
 
 @dataclass
@@ -46,8 +50,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     lock_manager: DAGRunLockManagerLike
     dag: DAGLike
 
+    def __post_init__(self):
+        self.__memo = {}
+
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         return await self._run_dag(ctx, self._get_reduced_dag(self.dag.input_node, self.dag.output_node))
+
 
     async def _get_node_kwargs(self, ctx: PipelineContextLike, node_id: NodeId) -> t.Dict[str, t.Any]:
         """
@@ -81,8 +89,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return kwargs
 
-    @staticmethod
-    def _is_switch(dag: DiGraph, node_id: NodeId) -> bool:
+    @cachedmethod(lambda self: self.__memo)
+    def _is_switch(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел switch-узлом
         """
