@@ -1,3 +1,4 @@
+from ml_pipeline_engine.dag_builders.annotation import build_dag
 from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputGeneric
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.types import NodeBase, NodeLike
@@ -73,6 +74,8 @@ class AnotherMlModel(NodeBase):
 
     def predict(self, vec_value: Input(AnotherParticularVectorizer)):
         return (vec_value + 30) / 100
+
+some_dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
 
 
 async def test_reusable_nodes(build_dag, pipeline_context):
