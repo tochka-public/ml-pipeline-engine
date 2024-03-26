@@ -7,7 +7,7 @@ class GraphAttributes:
     title: str
     repo_link: Optional[str] = None
     edgesep: int = field(default=60)  # Number of pixels that separate edges horizontally in the layout.
-    ranksep: int = field(default=50)  # Number of pixels between each rank in the layout.
+    ranksep: int = field(default=700)  # Number of pixels between each rank in the layout.
 
 
 @dataclass
