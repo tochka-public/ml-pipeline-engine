@@ -29,8 +29,6 @@ from cachetools import cachedmethod
 from cachetools.keys import hashkey
 
 
-
-
 class DAGConcurrentManagerLock(DAGRunLockManagerLike):
 
     def __init__(self, node_ids: t.Iterable[NodeId]):
@@ -39,6 +37,11 @@ class DAGConcurrentManagerLock(DAGRunLockManagerLike):
     def get_lock(self, node_id: NodeId) -> asyncio.Event:
         self.lock_store.setdefault(node_id, asyncio.Event())
         return self.lock_store[node_id]
+
+
+def cache_key(prefix, _, *args, **kwargs):
+    """Custom func key generation excluding 'self'."""
+    return hashkey(*args, prefix, **kwargs)
 
 
 @dataclass
@@ -52,13 +55,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     dag: DAGLike
 
     _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
-
-    def __hash__(self) -> int:
-        """
-        Redefine the easiest "hash" for current object, because cachetools.keys.hashkey
-        will try to cache current object
-        """
-        return 1
 
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         return await self._run_dag(ctx, self._get_reduced_dag(self.dag.input_node, self.dag.output_node))
@@ -95,7 +91,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return kwargs
 
-    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'is_switch'))
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(cache_key, 'is_switch'))
     def _is_switch(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел switch-узлом
@@ -106,14 +102,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         except KeyError:
             return False
 
-    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'node_in_oneof'))
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(cache_key, 'node_in_oneof'))
     def _is_node_in_oneof(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел узлом InputOneOf пула
         """
         return bool(dag.nodes[node_id].get(NodeField.is_first_success_pool))
 
-    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'head_of_oneof'))
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(cache_key, 'head_of_oneof'))
     def _is_head_of_oneof(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Является ли узел родителем InputOneOf пула
@@ -306,7 +302,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             if (not await ctx.is_node_in_run(node_id) if not dag.is_recurrent else True)
         ]
 
-    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(hashkey, 'node_dependencies'))
+    @cachedmethod(lambda self: self._memorization_store, key=functools.partial(cache_key, 'node_dependencies'))
     def _get_node_dependencies(self, dag: DiGraph, node_id: NodeId) -> t.Set[NodeId]:
         """
         Метод возвращает узлы без которых оператор switch-case, oneof не запустится в указанном dag.
