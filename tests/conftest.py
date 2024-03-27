@@ -20,23 +20,30 @@ def pytest_sessionstart(session):  # noqa
     threads_pool_registry.auto_init()
     process_pool_registry.auto_init()
 
-    for logger in (
+
+@pytest.fixture
+def get_loggers():
+    return (
         logs.logger_manager,
         logs.logger_decorators,
         logs.logger_parallelism,
-    ):
-        logger.setLevel(logging.DEBUG)
-
-        handler = logging.handlers.SysLogHandler()
-        handler.setLevel(logging.DEBUG)
-
-        logger.addHandler(handler)
+    )
 
 
 @pytest.fixture
-def caplog_debug(caplog):
+def caplog_debug(caplog, get_loggers):
+
+    for logger in get_loggers:
+        logger.addHandler(caplog.handler)
+
+    log_level = logging.getLevelName(logging.root.level)
     caplog.set_level(logging.DEBUG)
+
     yield caplog
+
+    caplog.set_level(log_level)
+    for logger in get_loggers:
+        logger.removeHandler(caplog.handler)
 
 
 @pytest.fixture
