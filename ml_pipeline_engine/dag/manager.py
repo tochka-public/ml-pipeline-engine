@@ -39,7 +39,7 @@ class DAGConcurrentManagerLock(DAGRunLockManagerLike):
         return self.lock_store[node_id]
 
 
-def cache_key(prefix, _, *args, **kwargs):
+def cache_key(prefix, _, *args, **kwargs) -> t.Type[tuple]:
     """Custom func key generation excluding 'self'."""
     return hashkey(*args, prefix, **kwargs)
 
