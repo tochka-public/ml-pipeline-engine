@@ -109,7 +109,7 @@ async def test_basic(call_func):
         call_func(target)()
 
         saved_config = (target / 'data.js').read_text()
-        saved_config = json.loads(saved_config.replace('data = ', ''))
+        saved_config = json.loads(saved_config.replace('window.__GRAPH_DATA__ = ', ''))
 
         assert saved_config == {
             'attributes': {
