@@ -163,11 +163,11 @@ def build_static(config: schema.GraphConfig, target_dir: pathlib.Path) -> None:
     """
 
     copy_resources(
-        const.LIB_ANCHOR,'visualization', 'js',
+        const.LIB_ANCHOR, 'visualization', 'viewer',
         target_dir=str(target_dir),
     )
 
     config = json.dumps(config.as_dict(), ensure_ascii=False, indent=2)
 
     with open(target_dir / 'data.js', 'w', encoding="utf-8") as file:
-        file.write(f'data = {config}')
+        file.write(f'window.__GRAPH_DATA__ = {config}')
