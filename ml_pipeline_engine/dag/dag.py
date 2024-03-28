@@ -48,6 +48,7 @@ class DAG(DAGLike):
                 self.node_map.keys(),
             ),
             dag=self,
+            ctx=ctx,
         )
 
-        return await run_manager.run(ctx)
+        return await run_manager.run()

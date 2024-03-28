@@ -12,6 +12,7 @@ from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
 from ml_pipeline_engine.dag.utils import get_connected_subgraph
 from ml_pipeline_engine.exceptions import NodeErrorType
+from ml_pipeline_engine.dag.storage import DAGNodeStorage
 from ml_pipeline_engine.node import run_node, run_node_default
 from ml_pipeline_engine.types import (
     CaseResult,
@@ -22,6 +23,7 @@ from ml_pipeline_engine.types import (
     PipelineContextLike,
     Recurrent,
     DAGRunLockManagerLike,
+    DAGNodeStorageLike,
 )
 
 from ml_pipeline_engine.logs import logger_manager as logger
@@ -52,14 +54,16 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     """
 
     lock_manager: DAGRunLockManagerLike
+    ctx: PipelineContextLike
     dag: DAGLike
+    node_storage: DAGNodeStorageLike = field(default_factory=DAGNodeStorage)
 
     _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
 
-    async def run(self, ctx: PipelineContextLike) -> NodeResultT:
-        return await self._run_dag(ctx, self._get_reduced_dag(self.dag.input_node, self.dag.output_node))
+    async def run(self) -> NodeResultT:
+        return await self._run_dag(self._get_reduced_dag(self.dag.input_node, self.dag.output_node))
 
-    async def _get_node_kwargs(self, ctx: PipelineContextLike, node_id: NodeId) -> t.Dict[str, t.Any]:
+    def _get_node_kwargs(self, node_id: NodeId) -> t.Dict[str, t.Any]:
         """
         Получить входные kwarg-и для узла графа перед его запуском
         """
@@ -74,15 +78,17 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     continue
 
                 if self.dag.graph.nodes[pred_node_id].get(NodeField.is_switch):
-                    kwargs[kwarg_name] = await ctx.load_node_result(
-                        (await ctx.get_case_result(pred_node_id)).node_id
+                    kwargs[kwarg_name] = self.node_storage.get_node_result(
+                        self.node_storage.get_switch_result(pred_node_id).node_id,
                     )
                     continue
 
-                kwargs[kwarg_name] = await ctx.load_node_result(pred_node_id)
+                kwargs[kwarg_name] = self.node_storage.get_node_result(
+                    pred_node_id,
+                )
 
         else:
-            kwargs = ctx.input_kwargs
+            kwargs = self.ctx.input_kwargs
 
         additional_data = self.dag.graph.nodes[node_id].get(NodeField.additional_data)
 
@@ -151,7 +157,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return get_connected_subgraph(nx.subgraph_view(self.dag.graph), source, dest)
 
-    async def _add_case_result(self, ctx: PipelineContextLike, switch_node_id: NodeId) -> None:
+    def _add_case_result(self, switch_node_id: NodeId) -> None:
         """
         Записать выбор, сделанный оператором выбора Switch-Case, в контекст
         """
@@ -161,21 +167,19 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             edge = self.dag.graph.edges[(pred_id, switch_node_id)]
 
             if edge.get(EdgeField.is_switch):
-                selected_branch_label = await ctx.load_node_result(pred_id)
+                selected_branch_label = self.node_storage.get_node_result(pred_id)
                 continue
 
             branch_nodes[edge.get(EdgeField.case_branch)] = pred_id
 
-        await ctx.add_case_result(
+        self.node_storage.set_switch_result(
             switch_node_id,
             CaseResult(label=selected_branch_label, node_id=branch_nodes[selected_branch_label]),
         )
 
     async def _run_node(
         self,
-        ctx: PipelineContextLike,
         node_id: NodeId,
-        dag: DiGraph,
         is_node_from_success_pool: bool,
         force_default: bool = False,
     ) -> t.Union[NodeResultT, t.Any]:
@@ -186,20 +190,20 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         # Due to concurrent nature, we have to check if the node is running concurrently in another subgraph.
         # In general, we have two checks: before execution and here. This check prevents a double run.
         # when the deep-nested node in the subgraph has been executed.
-        if await ctx.is_node_in_run(node_id):
+        if self.node_storage.exists_processed_node(node_id):
             logger.debug('Node %s has been executed. Stop new execution', node_id)
 
             event_lock = self.lock_manager.get_lock(node_id)
             await event_lock.wait()
 
-            return await ctx.load_node_result(node_id)
+            return self.node_storage.get_node_result(node_id)
 
-        await ctx.add_node_in_run(node_id)
-        await ctx.emit_on_node_start(node_id=node_id)
+        self.node_storage.set_node_as_processed(node_id)
+        await self.ctx.emit_on_node_start(node_id=node_id)
 
         try:
             logger.info('Начало исполнения ноды, node_id=%s', node_id)
-            input_kwargs = await self._get_node_kwargs(ctx, node_id)
+            input_kwargs = self._get_node_kwargs(node_id)
 
             # Если в узел попадают параметры, которые являются ошибками, то исполнять этот узел нельзя.
             # Как следствие, нам нужно завершить исполнение текущей ноды
@@ -208,26 +212,21 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     raise key_value
 
             result = await self.execute(
-                ctx=ctx,
                 node_id=node_id,
                 force_default=force_default,
                 **input_kwargs,
             )
 
             if isinstance(result, Exception):
-                await ctx.emit_on_node_complete(node_id=node_id, error=result)
+                await self.ctx.emit_on_node_complete(node_id=node_id, error=result)
             else:
-                await ctx.emit_on_node_complete(node_id=node_id, error=None)
+                await self.ctx.emit_on_node_complete(node_id=node_id, error=None)
 
             logger.info('Завершение исполнения ноды, node_id=%s', node_id)
-
-            if not dag.is_recurrent and await ctx.is_node_in_run(node_id):
-                logger.debug('Node %s has been executed. Stop new execution', node_id)
-
             return result
 
         except Exception as ex:
-            await ctx.emit_on_node_complete(node_id=node_id, error=ex)
+            await self.ctx.emit_on_node_complete(node_id=node_id, error=ex)
             logger.error('Ошибка исполнения ноды node_id=%s, err=%s', node_id, ex)
 
             if is_node_from_success_pool:
@@ -237,7 +236,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
     async def execute(
         self,
-        ctx: PipelineContextLike,
         node_id: NodeId,
         force_default: bool,
         **kwargs,
@@ -247,7 +245,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         Args:
             node_id: Идентификатор ноды
-            ctx: Контекст исполнения узла
             force_default: Отдать дефолтное значение
             **kwargs: Ключевые аргументы целевой функции
         """
@@ -280,7 +277,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                     raise error
 
-                await ctx.emit_on_node_complete(node_id=node_id, error=error)
+                await self.ctx.emit_on_node_complete(node_id=node_id, error=error)
 
                 n_attempts += 1
                 await asyncio.sleep(retry_policy.delay)
@@ -290,8 +287,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     return run_node_default(node, **kwargs)
                 raise
 
-    @staticmethod
-    async def _get_call_order(ctx: PipelineContextLike, dag: DiGraph) -> t.List[NodeId]:
+    def _get_call_order(self, dag: DiGraph) -> t.List[NodeId]:
         """
         Рассчитываем план выполнения узлов графа.
         Учитываем, что если подграф находится в активной рекурсии, то исполнять нужно все узлы
@@ -299,7 +295,11 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return [
             node_id for node_id in nx.topological_sort(dag)
-            if (not await ctx.is_node_in_run(node_id) if not dag.is_recurrent else True)
+            if (
+                not self.node_storage.exists_processed_node(node_id)
+                if not dag.is_recurrent
+                else True
+            )
         ]
 
     @cachedmethod(lambda self: self._memorization_store, key=functools.partial(cache_key, 'node_dependencies'))
@@ -313,7 +313,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return current_dag.intersection(node_predecessors)
 
-    async def _get_predecessors(self, dag: DiGraph, ctx: PipelineContextLike, node_id: NodeId) -> t.List[NodeId]:
+    def _get_predecessors(self, dag: DiGraph, node_id: NodeId) -> t.List[NodeId]:
         """
         Получение всех предшественников для узла
         """
@@ -327,11 +327,11 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             if self._is_switch(dag, node_id):
                 with suppress(KeyError):
-                    predecessors[idx] = (await ctx.get_case_result(node_id)).node_id
+                    predecessors[idx] = self.node_storage.get_switch_result(node_id).node_id
 
         return predecessors
 
-    async def _is_ready_to_run(self, dag: DiGraph, ctx: PipelineContextLike, node_id: NodeId) -> bool:
+    async def _is_ready_to_run(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
         Метод проверяет возможность запуска узла
         """
@@ -339,31 +339,27 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         # Switch context to collect any predecessors' results to approve the function for running.
         await asyncio.sleep(0)
 
-        if await ctx.is_node_in_run(node_id):
+        if self.node_storage.exists_processed_node(node_id):
             return False
 
-        for pred_node_id in await self._get_predecessors(dag, ctx, node_id):
+        for pred_node_id in self._get_predecessors(dag, node_id):
 
-            if not await ctx.exists_node_result(pred_node_id):
+            if not self.node_storage.exists_node_result(pred_node_id):
                 return False
 
         return True
 
-    async def _run_dag(
-        self,
-        ctx: PipelineContextLike,
-        dag: DiGraph,
-    ) -> t.Union[NodeResultT, t.Any]:
+    async def _run_dag(self, dag: DiGraph) -> t.Union[NodeResultT, t.Any]:
         """
         Запустить граф / подграф
         """
 
         logger.debug('Начало запуска DAG, dag=%s', str(dag))
 
-        list_node_ids = await self._get_call_order(ctx, dag)
+        list_node_ids = self._get_call_order(dag)
 
         if dag.is_recurrent:
-            ctx.delete_node_results(list_node_ids)
+            self.node_storage.hide_last_execution(*list_node_ids)
 
         if len(list_node_ids) == 0:
             return
@@ -381,22 +377,21 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             #   1. If it's a recurrent subgraph, the result would be deleted for each node in the subgraph
             #      and this if-statement won't be executed.
             #   2. If it's a non-recurrent execution, we just assume that the node's done before in any other graphs.
-            if await ctx.is_node_in_run(node_id):
+            if self.node_storage.exists_processed_node(node_id):
                 continue
 
-            elif await self._is_ready_to_run(dag, ctx, node_id):
+            elif await self._is_ready_to_run(dag, node_id):
                 logger.debug('Узел готов к обработке node_id=%s', node_id)
 
                 if self._is_switch(dag, node_id):
                     logger.debug('Узел является switch-кейсом node_id=%s', node_id)
-                    await self._add_case_result(ctx, node_id)
+                    self._add_case_result(node_id)
 
                     coro_to_run = asyncio.create_task(
                         self._run_dag(
-                            ctx=ctx,
                             dag=self._get_reduced_dag(
                                 self.dag.input_node,
-                                (await ctx.get_case_result(switch_node_id=node_id)).node_id,
+                                (self.node_storage.get_switch_result(node_id)).node_id,
                             ),
                         ),
                         name=node_id,
@@ -407,7 +402,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                     coro_to_run = asyncio.create_task(
                         self._run_dag(
-                            ctx=ctx,
                             dag=self._get_reduced_dag_input_one_of(
                                 self.dag.input_node,
                                 node_id,
@@ -420,11 +414,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     logger.debug('Узел может быть обработан, отправляем его в обработку node_id=%s', node_id)
                     coro_to_run = asyncio.create_task(
                         self._run_node(
-                            ctx,
                             node_id,
                             # Добавляем флаг, что выполняется нода из InputOneOf пула
                             is_node_from_success_pool=self._is_node_in_oneof(dag, node_id),
-                            dag=dag,
                         ),
                         name=node_id,
                     )
@@ -452,8 +444,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             max_iterations = dag.nodes[node_result_id].get(NodeField.max_iterations)
                             start_from_node_id = dag.nodes[node_result_id].get(NodeField.start_node)
 
-                            if not await ctx.is_active_recurrence_subgraph(start_from_node_id, node_result_id):
-                                await ctx.set_active_recurrence_subgraph(start_from_node_id, node_result_id)
+                            if not self.node_storage.exists_active_rec_subgraph(start_from_node_id, node_result_id):
+                                self.node_storage.set_active_rec_subgraph(start_from_node_id, node_result_id)
+
                                 logger.debug(
                                     'Start the process of the recurrent subgraph for nodes start_node=%s, dest_node=%s',
                                     start_from_node_id,
@@ -473,7 +466,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                                     )
                                     self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
 
-                                    node_result = await self._run_dag(dag=recurrent_subgraph, ctx=ctx)
+                                    node_result = await self._run_dag(dag=recurrent_subgraph)
 
                                     if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
 
@@ -484,19 +477,18 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                                             node_result_id,
                                         )
 
-                                        ctx.delete_node_results((node_result_id,))
+                                        self.node_storage.hide_last_execution(node_result_id)
+
                                         node_result = await self._run_node(
-                                            ctx,
                                             node_result_id,
                                             is_node_from_success_pool=self._is_node_in_oneof(dag, node_result_id),
                                             force_default=True,
-                                            dag=dag,
                                         )
 
                                     elif not isinstance(node_result, Recurrent):
                                         break
 
-                                await ctx.remove_recurrence_subgraph(start_from_node_id, node_result_id)
+                                self.node_storage.delete_active_rec_subgraph(start_from_node_id, node_result_id)
 
                             else:
                                 # В случае, если исполняемый узел рекуррентного подграфа не завершается ожидаемым образом,
@@ -515,18 +507,18 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             not isinstance(node_result, NodeErrorType)
                             and self._is_node_in_oneof(dag, node_result_id)
                         ):
-                            await ctx.save_node_result(dag_output_node, node_result)
+                            self.node_storage.set_node_result(dag_output_node, node_result)
                             # Для искусственной остановки пайплайна помечаем текущий узел как выходной
                             node_result_id = dag_output_node
 
-                        else:
-                            # Если узел обычный, то сохраняем результат в обычном режиме под оригинальным node_id
-                            await ctx.save_node_result(node_result_id, node_result)
-
+                        self.node_storage.set_node_result(node_result_id, node_result)
                         self.lock_manager.get_lock(node_result_id).set()
 
+                        # FIXME: Set new abstractions for event managers
+                        await self.ctx.save_node_result(node_result_id, node_result)
+
                         if node_result_id == dag_output_node:
-                            return await ctx.load_node_result(node_result_id)
+                            return self.node_storage.get_node_result(node_result_id, with_hidden=True)
 
                 awaitable_nodes.clear()
                 list_node_ids.appendleft(node_id)
