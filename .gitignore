@@ -6,3 +6,5 @@ dist/
 *.egg-info/
 .DS_Store
 .pytest_cache
+/public
+/build
