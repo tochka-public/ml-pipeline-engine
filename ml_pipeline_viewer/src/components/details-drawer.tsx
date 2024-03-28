@@ -110,18 +110,18 @@ export const DetailsDrawer: React.FC = () => {
               <DataList.Label>Количество узлов / рёбер</DataList.Label>
               <DataList.Value>{graphData.nodes.length} / {graphData.edges.length}</DataList.Value>
             </DataList.Item>
-            <DataList.Item>
-              <DataList.Label>Ссылка на репозиторий</DataList.Label>
-              <DataList.Value>
-                {
-                  graphData.attributes.repo_link &&
-                    <CopyArea>
-                      <Link color="blue" target="_blank"
-                            href={graphData.attributes.repo_link}>{graphData.attributes.repo_link}</Link>
-                    </CopyArea>
-                }
-              </DataList.Value>
-            </DataList.Item>
+            {
+              graphData.attributes.repo_link &&
+                <DataList.Item>
+                    <DataList.Label>Ссылка на репозиторий</DataList.Label>
+                    <DataList.Value>
+                        <CopyArea>
+                            <Link color="blue" target="_blank"
+                                  href={graphData.attributes.repo_link}>{graphData.attributes.repo_link}</Link>
+                        </CopyArea>
+                    </DataList.Value>
+                </DataList.Item>
+            }
           </DataList.Root>
         </Box>
 
