@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ml-pipeline-engine"
 readme = "README.md"
-version = "1.5.1"
+version = "1.5.2"
 authors = [
   "Konyaev Matvey",
   "Vasiliy Pankov",
