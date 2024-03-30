@@ -127,7 +127,7 @@ class GraphConfigImpl:
 
             node_types[node_type.value] = schema.NodeType(
                 name=node_type.value,
-                hex_bgr_color=node_colors.get(node_type.value)
+                hex_bgr_color=node_colors.get(node_type.value),
             )
 
         return node_types
@@ -160,7 +160,7 @@ class GraphConfigImpl:
                 repo_link=repo_link,
                 name=name,
                 **kwargs,
-            )
+            ),
         )
 
 

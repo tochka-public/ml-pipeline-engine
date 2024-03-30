@@ -147,7 +147,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             return not self.dag.graph.nodes[u].get(NodeField.is_first_success_pool)
 
         return get_connected_subgraph(
-            nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node), source, dest
+            nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node), source, dest,
         )
 
     def _get_reduced_dag_input_one_of(self, source: NodeId, dest: NodeId) -> DiGraph:
@@ -320,7 +320,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         predecessors = list(
             self._get_node_dependencies(dag, node_id)
             if self._is_switch(dag, node_id) or self._is_head_of_oneof(dag, node_id) or dag.is_recurrent
-            else self.dag.graph.predecessors(node_id)
+            else self.dag.graph.predecessors(node_id),
         )
 
         for idx, node_id in enumerate(predecessors):

@@ -29,7 +29,7 @@ class DAGPipelineContext(EventSourceMixin):
         self.input_kwargs = input_kwargs if input_kwargs is not None else {}
         self.meta = meta if meta is not None else {}
         self.artifact_store: ArtifactStoreLike = get_instance(
-            cls=self.chart.artifact_store or NoOpArtifactStore, ctx=self
+            cls=self.chart.artifact_store or NoOpArtifactStore, ctx=self,
         )
 
         self._event_managers = [get_instance(cls) for cls in self.chart.event_managers]

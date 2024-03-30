@@ -94,7 +94,7 @@ class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):  
 
     process: t.Union[
         t.Callable[..., ProcessorResultT],
-        t.Callable[..., t.Awaitable[ProcessorResultT]]
+        t.Callable[..., t.Awaitable[ProcessorResultT]],
     ]
 
 
@@ -105,7 +105,7 @@ class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):
 
     collect: t.Union[
         t.Callable[..., DataSourceResultT],
-        t.Callable[..., t.Awaitable[DataSourceResultT]]
+        t.Callable[..., t.Awaitable[DataSourceResultT]],
     ]
 
 
@@ -116,7 +116,7 @@ class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):  # no
 
     extract: t.Union[
         t.Callable[..., FeatureResultT],
-        t.Callable[..., t.Awaitable[FeatureResultT]]
+        t.Callable[..., t.Awaitable[FeatureResultT]],
     ]
 
 
@@ -127,7 +127,7 @@ class FeatureVectorizerLike(RetryProtocol, TagProtocol, t.Protocol[FeatureVector
 
     vectorize: t.Union[
         t.Callable[..., FeatureVectorizerResultT],
-        t.Callable[..., t.Awaitable[FeatureVectorizerResultT]]
+        t.Callable[..., t.Awaitable[FeatureVectorizerResultT]],
     ]
 
 
@@ -138,7 +138,7 @@ class MLModelLike(RetryProtocol, TagProtocol, t.Protocol[MLModelResultT]):
 
     predict: t.Union[
         t.Callable[..., MLModelResultT],
-        t.Callable[..., t.Awaitable[MLModelResultT]]
+        t.Callable[..., t.Awaitable[MLModelResultT]],
     ]
 
 

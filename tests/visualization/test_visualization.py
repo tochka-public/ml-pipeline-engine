@@ -98,7 +98,7 @@ runner = CliRunner()
                     '--dag_name', 'Dag-for-test',
                     '--dag_verbose_name', 'Dag - verbose name!',
                     '--target_dir', str(target_dir),
-                ]
+                ],
             )
         ),
     ),
@@ -119,13 +119,13 @@ async def test_basic(call_func):
                 'name': 'Dag-for-test',
                 'ranksep': 700,
                 'repo_link': None,
-                'verbose_name': 'Dag - verbose name!'
+                'verbose_name': 'Dag - verbose name!',
             },
             'edges': [
                 {
                     'id': ANY,
                     'source': ANY,
-                    'target': 'processor__tests_visualization_test_visualization_JustNode'
+                    'target': 'processor__tests_visualization_test_visualization_JustNode',
                 },
                 {
                     'id': ANY,
@@ -140,42 +140,42 @@ async def test_basic(call_func):
                 {
                     'id': 'processor__another_feature->processor__tests_visualization_test_visualization_Const',
                     'source': 'processor__another_feature',
-                    'target': 'processor__tests_visualization_test_visualization_Const'
+                    'target': 'processor__tests_visualization_test_visualization_Const',
                 },
                 {
                     'id': 'processor__double_number->processor__another_feature',
                     'source': 'processor__double_number',
-                    'target': 'processor__another_feature'
+                    'target': 'processor__another_feature',
                 },
                 {
                     'id': 'processor__add_const->processor__double_number',
                     'source': 'processor__add_const',
-                    'target': 'processor__double_number'
+                    'target': 'processor__double_number',
                 },
                 {
                     'id': 'datasource__invert_number->processor__add_const',
                     'source': 'datasource__invert_number',
-                    'target': 'processor__add_const'
+                    'target': 'processor__add_const',
                 },
                 {
                     'id': 'datasource__invert_number->processor__tests_visualization_test_visualization_SwitchNode',
                     'source': 'datasource__invert_number',
-                    'target': 'processor__tests_visualization_test_visualization_SwitchNode'
-                }
+                    'target': 'processor__tests_visualization_test_visualization_SwitchNode',
+                },
             ],
             'node_types': {
                 'datasource': {
                     'hex_bgr_color': None,
-                    'name': 'datasource'
+                    'name': 'datasource',
                 },
                 'processor': {
                     'hex_bgr_color': None,
-                    'name': 'processor'
+                    'name': 'processor',
                 },
                 'switch': {
                     'hex_bgr_color': None,
-                    'name': 'switch'
-                }
+                    'name': 'switch',
+                },
             },
             'nodes': [
                 {
@@ -190,86 +190,86 @@ async def test_basic(call_func):
                         'code_source': 'tests/visualization/test_visualization.py#L59',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
-                        'verbose_name': None
+                        'verbose_name': None,
                     },
                     'id': 'processor__tests_visualization_test_visualization_SwitchNode',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'processor'
+                    'type': 'processor',
                 },
                 {
                     'data': {
                         'code_source': 'tests/visualization/test_visualization.py#L54',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
-                        'verbose_name': None
+                        'verbose_name': None,
                     },
                     'id': 'processor__tests_visualization_test_visualization_Const',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'processor'
+                    'type': 'processor',
                 },
                 {
                     'data': {
                         'code_source': 'tests/visualization/test_visualization.py#L72',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
-                        'verbose_name': None
+                        'verbose_name': None,
                     },
                     'id': 'processor__tests_visualization_test_visualization_JustNode',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'processor'
+                    'type': 'processor',
                 },
                 {
                     'data': {
                         'code_source': 'tests/visualization/test_visualization.py#L44',  # Line for the real source!
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'another_feature',
-                        'verbose_name': None
+                        'verbose_name': None,
                     },
                     'id': 'processor__another_feature',
                     'is_generic': True,
                     'is_virtual': False,
-                    'type': 'processor'
+                    'type': 'processor',
                 },
                 {
                     'data': {
                         'code_source': 'tests/visualization/test_visualization.py#L36',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'double_number',
-                        'verbose_name': 'Double!'
+                        'verbose_name': 'Double!',
                     },
                     'id': 'processor__double_number',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'processor'
+                    'type': 'processor',
                 },
                 {
                     'data': {
                         'code_source': 'tests/visualization/test_visualization.py#L28',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'add_const',
-                        'verbose_name': 'Add!'
+                        'verbose_name': 'Add!',
                     },
                     'id': 'processor__add_const',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'processor'
+                    'type': 'processor',
                 },
                 {
                     'data': {
                         'code_source': 'tests/visualization/test_visualization.py#L20',
                         'doc': 'Базовый класс для источников данных',
                         'name': 'invert_number',
-                        'verbose_name': 'Invert!'
+                        'verbose_name': 'Invert!',
                     },
                     'id': 'datasource__invert_number',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'datasource'
-                }
-            ]
+                    'type': 'datasource',
+                },
+            ],
         }
 
         assert (target / 'index.html').exists()

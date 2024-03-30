@@ -217,13 +217,13 @@ class AnnotationDAGBuilder:
 
                     self._synthetic_nodes.append(synthetic_node_id)
                     self._dag.add_edge(
-                        synthetic_node_id, get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name}
+                        synthetic_node_id, get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name},
                     )
 
                 if isinstance(input_mark, InputMark):
                     self._add_node_to_map(input_mark.node)
                     self._add_node_pair_to_dag(
-                        get_node_id(input_mark.node), get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name}
+                        get_node_id(input_mark.node), get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name},
                     )
                     _set_visited(input_mark.node)
 
@@ -238,7 +238,7 @@ class AnnotationDAGBuilder:
                     for case_branch, case_node in input_mark.cases:
                         self._add_node_to_map(case_node)
                         self._dag.add_edge(
-                            get_node_id(case_node), switch_node_id, **{EdgeField.case_branch: case_branch}
+                            get_node_id(case_node), switch_node_id, **{EdgeField.case_branch: case_branch},
                         )
                         _set_visited(case_node)
 
@@ -285,7 +285,7 @@ class AnnotationDAGBuilder:
             if not dest_node.use_default:
                 raise errors.IncorrectParamsRecurrentNode(
                     f'Для участия в рекуррентном подграфе {dest_node} должен устанавливать параметр use_default=True. '
-                    'Дополнительно должен быть переопределен метод get_default()'
+                    'Дополнительно должен быть переопределен метод get_default()',
                 )
 
     def _validate_graph(self) -> None:
