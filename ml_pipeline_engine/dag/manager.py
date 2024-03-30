@@ -262,7 +262,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 return await run_node(**kwargs, node=node)
 
-            except retry_policy.exceptions as error:
+            except retry_policy.exceptions as error:  # noqa: PERF203
                 logger.debug(
                     'Node %s will be restarted in %s seconds...',
                     node_id,
@@ -349,7 +349,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return True
 
-    async def _run_dag(self, dag: DiGraph) -> t.Union[NodeResultT, t.Any]:
+    async def _run_dag(self, dag: DiGraph) -> t.Union[NodeResultT, t.Any]:  # noqa: PLR0912,PLR0915
         """
         Запустить граф / подграф
         """
