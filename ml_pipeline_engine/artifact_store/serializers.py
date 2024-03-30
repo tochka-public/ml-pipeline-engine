@@ -66,7 +66,7 @@ class SerializerFactory:
         try:
             fmt = DataFormat(extension)
         except ValueError:
-            raise SerializerInitializationError(f'No suitable serializer for {extension} extension')
+            raise SerializerInitializationError(f'No suitable serializer for {extension} extension') from None
 
         return self.from_data_format(fmt)
 
