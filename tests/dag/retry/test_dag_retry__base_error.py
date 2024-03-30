@@ -31,8 +31,7 @@ async def test_dag_retry__base_error(pipeline_context, build_dag, mocker):
 
     collect_spy = mocker.spy(SomeNode, 'collect')
 
-    with pytest.raises(BaseException) as err:
+    with pytest.raises(BaseException, match='CustomError'):
         assert await build_dag(input_node=InvertNumber, output_node=DoubleNumber).run(pipeline_context(num=2.5))
 
-    assert str(err.value) == 'CustomError'
     assert collect_spy.call_count == 1

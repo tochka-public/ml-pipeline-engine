@@ -44,9 +44,8 @@ async def test_dag_retry__error(pipeline_context, build_dag, mocker):
         ],
     )
 
-    with pytest.raises(Exception) as err:
+    with pytest.raises(Exception, match='CustomError'):
         assert await build_dag(input_node=InvertNumber, output_node=DoubleNumber).run(pipeline_context(num=2.5))
 
-    assert str(err.value) == 'CustomError'
     assert external_func_patch.call_count == 3
     assert collect_spy.call_count == 3
