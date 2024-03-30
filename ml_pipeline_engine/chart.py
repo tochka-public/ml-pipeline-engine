@@ -84,6 +84,6 @@ class NullPipelineChart(PipelineChartBase):
         self,
         pipeline_id: t.Optional[PipelineId] = None,
         input_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
-        meta: t.Dict[str, t.Any] = None,
+        meta: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> NodeResultT:
         raise NotImplementedError('Unable to run this kind of pipeline')
