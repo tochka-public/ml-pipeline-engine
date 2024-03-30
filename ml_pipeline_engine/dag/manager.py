@@ -362,7 +362,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             self.node_storage.hide_last_execution(*list_node_ids)
 
         if len(list_node_ids) == 0:
-            return
+            return None
 
         dag_output_node = list_node_ids[-1]
         list_node_ids = deque(list_node_ids)
@@ -525,6 +525,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 awaitable_nodes.clear()
                 list_node_ids.appendleft(node_id)
+        return None
 
     def __repr__(self) -> str:
         return f'<{self.__class__.__name__} nnodes="{len(self.dag.graph.nodes)}" nedges="{len(self.dag.graph.edges)}">'

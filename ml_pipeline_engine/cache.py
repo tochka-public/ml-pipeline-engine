@@ -15,6 +15,7 @@ class Cache(DAGCacheManagerLike):
     def load(self, node_id: NodeId) -> t.Any:
         if node_id in self._cache:
             return self._cache[node_id]
+        return None
 
     def exists(self, node_id: NodeId) -> bool:
         return bool(node_id in self._cache)
