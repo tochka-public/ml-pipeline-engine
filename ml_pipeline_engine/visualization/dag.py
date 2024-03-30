@@ -117,7 +117,7 @@ class GraphConfigImpl:
 
             elif node.node_type is None:
                 node_type = None
-                warnings.warn(f'Node {node_id} without node type.')
+                warnings.warn(f'Node {node_id} without node type.', stacklevel=1)
 
             else:
                 node_type = NodeType(node.node_type)
