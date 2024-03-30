@@ -8,15 +8,13 @@ from ulid import ULID
 
 from ml_pipeline_engine.module_loading import get_instance
 from ml_pipeline_engine.node.enums import NodeTag
-from ml_pipeline_engine.node.errors import (
-    ClassExpectedError,
-    RunMethodExpectedError,
-)
-from ml_pipeline_engine.parallelism import (
-    process_pool_registry,
-    threads_pool_registry,
-)
-from ml_pipeline_engine.types import NodeBase, NodeId, NodeLike
+from ml_pipeline_engine.node.errors import ClassExpectedError
+from ml_pipeline_engine.node.errors import RunMethodExpectedError
+from ml_pipeline_engine.parallelism import process_pool_registry
+from ml_pipeline_engine.parallelism import threads_pool_registry
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeLike
 
 NodeResultT = t.TypeVar('NodeResultT')
 

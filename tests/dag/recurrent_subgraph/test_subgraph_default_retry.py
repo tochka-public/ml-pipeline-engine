@@ -1,14 +1,12 @@
 import typing as t
 
-from tests.helpers import FactoryMocker, call_object
-from ml_pipeline_engine.base_nodes.processors import (
-    ProcessorBase,
-    RecurrentProcessor,
-)
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    Input,
-    RecurrentSubGraph,
-)
+from tests.helpers import FactoryMocker
+from tests.helpers import call_object
+
+from ml_pipeline_engine.base_nodes.processors import ProcessorBase
+from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.types import AdditionalDataT
 
 invert_process_mocker = FactoryMocker()

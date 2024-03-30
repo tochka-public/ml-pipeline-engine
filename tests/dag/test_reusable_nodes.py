@@ -1,6 +1,8 @@
-from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputGeneric
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.node import build_node
-from ml_pipeline_engine.types import NodeBase, NodeLike
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeLike
 
 
 class SomeInput(NodeBase):

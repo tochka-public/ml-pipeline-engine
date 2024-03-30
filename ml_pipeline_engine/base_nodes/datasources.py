@@ -1,7 +1,7 @@
 import typing as t
 
-from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.node.enums import NodeType
+from ml_pipeline_engine.types import NodeBase
 
 
 class DataSource(NodeBase):

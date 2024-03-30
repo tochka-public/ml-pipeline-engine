@@ -3,7 +3,8 @@ from typing import Type
 import pytest
 
 from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputOneOf
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.types import NodeBase
 

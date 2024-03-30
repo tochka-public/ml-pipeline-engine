@@ -1,7 +1,8 @@
 import copy
 import typing as t
 
-from ml_pipeline_engine.types import DAGCacheManagerLike, NodeId
+from ml_pipeline_engine.types import DAGCacheManagerLike
+from ml_pipeline_engine.types import NodeId
 
 
 class Cache(DAGCacheManagerLike):

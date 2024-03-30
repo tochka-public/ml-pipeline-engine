@@ -1,12 +1,11 @@
 from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    Input,
-    InputGeneric,
-    InputOneOf,
-)
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
+from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.node import build_node
-from ml_pipeline_engine.types import NodeBase, NodeLike
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeLike
 
 
 class SomeInput(NodeBase):

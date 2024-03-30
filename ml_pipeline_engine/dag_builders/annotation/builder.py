@@ -3,31 +3,27 @@ import inspect
 import typing as t
 from collections import deque
 
-from ml_pipeline_engine.dag import DAG, EdgeField, NodeField
+from ml_pipeline_engine.dag import DAG
+from ml_pipeline_engine.dag import EdgeField
+from ml_pipeline_engine.dag import NodeField
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.utils import get_connected_subgraph
 from ml_pipeline_engine.dag_builders.annotation import errors
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    InputGenericMark,
-    InputMark,
-    InputOneOfMark,
-    RecurrentSubGraphMark,
-    SwitchCaseMark,
-)
-from ml_pipeline_engine.node import (
-    NodeTag,
-    NodeType,
-    generate_node_id,
-    get_callable_run_method,
-    get_node_id,
-)
-from ml_pipeline_engine.types import (
-    DAGLike,
-    NodeBase,
-    NodeId,
-    NodeLike,
-    RecurrentProtocol,
-)
+from ml_pipeline_engine.dag_builders.annotation.marks import InputGenericMark
+from ml_pipeline_engine.dag_builders.annotation.marks import InputMark
+from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOfMark
+from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraphMark
+from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCaseMark
+from ml_pipeline_engine.node import NodeTag
+from ml_pipeline_engine.node import NodeType
+from ml_pipeline_engine.node import generate_node_id
+from ml_pipeline_engine.node import get_callable_run_method
+from ml_pipeline_engine.node import get_node_id
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import RecurrentProtocol
 
 __all__ = [
     'build_dag',

@@ -7,13 +7,9 @@ import pytest
 from ml_pipeline_engine import logs
 from ml_pipeline_engine.chart import NullPipelineChart
 from ml_pipeline_engine.context.dag import DAGPipelineContext
-from ml_pipeline_engine.dag_builders.annotation import (
-    build_dag as build_dag_base,
-)
-from ml_pipeline_engine.parallelism import (
-    process_pool_registry,
-    threads_pool_registry,
-)
+from ml_pipeline_engine.dag_builders.annotation import build_dag as build_dag_base
+from ml_pipeline_engine.parallelism import process_pool_registry
+from ml_pipeline_engine.parallelism import threads_pool_registry
 
 
 def pytest_sessionstart(session):  # noqa

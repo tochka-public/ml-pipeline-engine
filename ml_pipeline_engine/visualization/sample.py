@@ -1,6 +1,7 @@
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.dag_builders.annotation import build_dag
-from ml_pipeline_engine.dag_builders.annotation.marks import Input, SwitchCase
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 
 
 class Ident(ProcessorBase):

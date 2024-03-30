@@ -1,6 +1,8 @@
 import abc
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from typing import Optional, Union
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
+from typing import Union
 
 from ml_pipeline_engine.logs import logger_parallelism as logger
 

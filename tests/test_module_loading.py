@@ -1,6 +1,7 @@
 import pathlib
 
-from ml_pipeline_engine.module_loading import get_instance, import_string
+from ml_pipeline_engine.module_loading import get_instance
+from ml_pipeline_engine.module_loading import import_string
 
 
 def test_import_string():

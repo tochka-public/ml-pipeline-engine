@@ -1,9 +1,7 @@
 import pytest
 
-from ml_pipeline_engine.artifact_store.serializers import (
-    JSONSerializer,
-    PickleSerializer,
-)
+from ml_pipeline_engine.artifact_store.serializers import JSONSerializer
+from ml_pipeline_engine.artifact_store.serializers import PickleSerializer
 
 
 @pytest.mark.parametrize('serializer', [PickleSerializer(), JSONSerializer()])

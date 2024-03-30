@@ -1,11 +1,9 @@
 import typing as t
 
-from ml_pipeline_engine.types import (
-    EventManagerLike,
-    NodeId,
-    PipelineContextLike,
-    PipelineResult,
-)
+from ml_pipeline_engine.types import EventManagerLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import PipelineContextLike
+from ml_pipeline_engine.types import PipelineResult
 
 
 class EventManagerBase:

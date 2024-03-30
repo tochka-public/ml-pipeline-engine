@@ -1,7 +1,8 @@
 import typing as t
 from dataclasses import dataclass
 
-from ml_pipeline_engine.types import CaseLabel, NodeLike
+from ml_pipeline_engine.types import CaseLabel
+from ml_pipeline_engine.types import NodeLike
 
 NodeResultT = t.TypeVar('NodeResultT')
 

@@ -1,10 +1,8 @@
-from ml_pipeline_engine.types import (
-    AdditionalDataT,
-    NodeBase,
-    Recurrent,
-    RecurrentProtocol,
-)
 from ml_pipeline_engine.node.enums import NodeType
+from ml_pipeline_engine.types import AdditionalDataT
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import Recurrent
+from ml_pipeline_engine.types import RecurrentProtocol
 
 
 class ProcessorBase(NodeBase):

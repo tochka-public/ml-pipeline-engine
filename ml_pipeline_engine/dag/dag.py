@@ -1,23 +1,23 @@
 import pathlib
 from dataclasses import dataclass
-from typing import Dict, Type, Optional, Union
+from typing import Dict
+from typing import Optional
+from typing import Type
+from typing import Union
 
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager, DAGConcurrentManagerLock
+from ml_pipeline_engine.dag.manager import DAGConcurrentManagerLock
+from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
-from ml_pipeline_engine.parallelism import (
-    process_pool_registry,
-    threads_pool_registry,
-)
-from ml_pipeline_engine.types import (
-    DAGLike,
-    DAGRunManagerLike,
-    NodeId,
-    NodeResultT,
-    NodeLike,
-    PipelineContextLike,
-    RetryPolicyLike,
-)
+from ml_pipeline_engine.parallelism import process_pool_registry
+from ml_pipeline_engine.parallelism import threads_pool_registry
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import DAGRunManagerLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeResultT
+from ml_pipeline_engine.types import PipelineContextLike
+from ml_pipeline_engine.types import RetryPolicyLike
 
 
 @dataclass()
@@ -71,7 +71,8 @@ class DAG(DAGLike):
             **kwargs: Graph config kwargs
         """
 
-        from ml_pipeline_engine.visualization.dag import GraphConfigImpl, build_static
+        from ml_pipeline_engine.visualization.dag import GraphConfigImpl
+        from ml_pipeline_engine.visualization.dag import build_static
 
         config = GraphConfigImpl(self).generate(
             name=name or 'Dag',

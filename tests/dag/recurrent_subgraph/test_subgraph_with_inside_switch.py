@@ -2,13 +2,13 @@ import typing as t
 
 import pytest
 
-from tests.helpers import FactoryMocker, call_object
+from tests.helpers import FactoryMocker
+from tests.helpers import call_object
+
 from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    Input,
-    RecurrentSubGraph,
-    SwitchCase,
-)
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
+from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 from ml_pipeline_engine.types import AdditionalDataT
 
 case_switch_node_mocker = FactoryMocker()

@@ -1,15 +1,22 @@
 import inspect
+import json
 import pathlib
 import warnings
-import json
-from typing import Type, List, Dict, TypeVar, Optional, Union
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import TypeVar
+from typing import Union
 
+from ml_pipeline_engine import const
 from ml_pipeline_engine.node import get_callable_run_method
 from ml_pipeline_engine.node.enums import NodeType
-from ml_pipeline_engine.types import DAGLike, NodeId, NodeLike
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeLike
 from ml_pipeline_engine.visualization import schema
 from ml_pipeline_engine.visualization.utils import copy_resources
-from ml_pipeline_engine import const
 
 _HexColorT = TypeVar('_HexColorT', bound=str)
 _NodeTypeT = TypeVar('_NodeTypeT', bound=Union[str, NodeType])
@@ -169,5 +176,5 @@ def build_static(config: schema.GraphConfig, target_dir: pathlib.Path) -> None:
 
     config = json.dumps(config.as_dict(), ensure_ascii=False, indent=2)
 
-    with open(target_dir / 'data.js', 'w', encoding="utf-8") as file:
+    with open(target_dir / 'data.js', 'w', encoding='utf-8') as file:
         file.write(f'window.__GRAPH_DATA__ = {config}')

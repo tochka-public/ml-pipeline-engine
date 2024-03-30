@@ -1,5 +1,7 @@
 import pathlib
-from typing import Optional, List, Tuple
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import click
 
@@ -29,7 +31,9 @@ def build_static(
     """Build static for a dag by path"""
 
     import importlib
-    from ml_pipeline_engine.visualization.dag import build_static, GraphConfigImpl
+
+    from ml_pipeline_engine.visualization.dag import GraphConfigImpl
+    from ml_pipeline_engine.visualization.dag import build_static
 
     module, dag_object_name = dag_path.rsplit(':', 1)
     module = importlib.import_module(module)

@@ -1,8 +1,11 @@
 import typing as t
 from collections import UserDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 
-from ml_pipeline_engine.types import HiddenDictLike, DAGNodeStorageLike, NodeId
+from ml_pipeline_engine.types import DAGNodeStorageLike
+from ml_pipeline_engine.types import HiddenDictLike
+from ml_pipeline_engine.types import NodeId
 
 
 class HiddenDict(UserDict, HiddenDictLike):

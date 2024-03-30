@@ -1,17 +1,16 @@
 import typing as t
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 
 from ml_pipeline_engine.context import dag as dag_ctx
 from ml_pipeline_engine.node import generate_pipeline_id
-from ml_pipeline_engine.types import (
-    ArtifactStoreLike,
-    DAGLike,
-    EventManagerLike,
-    ModelName,
-    NodeLike,
-    PipelineId,
-    PipelineResult,
-)
+from ml_pipeline_engine.types import ArtifactStoreLike
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import EventManagerLike
+from ml_pipeline_engine.types import ModelName
+from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import PipelineId
+from ml_pipeline_engine.types import PipelineResult
 
 NodeResultT = t.TypeVar('NodeResultT')
 

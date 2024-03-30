@@ -2,7 +2,8 @@ import io
 import json
 import pickle
 import typing as t
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 from ml_pipeline_engine.artifact_store.enums import DataFormat
 

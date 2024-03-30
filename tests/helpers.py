@@ -1,7 +1,9 @@
 import functools
 import inspect
 import typing as t
-from unittest.mock import ANY, Mock, call
+from unittest.mock import ANY
+from unittest.mock import Mock
+from unittest.mock import call
 
 call_object = functools.partial(call, ANY)
 

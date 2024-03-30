@@ -3,11 +3,9 @@ import typing as t
 import pytest
 
 from ml_pipeline_engine.artifact_store.enums import DataFormat
-from ml_pipeline_engine.artifact_store.store.filesystem import (
-    ArtifactFileAlreadyExists,
-    ArtifactFileDoesNotExist,
-    FileSystemArtifactStore,
-)
+from ml_pipeline_engine.artifact_store.store.filesystem import ArtifactFileAlreadyExists
+from ml_pipeline_engine.artifact_store.store.filesystem import ArtifactFileDoesNotExist
+from ml_pipeline_engine.artifact_store.store.filesystem import FileSystemArtifactStore
 from ml_pipeline_engine.types import PipelineContextLike
 
 

@@ -3,32 +3,32 @@ import functools
 import typing as t
 from collections import deque
 from contextlib import suppress
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 
 import networkx as nx
-
-from ml_pipeline_engine.dag.enums import EdgeField, NodeField
-from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.retrying import DagRetryPolicy
-from ml_pipeline_engine.dag.utils import get_connected_subgraph
-from ml_pipeline_engine.exceptions import NodeErrorType
-from ml_pipeline_engine.dag.storage import DAGNodeStorage
-from ml_pipeline_engine.node import run_node, run_node_default
-from ml_pipeline_engine.types import (
-    CaseResult,
-    DAGLike,
-    DAGRunManagerLike,
-    NodeId,
-    NodeResultT,
-    PipelineContextLike,
-    Recurrent,
-    DAGRunLockManagerLike,
-    DAGNodeStorageLike,
-)
-
-from ml_pipeline_engine.logs import logger_manager as logger
 from cachetools import cachedmethod
 from cachetools.keys import hashkey
+
+from ml_pipeline_engine.dag.enums import EdgeField
+from ml_pipeline_engine.dag.enums import NodeField
+from ml_pipeline_engine.dag.graph import DiGraph
+from ml_pipeline_engine.dag.retrying import DagRetryPolicy
+from ml_pipeline_engine.dag.storage import DAGNodeStorage
+from ml_pipeline_engine.dag.utils import get_connected_subgraph
+from ml_pipeline_engine.exceptions import NodeErrorType
+from ml_pipeline_engine.logs import logger_manager as logger
+from ml_pipeline_engine.node import run_node
+from ml_pipeline_engine.node import run_node_default
+from ml_pipeline_engine.types import CaseResult
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import DAGNodeStorageLike
+from ml_pipeline_engine.types import DAGRunLockManagerLike
+from ml_pipeline_engine.types import DAGRunManagerLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeResultT
+from ml_pipeline_engine.types import PipelineContextLike
+from ml_pipeline_engine.types import Recurrent
 
 
 class DAGConcurrentManagerLock(DAGRunLockManagerLike):
@@ -459,12 +459,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                                 for current_iter in range(max_iterations):
                                     logger.debug(
-                                        'Executing the %s attempt of the recurrent subgraph start_node=%s, dest_node=%s',
+                                        'Executing the %s attempt of the recurrent subgraph '
+                                        'start_node=%s, dest_node=%s',
                                         current_iter,
                                         start_from_node_id,
                                         node_result_id,
                                     )
-                                    self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
+                                    # todo(lukmanova_e): left here to think how to rearrange the line
+                                    self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data  # noqa
 
                                     node_result = await self._run_dag(dag=recurrent_subgraph)
 
@@ -491,7 +493,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                                 self.node_storage.delete_active_rec_subgraph(start_from_node_id, node_result_id)
 
                             else:
-                                # В случае, если исполняемый узел рекуррентного подграфа не завершается ожидаемым образом,
+                                # В случае, если исполняемый узел рекуррентного подграфа
+                                # не завершается ожидаемым образом,
                                 # то его нужно вернуть обратно к управляющей конструкции
                                 logger.debug(
                                     'Finish the process of the recurrent subgraph for nodes '

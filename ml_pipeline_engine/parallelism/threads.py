@@ -1,8 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 
-from ml_pipeline_engine.parallelism.basic import (
-    PoolExecutorRegistry as BasePoolExecutorRegistry,
-)
+from ml_pipeline_engine.parallelism.basic import PoolExecutorRegistry as BasePoolExecutorRegistry
 
 __all__ = ('threads_pool_registry',)
 

@@ -1,5 +1,6 @@
-import networkx as nx
 import itertools
+
+import networkx as nx
 
 
 class DiGraph(nx.DiGraph):

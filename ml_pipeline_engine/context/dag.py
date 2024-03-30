@@ -1,19 +1,15 @@
 import typing as t
 
 from ml_pipeline_engine.artifact_store.store.no_op import NoOpArtifactStore
-from ml_pipeline_engine.cache import Cache
 from ml_pipeline_engine.events import EventSourceMixin
 from ml_pipeline_engine.module_loading import get_instance
 from ml_pipeline_engine.node import generate_pipeline_id
-from ml_pipeline_engine.types import (
-    ArtifactStoreLike,
-    CaseResult,
-    EventManagerLike,
-    ModelName,
-    NodeId,
-    PipelineChartLike,
-    PipelineId,
-)
+from ml_pipeline_engine.types import ArtifactStoreLike
+from ml_pipeline_engine.types import EventManagerLike
+from ml_pipeline_engine.types import ModelName
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import PipelineChartLike
+from ml_pipeline_engine.types import PipelineId
 
 
 class DAGPipelineContext(EventSourceMixin):

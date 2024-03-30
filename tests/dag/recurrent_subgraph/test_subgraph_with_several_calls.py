@@ -1,13 +1,9 @@
 import typing as t
 
-from ml_pipeline_engine.base_nodes.processors import (
-    ProcessorBase,
-    RecurrentProcessor,
-)
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    Input,
-    RecurrentSubGraph,
-)
+from ml_pipeline_engine.base_nodes.processors import ProcessorBase
+from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.types import AdditionalDataT
 
 

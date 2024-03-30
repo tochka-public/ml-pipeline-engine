@@ -1,6 +1,7 @@
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.node.enums import NodeTag
-from ml_pipeline_engine.parallelism import processes, threads
+from ml_pipeline_engine.parallelism import processes
+from ml_pipeline_engine.parallelism import threads
 from ml_pipeline_engine.types import NodeBase
 
 
