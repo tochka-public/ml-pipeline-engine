@@ -10,7 +10,7 @@ def test_import_string():
 
 def test_get_instance_init():
     class SomeClass:
-        def __init__(self, some_value):
+        def __init__(self, some_value) -> None:
             self.some_value = some_value
 
     instance = get_instance(SomeClass, some_value=10)
@@ -21,7 +21,7 @@ def test_get_instance_init():
 
 def test_get_instance_default_factory():
     class SomeClass:
-        def __init__(self, some_value: int, some_idem_value: int):
+        def __init__(self, some_value: int, some_idem_value: int) -> None:
             self.sum = some_value + some_idem_value
 
         @classmethod

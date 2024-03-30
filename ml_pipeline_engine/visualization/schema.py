@@ -39,7 +39,7 @@ class Edge:
     source: str
     target: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.id = f'{self.source}->{self.target}'
 
 

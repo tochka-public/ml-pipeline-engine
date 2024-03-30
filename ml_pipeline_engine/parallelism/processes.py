@@ -11,7 +11,7 @@ __all__ = ('process_pool_registry', )
 
 class PoolExecutorRegistry(BasePoolExecutorRegistry):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._process_manager: Optional[Manager] = None
 

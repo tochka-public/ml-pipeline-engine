@@ -23,7 +23,7 @@ class DAGPipelineContext(EventSourceMixin):
         pipeline_id: PipelineId = None,
         input_kwargs: t.Dict[str, t.Any] = None,
         meta: t.Dict[str, t.Any] = None,
-    ):
+    ) -> None:
         self.chart = chart
         self.pipeline_id = pipeline_id if pipeline_id is not None else generate_pipeline_id()
         self.input_kwargs = input_kwargs if input_kwargs is not None else {}
@@ -44,7 +44,7 @@ class DAGPipelineContext(EventSourceMixin):
     def _get_event_managers(self) -> t.List[EventManagerLike]:
         return self._event_managers
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{self.__class__.__name__} model_name="{self.chart.model_name}" pipeline_id="{self.pipeline_id}">'
 
 

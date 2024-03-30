@@ -33,7 +33,7 @@ from ml_pipeline_engine.types import Recurrent
 
 class DAGConcurrentManagerLock(DAGRunLockManagerLike):
 
-    def __init__(self, node_ids: t.Iterable[NodeId]):
+    def __init__(self, node_ids: t.Iterable[NodeId]) -> None:
         self.lock_store = {node_id: asyncio.Event() for node_id in node_ids}
 
     def get_lock(self, node_id: NodeId) -> asyncio.Event:
@@ -526,5 +526,5 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 awaitable_nodes.clear()
                 list_node_ids.appendleft(node_id)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{self.__class__.__name__} nnodes="{len(self.dag.graph.nodes)}" nedges="{len(self.dag.graph.edges)}">'

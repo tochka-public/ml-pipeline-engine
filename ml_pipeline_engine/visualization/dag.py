@@ -25,7 +25,7 @@ _NodeColorsT = Dict[_NodeTypeT, _HexColorT]
 
 class GraphConfigImpl:
 
-    def __init__(self, dag: DAGLike):
+    def __init__(self, dag: DAGLike) -> None:
         self._dag = dag
 
     def _get_node(self, node_id: NodeId) -> Type[NodeLike]:

@@ -6,7 +6,7 @@ from ml_pipeline_engine.types import NodeId
 
 
 class Cache(DAGCacheManagerLike):
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache = {}
 
     def save(self, node_id: NodeId, data: t.Any):

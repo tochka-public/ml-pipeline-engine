@@ -14,7 +14,7 @@ class FactoryMocker:
     при этом нет возможности потерять аннотации типов
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.mock = Mock()
 
     def __call__(self, func: t.Callable) -> t.Callable:

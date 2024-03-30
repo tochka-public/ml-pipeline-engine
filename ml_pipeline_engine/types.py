@@ -258,7 +258,7 @@ class ArtifactStoreLike(t.Protocol):
     Хранилище артефактов - результатов расчета узлов
     """
 
-    def __init__(self, ctx: PipelineContextLike, *args, **kwargs):
+    def __init__(self, ctx: PipelineContextLike, *args, **kwargs) -> None:
         ...
 
     async def save(self, node_id: NodeId, data: t.Any) -> None:

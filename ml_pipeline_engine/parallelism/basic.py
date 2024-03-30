@@ -1,6 +1,7 @@
 import abc
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 from typing import Optional
 from typing import Union
 
@@ -16,7 +17,8 @@ class SingletonMeta(type):
 
     _instances = {}
 
-    def __call__(cls, *args, **kwargs):
+    # todo(lukmanova_e): check the return type
+    def __call__(cls, *args, **kwargs) -> Any:
         """
         Possible changes to the value of the `__init__` argument do not affect
         the returned instance.
@@ -32,7 +34,7 @@ PoolExecutorT = Union[ProcessPoolExecutor, ThreadPoolExecutor]
 
 class PoolExecutorRegistry(metaclass=SingletonMeta):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._pool_executor: Optional[PoolExecutorT] = None
 
     @abc.abstractmethod

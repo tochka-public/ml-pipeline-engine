@@ -34,7 +34,7 @@ def dont_use_for_prod(func: t.Callable):
 
 
 class FileSystemArtifactStore(SerializedArtifactStore):
-    def __init__(self, ctx: PipelineContextLike, artifact_dir: t.Union[Path, str]):
+    def __init__(self, ctx: PipelineContextLike, artifact_dir: t.Union[Path, str]) -> None:
         super().__init__(ctx)
 
         self.artifact_dir = Path(artifact_dir)

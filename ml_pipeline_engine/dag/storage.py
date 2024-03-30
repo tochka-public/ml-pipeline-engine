@@ -10,7 +10,7 @@ from ml_pipeline_engine.types import NodeId
 
 class HiddenDict(UserDict, HiddenDictLike):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._hidden_keys: set = set()
 

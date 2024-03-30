@@ -38,7 +38,7 @@ NodeResultT = t.TypeVar('NodeResultT')
 
 
 class AnnotationDAGBuilder:
-    def __init__(self):
+    def __init__(self) -> None:
         self._dag = DiGraph()
         self._node_map: t.Dict[NodeId, NodeLike] = dict()
         self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
