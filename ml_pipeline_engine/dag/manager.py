@@ -31,22 +31,26 @@ from cachetools.keys import hashkey
 from collections import defaultdict
 
 
+_EventDictT = t.Dict[NodeId, asyncio.Event]
+_EventConditionT = t.Dict[NodeId, asyncio.Condition]
+
+
 @dataclass
 class DAGConcurrentManagerLock:
     node_ids: t.Iterable[NodeId]
-    event_lock_store: t.Dict[NodeId, asyncio.Event] = field(
+    event_lock_store: _EventDictT = field(
         default_factory=functools.partial(defaultdict, asyncio.Event),
     )
-    condition_lock_store: t.Dict[NodeId, asyncio.Condition] = field(
+    condition_lock_store: _EventConditionT = field(
         default_factory=functools.partial(defaultdict, asyncio.Condition),
     )
 
     @property
-    def cnd(self):
+    def conditions(self) -> _EventConditionT:
         return self.condition_lock_store
 
     @property
-    def evn(self):
+    def events(self) -> _EventDictT:
         return self.event_lock_store
 
 
@@ -162,7 +166,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node), source, dest
         )
 
-    def _get_reduced_dag_input_one_of(self, source: NodeId, dest: NodeId, is_oneof) -> DiGraph:
+    def _get_reduced_dag_input_one_of(self, source: NodeId, dest: NodeId, is_oneof: bool) -> DiGraph:
         """
         Получить связный подграф между двумя заданными узлами графа InputOneOf
         """
@@ -205,7 +209,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         if self.node_storage.exists_processed_node(node_id):
             logger.debug('Node %s has been executed. Stop new execution', node_id)
 
-            event_lock = self._lock_manager.evn[node_id]
+            event_lock = self._lock_manager.events[node_id]
             await event_lock.wait()
 
             return self.node_storage.get_node_result(node_id)
@@ -367,7 +371,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         # FIXME: It has to be different way to check oneof subgraph's nodes. PE-22
         if not dag.is_oneof and self.node_storage.exists_node_in_waiting_list(node_id):
-            condition = self._lock_manager.cnd[node_id]
+            condition = self._lock_manager.conditions[node_id]
 
             async with condition:
                 await condition.wait_for(exist_predecessor_results)
@@ -543,11 +547,11 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             # Для искусственной остановки пайплайна помечаем текущий узел как выходной
                             node_result_id = dag_output_node
 
-                        condition = self._lock_manager.cnd[node_id]
+                        condition = self._lock_manager.conditions[node_id]
 
                         async with condition:
                             self.node_storage.set_node_result(node_result_id, node_result)
-                            self._lock_manager.evn[node_id].set()
+                            self._lock_manager.events[node_id].set()
                             condition.notify_all()
 
                         # FIXME: Set new abstractions for event managers

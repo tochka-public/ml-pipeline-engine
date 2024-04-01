@@ -19,14 +19,14 @@ class DiGraph(nx.DiGraph):
 
 
 def get_connected_subgraph(
-    dag: DiGraph,
+    dag: nx.Graph,
     source: NodeId,
     dest: NodeId,
     is_recurrent: bool = False,
     is_oneof: bool = False,
 ) -> DiGraph:
     """
-    Получить связный подграф между двумя заданными узлами графа
+    Get a connected subgraph between two nodes
     """
 
     if len(dag) == 1:

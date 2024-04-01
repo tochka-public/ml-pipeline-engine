@@ -431,7 +431,7 @@ class DAGLike(t.Protocol[NodeResultT]):
     Граф
     """
 
-    graph: [t.Type[nx.DiGraph], nx.DiGraph]
+    graph: nx.DiGraph
     input_node: NodeId
     output_node: NodeId
     node_map: t.Dict[NodeId, NodeLike]
