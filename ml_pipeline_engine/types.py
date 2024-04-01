@@ -305,18 +305,6 @@ class RetryPolicyLike(t.Protocol):
         ...
 
 
-class DAGRunLockManagerLike(t.Protocol):
-    """
-    A manager object to store and manage locks related to NodeIds
-    """
-
-    lock_store: t.Dict[str, asyncio.Event] = {}
-
-    @abc.abstractmethod
-    def get_lock(self, node_id: NodeId) -> asyncio.Event:
-        ...
-
-
 class HiddenDictLike(t.Protocol):
     """
     Dict object that can hide some keys until they are set again
@@ -355,6 +343,7 @@ class DAGNodeStorageLike(t.Protocol):
     node_results: HiddenDictLike
     switch_results: HiddenDictLike
     recurrent_subgraph: HiddenDictLike
+    waiting_list: HiddenDictLike
 
     @abc.abstractmethod
     def set_node_result(self, node_id: NodeId, data: t.Any) -> None:
@@ -408,13 +397,24 @@ class DAGNodeStorageLike(t.Protocol):
     def hide_last_execution(self, *node_ids: NodeId) -> None:
         ...
 
+    @abc.abstractmethod
+    def set_node_in_waiting_list(self, node_id: NodeId) -> None:
+        ...
+
+    @abc.abstractmethod
+    def exists_node_in_waiting_list(self, node_id: NodeId, with_hidden: bool = False) -> bool:
+        ...
+
+    @abc.abstractmethod
+    def hide_node_in_waiting_list(self, node_id: NodeId) -> None:
+        ...
+
 
 class DAGRunManagerLike(t.Protocol):
     """
     Менеджер управлением запуска графа
     """
 
-    lock_manager: DAGRunLockManagerLike
     node_storage: DAGNodeStorageLike
     ctx: PipelineContextLike
     dag: 'DAGLike'

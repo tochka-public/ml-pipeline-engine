@@ -44,14 +44,7 @@ class DAG(DAGLike):
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         self._start_runtime_validation()
 
-        run_manager = self.run_manager(
-            lock_manager=DAGConcurrentManagerLock(
-                self.node_map.keys(),
-            ),
-            dag=self,
-            ctx=ctx,
-        )
-
+        run_manager = self.run_manager(dag=self, ctx=ctx)
         return await run_manager.run()
 
     def visualize(  # noqa
@@ -62,7 +55,7 @@ class DAG(DAGLike):
         **kwargs,
     ) -> None:
         """
-        Create a static for graph visualization
+        Create static files for graph visualization
 
         Args:
             name: Tech name for the dag
