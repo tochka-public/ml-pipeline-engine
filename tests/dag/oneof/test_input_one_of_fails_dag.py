@@ -26,7 +26,7 @@ class ErrorDataSource(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)) -> t.Type[Exception]:
+    def collect(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 
@@ -35,7 +35,7 @@ class ErrorDataSourceSecond(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)) -> t.Type[Exception]:
+    def collect(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 

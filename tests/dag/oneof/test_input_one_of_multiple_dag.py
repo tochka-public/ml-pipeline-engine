@@ -23,7 +23,7 @@ class SomeDataSource(DataSource):
     name = 'some_data_source'
     title = 'SomeDataSource'
 
-    def collect(self, inp: Input(SomeInput)) -> int:
+    def collect(self, _: Input(SomeInput)) -> int:
         return 110
 
 
@@ -32,7 +32,7 @@ class ErrorDataSource(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)) -> t.Type[Exception]:
+    def collect(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 

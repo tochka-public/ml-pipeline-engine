@@ -27,7 +27,7 @@ class FlDataSourceGeneric(DataSource):
     name = 'source'
 
     @guard_datasource_error()
-    def collect(self, inp: InputGeneric(NodeLike)) -> t.Type[Exception]:
+    def collect(self, _: InputGeneric(NodeLike)) -> t.Type[Exception]:
         raise Exception
 
 

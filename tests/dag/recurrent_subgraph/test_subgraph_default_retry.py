@@ -20,14 +20,14 @@ class InvertNumber(RecurrentProcessor):
     attempts = 2
     use_default = True
 
-    def get_default(self, **kwargs) -> int:
+    def get_default(self, **__) -> int:
         return -5
 
     @invert_process_mocker
     def process(
         self,
-        num: float,
-        additional_data: t.Optional[AdditionalDataT] = None,
+        additional_data: t.Optional[AdditionalDataT] = None,  # noqa: ARG002 ignore unused
+        **_: t.Any,
     ) -> float:
         raise Exception('error')
 

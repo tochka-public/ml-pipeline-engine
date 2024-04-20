@@ -18,7 +18,11 @@ case_switch_node_mocker = FactoryMocker()
 
 
 class Ident(RecurrentProcessor):
-    def process(self, num: float, additional_data: t.Optional[AdditionalDataT] = None) -> float:
+    def process(
+        self,
+        num: float,
+        additional_data: t.Optional[AdditionalDataT] = None,  # noqa: ARG002 ignore unused
+    ) -> float:
         return num
 
 

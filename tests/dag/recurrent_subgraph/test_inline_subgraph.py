@@ -14,8 +14,8 @@ class InvertNumber(RecurrentProcessor):
 
     def process(
         self,
-        num: float,
         additional_data: t.Optional[AdditionalDataT] = None,
+        **__: t.Any,
     ) -> float:
 
         if additional_data == -5:

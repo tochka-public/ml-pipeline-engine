@@ -20,7 +20,7 @@ class ThirdSwitchNode(ProcessorBase):
 
 
 class ThirdSwitchCase(ProcessorBase):
-    async def process(self, num: Input(Ident)) -> str:
+    async def process(self, _: Input(Ident)) -> str:
         return 'ident'
 
 
@@ -38,7 +38,7 @@ class IdentSub(ProcessorBase):
 
 
 class FirstSwitchCase(ProcessorBase):
-    async def process(self, num: Input(Ident)) -> str:
+    async def process(self, _: Input(Ident)) -> str:
         return 'ident'
 
 
@@ -56,7 +56,7 @@ class DoubleNumber(ProcessorBase):
 
 
 class SecondSwitchCase(ProcessorBase):
-    async def process(self, num: Input(Ident)) -> str:
+    async def process(self, _: Input(Ident)) -> str:
         return 'double'
 
 

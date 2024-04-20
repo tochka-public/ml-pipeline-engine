@@ -20,8 +20,8 @@ class InvertNumber(RecurrentProcessor):
 
     def process(
         self,
-        num: float,
-        additional_data: t.Optional[AdditionalDataT] = None,
+        additional_data: t.Optional[AdditionalDataT] = None,  # noqa: ARG002 ignore unused
+        **_: t.Any,
     ) -> float:
         return -5
 
@@ -29,7 +29,7 @@ class InvertNumber(RecurrentProcessor):
 class DifferentSubgraph(RecurrentProcessor):
     def process(
         self,
-        additional_data: t.Optional[AdditionalDataT] = None,
+        additional_data: t.Optional[AdditionalDataT] = None,  # noqa: ARG002 ignore unused
     ) -> float:
         return 10
 

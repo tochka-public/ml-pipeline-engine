@@ -53,7 +53,7 @@ NoGenericFeature = build_node(GenericAnotherFeature, inp=Input(DoubleNumber))
 
 
 class Const(ProcessorBase):
-    def process(self, number: Input(NoGenericFeature)) -> float:
+    def process(self, _: Input(NoGenericFeature)) -> float:
         return 10.0
 
 
@@ -71,7 +71,7 @@ SomeSwitchCase = SwitchCase(
 
 
 class JustNode(ProcessorBase):
-    def process(self, num: SomeSwitchCase) -> int:
+    def process(self, _: SomeSwitchCase) -> int:
         return 1
 
 
