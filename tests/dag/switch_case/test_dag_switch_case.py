@@ -6,12 +6,12 @@ from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 
 
 class Ident(ProcessorBase):
-    def process(self, num: float):
+    def process(self, num: float) -> float:
         return num
 
 
 class SwitchNode(ProcessorBase):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> str:
         if num < 0.0:
             return 'invert'
         if num == 0.0:
@@ -22,32 +22,32 @@ class SwitchNode(ProcessorBase):
 
 
 class ConstNoInput(ProcessorBase):
-    def process(self):
+    def process(self) -> float:
         return 10.0
 
 
 class Add100(ProcessorBase):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return num + 100
 
 
 class AddAConst(ProcessorBase):
-    def process(self, num: Input(Ident), const: float = 9.0):
+    def process(self, num: Input(Ident), const: float = 9.0) -> float:
         return num + const
 
 
 class InvertNumber(ProcessorBase):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return -num
 
 
 class SubIdent(ProcessorBase):
-    def process(self, num: Input(AddAConst), num_ident: Input(Ident)):
+    def process(self, num: Input(AddAConst), num_ident: Input(Ident)) -> float:
         return num - num_ident
 
 
 class DoubleNumber(ProcessorBase):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return num * 2
 
 
@@ -63,12 +63,12 @@ SomeSwitchCase = SwitchCase(
 
 
 class CaseNode(ProcessorBase):
-    def process(self, num: SomeSwitchCase, num2: Input(Ident), num3: Input(Add100)):
+    def process(self, num: SomeSwitchCase, num2: Input(Ident), num3: Input(Add100)) -> float:
         return num + num2 + num3
 
 
 class Out(ProcessorBase):
-    def process(self, num: Input(CaseNode)):
+    def process(self, num: Input(CaseNode)) -> float:
         return num
 
 
@@ -81,5 +81,5 @@ class Out(ProcessorBase):
         (3.0, 115),
     ],
 )
-async def test_dag_switch_case(input_num, expect, build_dag, pipeline_context):
+async def test_dag_switch_case(input_num, expect, build_dag, pipeline_context) -> None:
     assert await build_dag(input_node=Ident, output_node=Out).run(pipeline_context(num=input_num)) == expect

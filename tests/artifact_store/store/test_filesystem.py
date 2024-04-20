@@ -10,7 +10,7 @@ from ml_pipeline_engine.types import PipelineContextLike
 
 
 @pytest.fixture
-def store(tmp_path):
+def store(tmp_path) -> FileSystemArtifactStore:
     class PipelineContext:
         model_name = 'some-model'
         pipeline_id = 'some-pipeline'
@@ -22,7 +22,7 @@ def store(tmp_path):
     'fmt',
     DataFormat,
 )
-async def test_fs_artifact_store_success(store, fmt):
+async def test_fs_artifact_store_success(store, fmt) -> None:
     await store.save('some-node-id-1', {'some-key1': 'some-value1'})
     await store.save('some-node-id-2', {'some-key2': 'some-value2'})
     await store.save('some-node-id-3', {'some-key3': 'some-value3'})
@@ -32,13 +32,13 @@ async def test_fs_artifact_store_success(store, fmt):
     assert await store.load('some-node-id-3') == {'some-key3': 'some-value3'}
 
 
-async def test_fs_artifact_store_error_already_exists(store):
+async def test_fs_artifact_store_error_already_exists(store) -> None:
     await store.save('some-node-id', {'some-key': 'some-value'})
 
     with pytest.raises(ArtifactFileAlreadyExists):
         await store.save('some-node-id', {'some-key': 'some-value'})
 
 
-async def test_fs_artifact_store_error_does_not_exist(store):
+async def test_fs_artifact_store_error_does_not_exist(store) -> None:
     with pytest.raises(ArtifactFileDoesNotExist):
         await store.load('some-bad-node-id')

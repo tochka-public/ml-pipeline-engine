@@ -13,7 +13,7 @@ from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import PipelineResult
 
 
-async def test_pipeline_chart_events_success(mocker, model_name_op):
+async def test_pipeline_chart_events_success(mocker, model_name_op) -> None:
     class SomeDataSourceNode(DataSource):
         name = 'some_datasource'
 
@@ -96,7 +96,7 @@ async def test_pipeline_chart_events_success(mocker, model_name_op):
     }
 
 
-async def test_pipeline_chart_events_error(mocker, model_name_op):
+async def test_pipeline_chart_events_error(mocker, model_name_op) -> None:
     class SomeDataSourceNode(DataSource):
         name = 'some_datasource'
 

@@ -1,3 +1,5 @@
+import typing as t
+
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
@@ -28,7 +30,7 @@ class ErrorDataSource(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)):
+    def collect(self, inp: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 
@@ -89,10 +91,10 @@ class SomeVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeVectorizer)):
+    def predict(self, vec_value: Input(SomeVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
-async def test_input_one_of_multiple_dag(pipeline_context, build_dag):
+async def test_input_one_of_multiple_dag(pipeline_context, build_dag) -> None:
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 3

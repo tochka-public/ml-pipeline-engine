@@ -66,18 +66,18 @@ AnotherParticularVectorizer = build_node(
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeParticularVectorizer)):
+    def predict(self, vec_value: Input(SomeParticularVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
 class AnotherMlModel(NodeBase):
     name = 'another_model'
 
-    def predict(self, vec_value: Input(AnotherParticularVectorizer)):
+    def predict(self, vec_value: Input(AnotherParticularVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
-async def test_reusable_nodes(build_dag, pipeline_context):
+async def test_reusable_nodes(build_dag, pipeline_context) -> None:
 
     # Проверяем корректность первого графа
     some_dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)

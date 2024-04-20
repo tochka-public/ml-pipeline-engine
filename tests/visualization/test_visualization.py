@@ -21,7 +21,7 @@ class InvertNumber(DataSource):
     name = 'invert_number'
     verbose_name = 'Invert!'
 
-    def collect(self, num: float):
+    def collect(self, num: float) -> float:
         return -num
 
 
@@ -29,7 +29,7 @@ class AddConst(ProcessorBase):
     name = 'add_const'
     verbose_name = 'Add!'
 
-    def process(self, num: Input(InvertNumber), const: float = 0.1):
+    def process(self, num: Input(InvertNumber), const: float = 0.1) -> float:
         return num + const
 
 
@@ -52,12 +52,12 @@ NoGenericFeature = build_node(GenericAnotherFeature, inp=Input(DoubleNumber))
 
 
 class Const(ProcessorBase):
-    def process(self, number: Input(NoGenericFeature)):
+    def process(self, number: Input(NoGenericFeature)) -> float:
         return 10.0
 
 
 class SwitchNode(ProcessorBase):
-    def process(self):
+    def process(self) -> str:
         return 'const'
 
 
@@ -70,7 +70,7 @@ SomeSwitchCase = SwitchCase(
 
 
 class JustNode(ProcessorBase):
-    def process(self, num: SomeSwitchCase):
+    def process(self, num: SomeSwitchCase) -> int:
         return 1
 
 
@@ -103,7 +103,7 @@ runner = CliRunner()
         ),
     ),
 )
-async def test_basic(call_func):
+async def test_basic(call_func) -> None:
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         target = pathlib.Path(tmp_dir) / 'true-target'

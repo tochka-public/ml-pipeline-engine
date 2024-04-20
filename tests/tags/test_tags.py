@@ -42,7 +42,7 @@ class SomeVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    async def predict(self, vec_value: Input(SomeVectorizer)):
+    async def predict(self, vec_value: Input(SomeVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
@@ -50,7 +50,7 @@ async def test_tags__with_thread_process(
     pipeline_context,
     build_dag,
     mocker,
-):
+) -> None:
     threads_get_pool_executor = mocker.spy(threads.PoolExecutorRegistry, 'get_pool_executor')
     processes_get_pool_executor = mocker.spy(processes.PoolExecutorRegistry, 'get_pool_executor')
 

@@ -36,10 +36,10 @@ class SomeVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeVectorizer)):
+    def predict(self, vec_value: Input(SomeVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
-async def test_demo_ml_model_dag(pipeline_context, build_dag):
+async def test_demo_ml_model_dag(pipeline_context, build_dag) -> None:
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75

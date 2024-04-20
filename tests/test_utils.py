@@ -14,11 +14,11 @@ from ml_pipeline_engine.node import run_node
 from ml_pipeline_engine.types import NodeBase
 
 
-def test_generate_pipeline_id():
+def test_generate_pipeline_id() -> None:
     assert isinstance(generate_pipeline_id(), UUID)
 
 
-def test_get_id():
+def test_get_id() -> None:
     node_id_test_prefix = __name__.replace('.', '_')
 
     class SomeNode(ProcessorBase):
@@ -34,7 +34,7 @@ def test_get_id():
     assert get_node_id(SomeNode) == f'node__{node_id_test_prefix}_SomeNode'
 
 
-async def test_run_method():
+async def test_run_method() -> None:
     class SomeNode(ProcessorBase):
         @staticmethod
         def process(x: int) -> int:
@@ -76,7 +76,7 @@ async def test_run_method():
     assert await run_node(SomeNode, x=10) == 10
 
 
-def test_get_run_method_2_methods_error():
+def test_get_run_method_2_methods_error() -> None:
     class SomeNode(NodeBase):
         @staticmethod
         def extract(x: int) -> int:

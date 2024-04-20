@@ -3,9 +3,9 @@ from ml_pipeline_engine.dag_builders.annotation import build_dag_single
 
 
 class DoubleNumber(ProcessorBase):
-    def process(self, num: float):
+    def process(self, num: float) -> float:
         return num * 2
 
 
-async def test_basic(pipeline_context):
+async def test_basic(pipeline_context) -> None:
     assert await build_dag_single(DoubleNumber).run(pipeline_context(num=2.5)) == 5.0

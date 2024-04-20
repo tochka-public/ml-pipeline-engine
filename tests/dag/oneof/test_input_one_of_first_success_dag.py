@@ -70,11 +70,11 @@ class NoneVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeVectorizer), none_value: Input(NoneVectorizer)):
+    def predict(self, vec_value: Input(SomeVectorizer), none_value: Input(NoneVectorizer)) -> float:
         assert none_value is None
         return (vec_value + 30) / 100
 
 
-async def test_input_one_of_first_success_dag(pipeline_context, build_dag):
+async def test_input_one_of_first_success_dag(pipeline_context, build_dag) -> None:
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75

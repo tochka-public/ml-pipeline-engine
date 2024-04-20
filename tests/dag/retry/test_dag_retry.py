@@ -24,26 +24,26 @@ class ExternalDatasource:
 class SomeNode(DataSource):
     exceptions = (BaseExecutionError,)
 
-    def collect(self):
+    def collect(self) -> float:
         return ExternalDatasource().external_func()
 
 
 class InvertNumber(ProcessorBase):
-    def process(self, num: float):
+    def process(self, num: float) -> float:
         return -num
 
 
 class AddConst(ProcessorBase):
-    def process(self, num: Input(InvertNumber), const: Input(SomeNode)):
+    def process(self, num: Input(InvertNumber), const: Input(SomeNode)) -> float:
         return num + const
 
 
 class DoubleNumber(ProcessorBase):
-    def process(self, num: Input(AddConst)):
+    def process(self, num: Input(AddConst)) -> float:
         return num * 2
 
 
-async def test_dag_retry(pipeline_context, build_dag, mocker):
+async def test_dag_retry(pipeline_context, build_dag, mocker) -> None:
 
     collect_spy = mocker.spy(SomeNode, 'collect')
     external_func_patch = mocker.patch.object(

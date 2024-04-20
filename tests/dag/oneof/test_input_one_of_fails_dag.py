@@ -1,4 +1,4 @@
-from typing import Type
+import typing as t
 
 import pytest
 
@@ -24,7 +24,7 @@ class ErrorDataSource(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)):
+    def collect(self, inp: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 
@@ -33,7 +33,7 @@ class ErrorDataSourceSecond(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)):
+    def collect(self, inp: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 
@@ -54,7 +54,7 @@ class SomeFeatureSecond(NodeBase):
 class FallbackFeature(NodeBase):
     name = 'fallback_feature'
 
-    def extract(self) -> Type[Exception]:
+    def extract(self) -> t.Type[Exception]:
         return Exception
 
 
@@ -68,11 +68,11 @@ class SomeVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeVectorizer)):
+    def predict(self, vec_value: Input(SomeVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
-async def test_input_one_of_fails_dag(pipeline_context, build_dag):
+async def test_input_one_of_fails_dag(pipeline_context, build_dag) -> None:
 
     with pytest.raises(TypeError):
         await build_dag(input_node=SomeInput, output_node=SomeMLModel).run(pipeline_context(base_num=10, other_num=5))

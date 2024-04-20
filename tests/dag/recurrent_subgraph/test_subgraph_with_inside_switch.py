@@ -10,17 +10,18 @@ from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 from ml_pipeline_engine.types import AdditionalDataT
+from ml_pipeline_engine.types import Recurrent
 
 case_switch_node_mocker = FactoryMocker()
 
 
 class Ident(RecurrentProcessor):
-    def process(self, num: float, additional_data: t.Optional[AdditionalDataT] = None):
+    def process(self, num: float, additional_data: t.Optional[AdditionalDataT] = None) -> float:
         return num
 
 
 class SwitchNode(RecurrentProcessor):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> str:
         if num < 0.0:
             return 'invert'
         if num == 0.0:
@@ -31,32 +32,32 @@ class SwitchNode(RecurrentProcessor):
 
 
 class ConstNoInput(RecurrentProcessor):
-    def process(self):
+    def process(self) -> float:
         return 10.0
 
 
 class Add100(RecurrentProcessor):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return num + 100
 
 
 class AddAConst(RecurrentProcessor):
-    def process(self, num: Input(Ident), const: float = 9.0):
+    def process(self, num: Input(Ident), const: float = 9.0) -> float:
         return num + const
 
 
 class InvertNumber(RecurrentProcessor):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return -num
 
 
 class SubIdent(RecurrentProcessor):
-    def process(self, num: Input(AddAConst), num_ident: Input(Ident)):
+    def process(self, num: Input(AddAConst), num_ident: Input(Ident)) -> float:
         return num - num_ident
 
 
 class DoubleNumber(RecurrentProcessor):
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return num * 2
 
 
@@ -72,7 +73,7 @@ SomeSwitchCase = SwitchCase(
 
 
 class CaseNode(RecurrentProcessor):
-    def process(self, num: SomeSwitchCase, num2: Input(Ident), num3: Input(Add100)):
+    def process(self, num: SomeSwitchCase, num2: Input(Ident), num3: Input(Add100)) -> float:
         return num + num2 + num3
 
 
@@ -83,7 +84,7 @@ class CaseSwitchNode(RecurrentProcessor):
         return 0
 
     @case_switch_node_mocker
-    def process(self, num: Input(CaseNode)):
+    def process(self, num: Input(CaseNode)) -> Recurrent:
         return self.next_iteration(num)
 
 
@@ -95,7 +96,7 @@ recurrent_switch = RecurrentSubGraph(
 
 
 class Output(RecurrentProcessor):
-    def process(self, num: recurrent_switch, num2: Input(Ident)):
+    def process(self, num: recurrent_switch, num2: Input(Ident)) -> float:
         return num + num2 - num2
 
 
@@ -108,7 +109,7 @@ class Output(RecurrentProcessor):
         (10, 129),
     ),
 )
-async def test_dag__case1(input_num, call_num, build_dag, pipeline_context):
+async def test_dag__case1(input_num, call_num, build_dag, pipeline_context) -> None:
     case_switch_node_mocker.mock.reset_mock()
     assert await build_dag(input_node=Ident, output_node=Output).run(pipeline_context(num=input_num)) == 0
 
