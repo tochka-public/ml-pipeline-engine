@@ -20,7 +20,7 @@ class InvertNumber(RecurrentProcessor):
     attempts = 2
     use_default = True
 
-    def get_default(self, **__) -> int:
+    def get_default(self, **__: t.Any) -> int:
         return -5
 
     @invert_process_mocker
@@ -41,7 +41,7 @@ class DoubleNumber(RecurrentProcessor):
     use_default = True
 
     @double_default_mocker
-    def get_default(self, **kwargs) -> float:
+    def get_default(self, **kwargs: t.Any) -> float:
         return -1 + kwargs['num']
 
     async def process(self, num: Input(AddZero)) -> t.Union[Recurrent, float]:

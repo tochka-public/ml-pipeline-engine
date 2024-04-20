@@ -52,7 +52,7 @@ def model_name_op() -> str:
 @pytest.fixture
 def build_dag() -> t.Callable[..., DAGLike]:
 
-    def wrap(*args, **kwargs) -> DAGLike:
+    def wrap(*args: t.Any, **kwargs: t.Any) -> DAGLike:
         return build_dag_base(*args, **kwargs)
 
     return wrap
@@ -60,7 +60,7 @@ def build_dag() -> t.Callable[..., DAGLike]:
 
 @pytest.fixture
 def pipeline_context(model_name_op: str) -> t.Callable[..., DAGPipelineContext]:
-    def wrapper(**input_kwargs) -> DAGPipelineContext:
+    def wrapper(**input_kwargs: t.Any) -> DAGPipelineContext:
         return DAGPipelineContext(
             chart=NullPipelineChart(model_name_op),
             input_kwargs=input_kwargs,

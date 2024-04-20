@@ -86,7 +86,7 @@ class CaseNode(RecurrentProcessor):
 class CaseSwitchNode(RecurrentProcessor):
     use_default = True
 
-    def get_default(self, **__) -> int:
+    def get_default(self, **__: t.Any) -> int:
         return 0
 
     @case_switch_node_mocker

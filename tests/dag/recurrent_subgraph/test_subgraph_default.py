@@ -36,7 +36,7 @@ class DoubleNumber(RecurrentProcessor):
     use_default = True
 
     @double_default_mocker
-    def get_default(self, **__) -> float:
+    def get_default(self, **__: t.Any) -> float:
         return -6
 
     async def process(self, num: Input(AddZero)) -> t.Union[Recurrent, float]:
