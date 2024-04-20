@@ -12,7 +12,7 @@ from ml_pipeline_engine.types import DAGLike
 
 class ExternalDatasource:
     @staticmethod
-    def external_func():
+    def external_func() -> float:
         return 0.1
 
 

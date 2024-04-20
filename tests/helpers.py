@@ -22,12 +22,12 @@ class FactoryMocker:
         method = getattr(self.mock, func.__name__)
 
         @functools.wraps(func)
-        def wrap(*args: t.Any, **kwargs: t.Any):
+        def wrap(*args: t.Any, **kwargs: t.Any) -> t.Any:
             method(*args, **kwargs)
             return func(*args, **kwargs)
 
         @functools.wraps(func)
-        async def async_wrap(*args: t.Any, **kwargs: t.Any):
+        async def async_wrap(*args: t.Any, **kwargs: t.Any) -> t.Any:
             method(*args, **kwargs)
             return await func(*args, **kwargs)
 
