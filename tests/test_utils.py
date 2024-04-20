@@ -31,7 +31,7 @@ def test_get_id():
     class SomeNode(NodeBase):
         pass
 
-    assert get_node_id(SomeNode) == f'node__{node_id_test_prefix}_SomeNode'  # noqa
+    assert get_node_id(SomeNode) == f'node__{node_id_test_prefix}_SomeNode'
 
 
 async def test_run_method():

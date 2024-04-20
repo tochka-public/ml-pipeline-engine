@@ -25,7 +25,7 @@ class FlDataSourceGeneric(DataSource):
         raise Exception
 
 
-FlDataSource = build_node(  # noqa
+FlDataSource = build_node(
     FlDataSourceGeneric,
     inp=Input(SomeInput),
 )
@@ -47,7 +47,7 @@ class SomeFeatureFallback(NodeBase):
         return 777_777
 
 
-SomeFeature = build_node(  # noqa
+SomeFeature = build_node(
     SomeFeatureGeneric,
     fl_credit_history=Input(FlDataSource),
     inp=Input(SomeInput),

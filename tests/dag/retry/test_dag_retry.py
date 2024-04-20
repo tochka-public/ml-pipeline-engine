@@ -24,7 +24,7 @@ class ExternalDatasource:
 class SomeNode(DataSource):
     exceptions = (BaseExecutionError,)
 
-    def collect(self):  # noqa
+    def collect(self):
         return ExternalDatasource().external_func()
 
 

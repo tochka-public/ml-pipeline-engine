@@ -111,6 +111,7 @@ select = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
   "ARG001",  # fixtures are banned otherwise
+  "PLR2004", #  Use magic value in comparison
 ]
 
 [tool.ruff.lint.flake8-quotes]

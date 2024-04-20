@@ -45,7 +45,7 @@ class AnotherFeature(NodeBase):
 
 
 # Первый переопределенный подграф
-SomeParticularVectorizer = build_node(  # noqa
+SomeParticularVectorizer = build_node(
     GenericVectorizer,
     feature_value=Input(SomeCommonFeature),
     dependencies_default=dict(
@@ -54,7 +54,7 @@ SomeParticularVectorizer = build_node(  # noqa
 )
 
 # Второй переопределенный подграф
-AnotherParticularVectorizer = build_node(  # noqa
+AnotherParticularVectorizer = build_node(
     GenericVectorizer,
     feature_value=Input(AnotherFeature),
     dependencies_default=dict(

@@ -9,7 +9,7 @@ class SomeNode(DataSource):
     exceptions = (Exception,)
 
     def collect(self):  # noqa
-        raise BaseException('CustomError')  # noqa
+        raise BaseException('CustomError')
 
 
 class InvertNumber(ProcessorBase):
@@ -28,7 +28,6 @@ class DoubleNumber(ProcessorBase):
 
 
 async def test_dag_retry__base_error(pipeline_context, build_dag, mocker):
-
     collect_spy = mocker.spy(SomeNode, 'collect')
 
     with pytest.raises(BaseException, match='CustomError'):
