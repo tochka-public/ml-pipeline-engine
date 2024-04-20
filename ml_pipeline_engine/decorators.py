@@ -17,7 +17,7 @@ def guard_datasource_error(name=None, title=None):
                 assert not is_empty_names, 'Укажите имя источника данных явно'
                 _name, _title = name, title
 
-                class _LegacyDataSource(DataSource):  # noqa
+                class _LegacyDataSource(DataSource):
                     """
                     Для совместимости с кодом, где не используется класс DataSource
                     """

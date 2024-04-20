@@ -54,7 +54,7 @@ class DAG(DAGLike):
 
         return await run_manager.run()
 
-    def visualize(  # noqa
+    def visualize(  # type: ignore
         self,
         name: str,
         verbose_name: Optional[str] = None,

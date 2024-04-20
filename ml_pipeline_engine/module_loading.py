@@ -12,7 +12,7 @@ def _cached_import(module_path, class_name) -> t.Type:
     if not (
         (module := sys.modules.get(module_path))
         and (spec := getattr(module, '__spec__', None))
-        and getattr(spec, '_initializing', False) is False  # noqa
+        and getattr(spec, '_initializing', False) is False
     ):
         module = import_module(module_path)
     return getattr(module, class_name)

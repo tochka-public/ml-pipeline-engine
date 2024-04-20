@@ -28,10 +28,10 @@ def generate_node_id(prefix: str, name: t.Optional[str] = None) -> str:
 
 
 def get_node_id(node: NodeLike) -> NodeId:
-    node_type = node.node_type if getattr(node, 'node_type', None) else 'node'  # noqa
+    node_type = node.node_type if getattr(node, 'node_type', None) else 'node'
 
     if getattr(node, 'name', None):
-        node_name = node.name  # noqa
+        node_name = node.name
     else:
         node_name = f'{node.__module__}_{getattr(node, "__name__", node.__class__.__name__)}'.replace('.', '_')
 
@@ -152,7 +152,7 @@ def build_node(
             run_method: class_method,
             '__module__': __name__,
             '__generic_class__': node,
-            'name': node_name or node.name,  # noqa
+            'name': node_name or node.name,
             **(atts or {}),
         },
     )

@@ -98,7 +98,7 @@ class AnnotationDAGBuilder:
         node = get_callable_run_method(node)
 
         inputs = []
-        for name, annotation in node.__annotations__.items():  # noqa
+        for name, annotation in node.__annotations__.items():
 
             if isinstance(annotation, InputGenericMark):
                 raise errors.NonRedefinedGenericTypeError(
@@ -275,7 +275,7 @@ class AnnotationDAGBuilder:
 
             method = get_callable_run_method(self._node_map[source])
 
-            if 'additional_data' not in method.__annotations__:  # noqa
+            if 'additional_data' not in method.__annotations__:
                 raise errors.IncorrectParamsRecurrentNode(
                     f'В {method} отсутствует системный параметр "additional_data" для получения данных от узла, '
                     'который может перезапустить подграф',

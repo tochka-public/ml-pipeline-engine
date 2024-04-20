@@ -87,7 +87,7 @@ class NodeBase(NodeProtocol, RetryProtocol, TagProtocol):
     pass
 
 
-class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):  # noqa
+class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):
     """
     Узел общего назначения
     """
@@ -98,7 +98,7 @@ class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):  
     ]
 
 
-class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):  # noqa
+class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):
     """
     Источник данных
     """
@@ -109,7 +109,7 @@ class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):
     ]
 
 
-class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):  # noqa
+class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):
     """
     Фича
     """
@@ -228,7 +228,7 @@ class PipelineContextLike(t.Protocol):
         ...
 
     @property
-    def model_name(self) -> ModelName:  # noqa
+    def model_name(self) -> ModelName:
         ...
 
     def _get_event_managers(self) -> t.List['EventManagerLike']:
