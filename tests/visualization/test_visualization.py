@@ -2,6 +2,7 @@ import functools
 import json
 import pathlib
 import tempfile
+import typing as t
 from unittest.mock import ANY
 
 import pytest
@@ -103,7 +104,7 @@ runner = CliRunner()
         ),
     ),
 )
-async def test_basic(call_func) -> None:
+async def test_basic(call_func: t.Callable) -> None:
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         target = pathlib.Path(tmp_dir) / 'true-target'
@@ -187,7 +188,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L59',
+                        'code_source': 'tests/visualization/test_visualization.py#L60',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,
@@ -199,7 +200,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L54',
+                        'code_source': 'tests/visualization/test_visualization.py#L55',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,
@@ -211,7 +212,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L72',
+                        'code_source': 'tests/visualization/test_visualization.py#L73',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,
@@ -223,7 +224,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L44',  # Line for the real source!
+                        'code_source': 'tests/visualization/test_visualization.py#L45',  # Line for the real source!
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'another_feature',
                         'verbose_name': None,
@@ -235,7 +236,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L36',
+                        'code_source': 'tests/visualization/test_visualization.py#L37',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'double_number',
                         'verbose_name': 'Double!',
@@ -247,7 +248,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L28',
+                        'code_source': 'tests/visualization/test_visualization.py#L29',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'add_const',
                         'verbose_name': 'Add!',
@@ -259,7 +260,7 @@ async def test_basic(call_func) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L20',
+                        'code_source': 'tests/visualization/test_visualization.py#L21',
                         'doc': 'Базовый класс для источников данных',
                         'name': 'invert_number',
                         'verbose_name': 'Invert!',

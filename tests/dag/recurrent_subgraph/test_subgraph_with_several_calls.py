@@ -1,10 +1,14 @@
 import typing as t
 
+import pytest
+
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.types import AdditionalDataT
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import Recurrent
 
 
@@ -65,5 +69,9 @@ class JustANode(ProcessorBase):
         return num2
 
 
-async def test_dag(build_dag, pipeline_context, caplog_debug) -> None:
+async def test_dag(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+    caplog_debug: pytest.LogCaptureFixture,
+) -> None:
     assert await build_dag(input_node=InvertNumber, output_node=JustANode).run(pipeline_context(num=3)) == 11

@@ -3,9 +3,11 @@ import typing as t
 import pytest
 
 from ml_pipeline_engine.base_nodes.datasources import DataSource
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 
 
@@ -72,7 +74,10 @@ class SomeMLModel(NodeBase):
         return (vec_value + 30) / 100
 
 
-async def test_input_one_of_fails_dag(pipeline_context, build_dag) -> None:
+async def test_input_one_of_fails_dag(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
 
     with pytest.raises(TypeError):
         await build_dag(input_node=SomeInput, output_node=SomeMLModel).run(pipeline_context(base_num=10, other_num=5))

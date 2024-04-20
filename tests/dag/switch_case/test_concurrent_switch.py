@@ -1,6 +1,12 @@
+import typing as t
+
+import pytest
+
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
+from ml_pipeline_engine.types import DAGLike
 
 
 class Ident(ProcessorBase):
@@ -67,7 +73,11 @@ class Out(ProcessorBase):
         return num1 + num2
 
 
-async def test_dag_multiple_switch_cases(build_dag, pipeline_context, caplog_debug) -> None:
+async def test_dag_multiple_switch_cases(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+    caplog_debug: pytest.LogCaptureFixture,
+) -> None:
     assert await build_dag(input_node=Ident, output_node=Out).run(pipeline_context(num=1)) == 3
 
     assert (

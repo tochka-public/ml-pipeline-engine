@@ -6,10 +6,12 @@ from tests.helpers import FactoryMocker
 from tests.helpers import call_object
 
 from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 from ml_pipeline_engine.types import AdditionalDataT
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import Recurrent
 
 case_switch_node_mocker = FactoryMocker()
@@ -109,7 +111,12 @@ class Output(RecurrentProcessor):
         (10, 129),
     ),
 )
-async def test_dag__case1(input_num, call_num, build_dag, pipeline_context) -> None:
+async def test_dag__case1(
+    input_num: int,
+    call_num: int,
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
     case_switch_node_mocker.mock.reset_mock()
     assert await build_dag(input_node=Ident, output_node=Output).run(pipeline_context(num=input_num)) == 0
 

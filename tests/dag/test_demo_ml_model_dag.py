@@ -1,4 +1,8 @@
+import typing as t
+
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 
 
@@ -40,6 +44,9 @@ class SomeMLModel(NodeBase):
         return (vec_value + 30) / 100
 
 
-async def test_demo_ml_model_dag(pipeline_context, build_dag) -> None:
+async def test_demo_ml_model_dag(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75

@@ -5,7 +5,7 @@ from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.dag_builders.annotation import build_dag_single
 
 
-async def test_pipeline_chart_run_success(model_name_op) -> None:
+async def test_pipeline_chart_run_success(model_name_op: str) -> None:
     class SomeNode(ProcessorBase):
         def process(self, x: int) -> float:
             return x * 10
@@ -21,7 +21,7 @@ async def test_pipeline_chart_run_success(model_name_op) -> None:
     assert result.error is None
 
 
-async def test_pipeline_chart_run_error(model_name_op) -> None:
+async def test_pipeline_chart_run_error(model_name_op: str) -> None:
     class SomeErrorNode(ProcessorBase):
         def process(self, x: int) -> float:
             return x / 0

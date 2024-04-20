@@ -1,11 +1,15 @@
 import typing as t
 
+import pytest_mock
+
 from ml_pipeline_engine.base_nodes.datasources import DataSource
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.node import build_node
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeLike
 
@@ -63,7 +67,11 @@ class SomeMLModel(NodeBase):
         return fl_credit_history_feature
 
 
-async def test_fail_node(pipeline_context, build_dag, mocker) -> None:
+async def test_fail_node(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+    mocker: pytest_mock.MockerFixture,
+) -> None:
     extract_patch = mocker.patch.object(SomeFeatureGeneric, 'extract')
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
 

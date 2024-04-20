@@ -1,8 +1,12 @@
+import typing as t
+
 import pytest
 
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
+from ml_pipeline_engine.types import DAGLike
 
 
 class Ident(ProcessorBase):
@@ -75,5 +79,10 @@ class CaseNode(ProcessorBase):
         (2.0, 8.0),
     ],
 )
-async def test_dag_nested_switch_case(input_num, expect, build_dag, pipeline_context) -> None:
+async def test_dag_nested_switch_case(
+    input_num: float,
+    expect: float,
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
     assert await build_dag(input_node=Ident, output_node=CaseNode).run(pipeline_context(num=input_num)) == expect

@@ -29,7 +29,7 @@ def get_loggers() -> t.Tuple[logging.Logger, ...]:
 
 
 @pytest.fixture
-def caplog_debug(caplog, get_loggers) -> pytest.LogCaptureFixture:
+def caplog_debug(caplog: pytest.LogCaptureFixture, get_loggers: t.Tuple[logging.Logger]) -> pytest.LogCaptureFixture:
 
     for logger in get_loggers:
         logger.addHandler(caplog.handler)
@@ -59,7 +59,7 @@ def build_dag() -> t.Callable[..., DAGLike]:
 
 
 @pytest.fixture
-def pipeline_context(model_name_op) -> t.Callable[..., DAGPipelineContext]:
+def pipeline_context(model_name_op: str) -> t.Callable[..., DAGPipelineContext]:
     def wrapper(**input_kwargs) -> DAGPipelineContext:
         return DAGPipelineContext(
             chart=NullPipelineChart(model_name_op),

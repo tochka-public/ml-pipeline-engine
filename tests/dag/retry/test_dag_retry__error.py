@@ -1,8 +1,13 @@
+import typing as t
+
 import pytest
+import pytest_mock
 
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.types import DAGLike
 
 
 class ExternalDatasource:
@@ -31,7 +36,11 @@ class DoubleNumber(ProcessorBase):
         return num * 2
 
 
-async def test_dag_retry__error(pipeline_context, build_dag, mocker) -> None:
+async def test_dag_retry__error(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+    mocker: pytest_mock.MockerFixture,
+) -> None:
 
     collect_spy = mocker.spy(SomeNode, 'collect')
     external_func_patch = mocker.patch.object(

@@ -13,7 +13,7 @@ def test_import_string() -> None:
 
 def test_get_instance_init() -> None:
     class SomeClass:
-        def __init__(self, some_value) -> None:
+        def __init__(self, some_value: int) -> None:
             self.some_value = some_value
 
     instance = get_instance(SomeClass, some_value=10)

@@ -2,6 +2,8 @@ import typing as t
 from unittest.mock import ANY
 from uuid import UUID
 
+import pytest_mock
+
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.chart import PipelineChart
@@ -13,7 +15,7 @@ from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import PipelineResult
 
 
-async def test_pipeline_chart_events_success(mocker, model_name_op) -> None:
+async def test_pipeline_chart_events_success(mocker: pytest_mock.MockerFixture, model_name_op: str) -> None:
     class SomeDataSourceNode(DataSource):
         name = 'some_datasource'
 
@@ -96,7 +98,7 @@ async def test_pipeline_chart_events_success(mocker, model_name_op) -> None:
     }
 
 
-async def test_pipeline_chart_events_error(mocker, model_name_op) -> None:
+async def test_pipeline_chart_events_error(mocker: pytest_mock.MockerFixture, model_name_op: str) -> None:
     class SomeDataSourceNode(DataSource):
         name = 'some_datasource'
 
