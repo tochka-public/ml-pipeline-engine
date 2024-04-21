@@ -56,7 +56,7 @@ class SwitchCaseMark:
 def SwitchCase(  # noqa:  N802,RUF100
     switch: NodeLike[t.Any],
     cases: t.List[t.Tuple[CaseLabel, NodeLike[NodeResultT]]],
-    name: str = None,
+    name: t.Optional[str] = None,
 ) -> t.Type[NodeResultT]:
     return t.cast(t.Any, SwitchCaseMark(switch, cases, name))
 

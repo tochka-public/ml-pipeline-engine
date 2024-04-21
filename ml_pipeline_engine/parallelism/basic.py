@@ -15,7 +15,7 @@ class SingletonMeta(type):
     metaclass because it is best suited for this purpose.
     """
 
-    _instances = {}
+    _instances: t.ClassVar[t.Dict] = {}
 
     def __call__(cls, *args: t.Any, **kwargs: t.Any) -> SingletonMetaT:
         """

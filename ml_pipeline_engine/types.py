@@ -310,7 +310,7 @@ class DAGRunLockManagerLike(t.Protocol):
     A manager object to store and manage locks related to NodeIds
     """
 
-    lock_store: t.Dict[str, asyncio.Event] = {}
+    lock_store: t.ClassVar[t.Dict[str, asyncio.Event]] = {}
 
     @abc.abstractmethod
     def get_lock(self, node_id: NodeId) -> asyncio.Event:
