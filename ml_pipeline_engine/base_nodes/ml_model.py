@@ -11,5 +11,5 @@ class MLModelBase(NodeBase):
 
     node_type = NodeType.ml_model.value
 
-    def predict(self, *args: t.Any, **kwargs: t.Any):
+    def predict(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         raise NotImplementedError('Method predict() is not implemented')

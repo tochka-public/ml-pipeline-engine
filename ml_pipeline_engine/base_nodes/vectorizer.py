@@ -11,5 +11,5 @@ class FeatureVectorizerBase(NodeBase):
 
     node_type = NodeType.vectorizer.value
 
-    def vectorize(self, *args: t.Any, **kwargs: t.Any):
+    def vectorize(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         raise NotImplementedError('Method vectorize() is not implemented')

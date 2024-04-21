@@ -14,7 +14,7 @@ class ProcessorBase(NodeBase):
 
     node_type = NodeType.processor.value
 
-    def process(self, *args: t.Any, **kwargs: t.Any):
+    def process(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         raise NotImplementedError('Method process() is not implemented')
 
 

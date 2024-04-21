@@ -11,5 +11,5 @@ class FeatureBase(NodeBase):
 
     node_type = NodeType.feature.value
 
-    def extract(self, *args: t.Any, **kwargs: t.Any):
+    def extract(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         raise NotImplementedError('Method extract() is not implemented')

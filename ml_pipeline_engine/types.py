@@ -211,16 +211,16 @@ class PipelineContextLike(t.Protocol):
     meta: t.Dict[str, t.Any]
     artifact_store: 'ArtifactStoreLike'
 
-    async def emit_on_node_start(self, node_id: NodeId):
+    async def emit_on_node_start(self, node_id: NodeId) -> t.Any:
         ...
 
-    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[Exception]):
+    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[Exception]) -> t.Any:
         ...
 
-    async def emit_on_pipeline_start(self):
+    async def emit_on_pipeline_start(self) -> t.Any:
         ...
 
-    async def emit_on_pipeline_complete(self, result: PipelineResult):
+    async def emit_on_pipeline_complete(self, result: PipelineResult) -> t.Any:
         ...
 
     # TODO: Remove it in the future!
@@ -274,7 +274,7 @@ class DAGCacheManagerLike(t.Protocol):
     """
 
     @abc.abstractmethod
-    def save(self, node_id: NodeId, data: t.Any):
+    def save(self, node_id: NodeId, data: t.Any) -> t.Any:
         ...
 
     @abc.abstractmethod

@@ -136,11 +136,11 @@ def build_node(
 
     if inspect.iscoroutinefunction(getattr(node, run_method)):
 
-        async def class_method(*args: t.Any, **kwargs: t.Any):
+        async def class_method(*args: t.Any, **kwargs: t.Any) -> t.Any:
             return await getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
 
     else:
-        def class_method(*args: t.Any, **kwargs: t.Any):
+        def class_method(*args: t.Any, **kwargs: t.Any) -> t.Any:
             return getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
 
     class_name = class_name or f'Generic{node.__name__}'

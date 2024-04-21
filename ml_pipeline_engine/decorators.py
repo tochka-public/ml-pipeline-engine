@@ -6,10 +6,10 @@ from ml_pipeline_engine.exceptions import DataSourceCollectError
 from ml_pipeline_engine.logs import logger_decorators as logger
 
 
-def guard_datasource_error(name: str = None, title: str = None):
-    def _guard_datasource_error(func: t.Callable):
+def guard_datasource_error(name: str = None, title: str = None) -> t.Callable:
+    def _guard_datasource_error(func: t.Callable) -> t.Callable:
         @functools.wraps(func)
-        def wrapper(*args: t.Any, **kwargs: t.Any):
+        def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
             is_empty_names = name is None and title is None
             if args and isinstance(args[0], DataSource):
                 assert is_empty_names, 'Не нужно явно указывать имя источника данных, если используется DataSource'
@@ -26,7 +26,7 @@ def guard_datasource_error(name: str = None, title: str = None):
                     name = _name
                     title = _title
 
-                    def collect(self):
+                    def collect(self) -> t.Any:
                         raise NotImplementedError
 
                 data_source = _LegacyDataSource()

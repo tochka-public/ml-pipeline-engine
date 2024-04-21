@@ -11,7 +11,7 @@ class Ident(ProcessorBase):
     name = 'ident'
     verbose_name = 'Identity'
 
-    def process(self, num: float):
+    def process(self, num: float) -> float:
         return num
 
 
@@ -22,7 +22,7 @@ class SwitchStmt(ProcessorBase):
     name = 'switch_stmt'
     verbose_name = 'Условие для switch'
 
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> str:
         if num < 0.0:
             return 'invert'
         return 'nested_switch'
@@ -35,7 +35,7 @@ class Invert(ProcessorBase):
     name = 'invert'
     verbose_name = 'Инвертор'
 
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return -num
 
 
@@ -46,7 +46,7 @@ class NestedSwitchStmt(ProcessorBase):
     name = 'nested_switch_stmt'
     verbose_name = 'Условие для вложенного switch'
 
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> str:
         if num == 1.0:
             return 'double'
         return 'triple'
@@ -59,7 +59,7 @@ class DoubleNumber(ProcessorBase):
     name = 'double_number'
     verbose_name = 'Удвоение числа'
 
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return num * 2
 
 
@@ -70,7 +70,7 @@ class TripleNumber(ProcessorBase):
     name = 'triple_number'
     verbose_name = 'Умножение числа на 3'
 
-    def process(self, num: Input(Ident)):
+    def process(self, num: Input(Ident)) -> float:
         return num * 3
 
 
@@ -91,7 +91,7 @@ class Add3Node(ProcessorBase):
     name = 'add_3'
     verbose_name = 'Прибавление числа 3'
 
-    def process(self, num: NestedSwitchCase):
+    def process(self, num: NestedSwitchCase) -> float:
         return num + 3
 
 
@@ -112,7 +112,7 @@ class Result(ProcessorBase):
     name = 'result'
     verbose_name = 'Результат'
 
-    def process(self, num: SomeSwitchCase, num2: Input(Ident)):
+    def process(self, num: SomeSwitchCase, num2: Input(Ident)) -> float:
         return num + num2
 
 

@@ -9,7 +9,7 @@ class Cache(DAGCacheManagerLike):
     def __init__(self) -> None:
         self._cache = {}
 
-    def save(self, node_id: NodeId, data: t.Any):
+    def save(self, node_id: NodeId, data: t.Any) -> None:
         self._cache[node_id] = copy.deepcopy(data)
 
     def load(self, node_id: NodeId) -> t.Any:

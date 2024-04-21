@@ -23,10 +23,10 @@ class ArtifactFileDoesNotExist(ArtifactDoesNotExist):
     pass
 
 
-def dont_use_for_prod(func: t.Callable):
+def dont_use_for_prod(func: t.Callable) -> t.Callable[..., t.Any]:
 
     @functools.wraps(func)
-    async def wrap(*args: t.Any, **kwargs: t.Any):
+    async def wrap(*args: t.Any, **kwargs: t.Any) -> t.Any:
         warnings.warn(f'Функция {func.__name__} предназначена для локального использования', stacklevel=1)
         return await func(*args, **kwargs)
 

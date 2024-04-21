@@ -11,7 +11,7 @@ class PoolExecutorRegistry(BasePoolExecutorRegistry):
         if not self._pool_executor or self._pool_executor._shutdown:
             raise RuntimeError('Исполнение невозможно без указания пула потоков')
 
-    def auto_init(self):
+    def auto_init(self) -> None:
         self.register_pool_executor(ThreadPoolExecutor())
 
 

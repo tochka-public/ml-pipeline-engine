@@ -5,6 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 from ml_pipeline_engine.logs import logger_parallelism as logger
 
+SingletonMetaT = t.TypeVar('SingletonMetaT', bound='SingletonMeta')
+
 
 class SingletonMeta(type):
     """
@@ -15,8 +17,7 @@ class SingletonMeta(type):
 
     _instances = {}
 
-    # todo(lukmanova_e): check the return type
-    def __call__(cls, *args: t.Any, **kwargs: t.Any) -> t.Any:
+    def __call__(cls, *args: t.Any, **kwargs: t.Any) -> SingletonMetaT:
         """
         Possible changes to the value of the `__init__` argument do not affect
         the returned instance.
