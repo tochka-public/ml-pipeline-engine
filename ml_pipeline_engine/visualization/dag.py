@@ -171,5 +171,5 @@ def build_static(config: schema.GraphConfig, target_dir: pathlib.Path) -> None:
 
     config = json.dumps(config.as_dict(), ensure_ascii=False, indent=2)
 
-    with open(target_dir / 'data.js', 'w', encoding='utf-8') as file:
+    with pathlib.Path(target_dir / 'data.js').open('w', encoding='utf-8') as file:
         file.write(f'window.__GRAPH_DATA__ = {config}')

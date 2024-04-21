@@ -1,5 +1,4 @@
 import functools
-import os
 import typing as t
 import warnings
 from enum import Enum
@@ -44,7 +43,7 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         path = Path(self.artifact_dir / model_name / str(self.ctx.pipeline_id))
 
         if not path.exists():
-            os.makedirs(path)
+            path.mkdir(parents=True)
 
         return path
 
@@ -56,7 +55,7 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         if len(self._get_glob(node_id)):
             raise ArtifactFileAlreadyExists(f'Artifact file for {node_id} already exists')
 
-        with open(self._ensure_dir() / f'{node_id}.{fmt.value}', 'wb') as file:
+        with Path(self._ensure_dir() / f'{node_id}.{fmt.value}').open('wb') as file:
             serializer_factory.from_data_format(fmt).dump(data, file)
 
     @dont_use_for_prod
@@ -66,5 +65,5 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         if not len(glob):
             raise ArtifactFileDoesNotExist(f'Artifact file for {node_id} does not exist')
 
-        with open(glob[0], 'rb') as file:
+        with Path(glob[0]).open('rb') as file:
             return serializer_factory.from_extension(glob[0].suffix[1:]).load(file)
