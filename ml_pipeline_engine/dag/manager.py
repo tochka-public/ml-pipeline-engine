@@ -380,7 +380,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             if self.node_storage.exists_processed_node(node_id):
                 continue
 
-            elif await self._is_ready_to_run(dag, node_id):
+            if await self._is_ready_to_run(dag, node_id):
                 logger.debug('Узел готов к обработке node_id=%s', node_id)
 
                 if self._is_switch(dag, node_id):
