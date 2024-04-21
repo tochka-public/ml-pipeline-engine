@@ -465,8 +465,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                                         start_from_node_id,
                                         node_result_id,
                                     )
-                                    # todo(lukmanova_e): left here to think how to rearrange the line
-                                    self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data  # noqa
+                                    start_node = self.dag.graph.nodes[start_from_node_id]
+                                    start_node[NodeField.additional_data] = node_result.data
 
                                     node_result = await self._run_dag(dag=recurrent_subgraph)
 
