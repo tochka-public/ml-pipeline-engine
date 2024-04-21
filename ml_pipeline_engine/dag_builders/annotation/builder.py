@@ -120,7 +120,7 @@ class AnnotationDAGBuilder:
 
         self._node_map[get_node_id(node)] = node
 
-    def _add_node_pair_to_dag(self, source_node_id: NodeId, dest_node_id: NodeId, **edge_data) -> None:
+    def _add_node_pair_to_dag(self, source_node_id: NodeId, dest_node_id: NodeId, **edge_data: t.Any) -> None:
         """
         Добавить в граф пару узлов, связанных ребром
         """

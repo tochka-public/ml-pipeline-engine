@@ -41,7 +41,7 @@ class DAGConcurrentManagerLock(DAGRunLockManagerLike):
         return self.lock_store[node_id]
 
 
-def cache_key(prefix, _, *args, **kwargs) -> t.Type[tuple]:
+def cache_key(prefix: str, _: t.Any, *args: t.Any, **kwargs: t.Any) -> t.Type[tuple]:
     """Custom func key generation excluding 'self'."""
     return hashkey(*args, prefix, **kwargs)
 
@@ -127,7 +127,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Получить связный подграф между двумя заданными узлами графа с удаленными ребрами условных операторов
         """
 
-        def _filter(u, v) -> bool:
+        def _filter(u: str, v: str) -> bool:
             """
             Удаляет ребра с меткой EdgeField.case_branch из subgraph_view
 
@@ -137,7 +137,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             """
             return not self.dag.graph.edges[u, v].get(EdgeField.case_branch)
 
-        def _filter_node(u) -> bool:
+        def _filter_node(u: str) -> bool:
             """
             Удаляет ноды с меткой NodeField.is_first_success_pool из subgraph_view
 
@@ -238,7 +238,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         self,
         node_id: NodeId,
         force_default: bool,
-        **kwargs,
+        **kwargs: t.Any,
     ) -> t.Union[NodeResultT, t.Any]:
         """
         Запуск ноды с дополнительной обработкой

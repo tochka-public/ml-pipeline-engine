@@ -1,9 +1,7 @@
 import abc
+import typing as t
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
-from typing import Optional
-from typing import Union
 
 from ml_pipeline_engine.logs import logger_parallelism as logger
 
@@ -18,7 +16,7 @@ class SingletonMeta(type):
     _instances = {}
 
     # todo(lukmanova_e): check the return type
-    def __call__(cls, *args, **kwargs) -> Any:
+    def __call__(cls, *args: t.Any, **kwargs: t.Any) -> t.Any:
         """
         Possible changes to the value of the `__init__` argument do not affect
         the returned instance.
@@ -29,13 +27,13 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 
-PoolExecutorT = Union[ProcessPoolExecutor, ThreadPoolExecutor]
+PoolExecutorT = t.Union[ProcessPoolExecutor, ThreadPoolExecutor]
 
 
 class PoolExecutorRegistry(metaclass=SingletonMeta):
 
     def __init__(self) -> None:
-        self._pool_executor: Optional[PoolExecutorT] = None
+        self._pool_executor: t.Optional[PoolExecutorT] = None
 
     @abc.abstractmethod
     def is_ready(self) -> None:

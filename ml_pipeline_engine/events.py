@@ -23,7 +23,7 @@ class EventManagerBase:
 class EventSourceMixin:
     _get_event_managers: t.Callable[..., t.List[t.Type[EventManagerLike]]]
 
-    async def _emit(self, event_name: str, **kwargs):
+    async def _emit(self, event_name: str, **kwargs: t.Any):
         for mgr in self._get_event_managers():
             callback = getattr(mgr, event_name, None)
 

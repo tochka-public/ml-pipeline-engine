@@ -1,14 +1,15 @@
 import functools
+import typing as t
 
 from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.exceptions import DataSourceCollectError
 from ml_pipeline_engine.logs import logger_decorators as logger
 
 
-def guard_datasource_error(name=None, title=None):
-    def _guard_datasource_error(func):
+def guard_datasource_error(name: str = None, title: str = None):
+    def _guard_datasource_error(func: t.Callable):
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: t.Any, **kwargs: t.Any):
             is_empty_names = name is None and title is None
             if args and isinstance(args[0], DataSource):
                 assert is_empty_names, 'Не нужно явно указывать имя источника данных, если используется DataSource'

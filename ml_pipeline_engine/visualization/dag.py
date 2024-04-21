@@ -1,13 +1,8 @@
 import inspect
 import json
 import pathlib
+import typing as t
 import warnings
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import TypeVar
-from typing import Union
 
 from ml_pipeline_engine import const
 from ml_pipeline_engine.node import get_callable_run_method
@@ -18,9 +13,9 @@ from ml_pipeline_engine.types import NodeLike
 from ml_pipeline_engine.visualization import schema
 from ml_pipeline_engine.visualization.utils import copy_resources
 
-_HexColorT = TypeVar('_HexColorT', bound=str)
-_NodeTypeT = TypeVar('_NodeTypeT', bound=Union[str, NodeType])
-_NodeColorsT = Dict[_NodeTypeT, _HexColorT]
+_HexColorT = t.TypeVar('_HexColorT', bound=str)
+_NodeTypeT = t.TypeVar('_NodeTypeT', bound=t.Union[str, NodeType])
+_NodeColorsT = t.Dict[_NodeTypeT, _HexColorT]
 
 
 class GraphConfigImpl:
@@ -28,14 +23,14 @@ class GraphConfigImpl:
     def __init__(self, dag: DAGLike) -> None:
         self._dag = dag
 
-    def _get_node(self, node_id: NodeId) -> Type[NodeLike]:
+    def _get_node(self, node_id: NodeId) -> t.Type[NodeLike]:
         """
         Get a node object. Sometimes it can be None if we work with an artificial node
         """
         return self._dag.node_map.get(node_id)
 
     @staticmethod
-    def _get_node_relative_path(node: Type[NodeLike]) -> str:
+    def _get_node_relative_path(node: t.Type[NodeLike]) -> str:
         """
         Generate relative path for a node
         """
@@ -52,7 +47,7 @@ class GraphConfigImpl:
         line_number = inspect.getsourcelines(node)[-1]
         return f'{file_path}.py#L{line_number}'
 
-    def _generate_nodes(self) -> List[schema.Node]:
+    def _generate_nodes(self) -> t.List[schema.Node]:
         """
         Generate physical and artificial nodes
         """
@@ -92,7 +87,7 @@ class GraphConfigImpl:
 
         return nodes
 
-    def _generate_edges(self) -> List[schema.Edge]:
+    def _generate_edges(self) -> t.List[schema.Edge]:
         """
         Generate edges between physical and artificial nodes
         """
@@ -101,7 +96,7 @@ class GraphConfigImpl:
             for source, target in self._dag.graph.edges
         ]
 
-    def _generate_node_types(self, node_colors: Optional[_NodeColorsT] = None) -> Dict[str, schema.NodeType]:
+    def _generate_node_types(self, node_colors: t.Optional[_NodeColorsT] = None) -> t.Dict[str, schema.NodeType]:
         """
         Generate all node types.
         Will skip nodes without type.
@@ -135,10 +130,10 @@ class GraphConfigImpl:
     def generate(
         self,
         name: str,
-        verbose_name: Optional[str] = None,
-        repo_link: Optional[str] = None,
-        node_colors: Optional[_NodeColorsT] = None,
-        **kwargs,
+        verbose_name: t.Optional[str] = None,
+        repo_link: t.Optional[str] = None,
+        node_colors: t.Optional[_NodeColorsT] = None,
+        **kwargs: t.Any,
     ) -> schema.GraphConfig:
         """
         Generate a config for graph visualizer

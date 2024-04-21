@@ -11,5 +11,5 @@ class DataSource(NodeBase):
 
     node_type = NodeType.datasource.value
 
-    def collect(self, *args, **kwargs) -> t.Any:
+    def collect(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         raise NotImplementedError('Method collect() is not implemented')

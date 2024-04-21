@@ -1,9 +1,6 @@
 import pathlib
+import typing as t
 from dataclasses import dataclass
-from typing import Dict
-from typing import Optional
-from typing import Type
-from typing import Union
 
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.manager import DAGConcurrentManagerLock
@@ -27,9 +24,9 @@ class DAG(DAGLike):
     output_node: NodeId
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
-    node_map: Dict[NodeId, NodeLike]
-    retry_policy: Type[RetryPolicyLike] = DagRetryPolicy
-    run_manager: Type[DAGRunManagerLike] = DAGRunConcurrentManager
+    node_map: t.Dict[NodeId, NodeLike]
+    retry_policy: t.Type[RetryPolicyLike] = DagRetryPolicy
+    run_manager: t.Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
     def _start_runtime_validation(self) -> None:
         self._validate_pool_executors()
@@ -57,9 +54,9 @@ class DAG(DAGLike):
     def visualize(  # type: ignore
         self,
         name: str,
-        verbose_name: Optional[str] = None,
-        target_dir: Optional[Union[pathlib.Path, str]] = None,
-        **kwargs,
+        verbose_name: t.Optional[str] = None,
+        target_dir: t.Optional[t.Union[pathlib.Path, str]] = None,
+        **kwargs: t.Any,
     ) -> None:
         """
         Create a static for graph visualization

@@ -60,14 +60,14 @@ def get_callable_run_method(node: NodeLike) -> t.Callable:
     return node
 
 
-def run_node_default(node: NodeLike[NodeResultT], **kwargs) -> t.Type[NodeResultT]:
+def run_node_default(node: NodeLike[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Запуск получения дефолтного значения узла
     """
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeLike[NodeResultT], *args, **kwargs) -> t.Type[NodeResultT]:
+async def run_node(node: NodeLike[NodeResultT], *args: t.Any, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Функция для запуска узла.
     Запуск учитывает наличие тега для декларирования запуска узлов.
@@ -110,7 +110,7 @@ def build_node(
     class_name: t.Optional[str] = None,
     atts: t.Optional[t.Dict[str, t.Any]] = None,
     dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
-    **target_dependencies,
+    **target_dependencies: t.Any,
 ) -> t.Type[NodeLike]:
     """
     Функция создает новый узел графа на основе generic-узлов.
@@ -136,11 +136,11 @@ def build_node(
 
     if inspect.iscoroutinefunction(getattr(node, run_method)):
 
-        async def class_method(*args, **kwargs):
+        async def class_method(*args: t.Any, **kwargs: t.Any):
             return await getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
 
     else:
-        def class_method(*args, **kwargs):
+        def class_method(*args: t.Any, **kwargs: t.Any):
             return getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
 
     class_name = class_name or f'Generic{node.__name__}'

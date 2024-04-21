@@ -1,5 +1,5 @@
+import typing as t
 from enum import Enum
-from typing import Optional
 
 
 class NodeErrorType(str, Enum):
@@ -7,7 +7,7 @@ class NodeErrorType(str, Enum):
 
 
 class DataSourceCollectError(Exception):
-    def __init__(self, source_title: str, source_name: Optional[str] = None, *args) -> None:
+    def __init__(self, source_title: str, source_name: t.Optional[str] = None, *args: t.Any) -> None:
         super().__init__(args)
         self.source_title = source_title
         self.source_name = source_name

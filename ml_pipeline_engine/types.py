@@ -35,7 +35,7 @@ class RetryProtocol(t.Protocol):
     exceptions: t.ClassVar[t.Optional[t.Tuple[t.Type[BaseException], ...]]] = None
     use_default: t.ClassVar[bool] = False
 
-    def get_default(self, **kwargs) -> NodeResultT:
+    def get_default(self, **kwargs: t.Any) -> NodeResultT:
         ...
 
 
@@ -258,7 +258,7 @@ class ArtifactStoreLike(t.Protocol):
     Хранилище артефактов - результатов расчета узлов
     """
 
-    def __init__(self, ctx: PipelineContextLike, *args, **kwargs) -> None:
+    def __init__(self, ctx: PipelineContextLike, *args: t.Any, **kwargs: t.Any) -> None:
         ...
 
     async def save(self, node_id: NodeId, data: t.Any) -> None:
@@ -327,7 +327,7 @@ class HiddenDictLike(t.Protocol):
         ...
 
     @abc.abstractmethod
-    def exists(self, key, with_hidden: bool = True) -> bool:
+    def exists(self, key: t.Any, with_hidden: bool = True) -> bool:
         ...
 
     @abc.abstractmethod
@@ -444,5 +444,5 @@ class DAGLike(t.Protocol[NodeResultT]):
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         ...
 
-    def visualize(self, *args, **kwargs) -> None:
+    def visualize(self, *args: t.Any, **kwargs: t.Any) -> None:
         ...

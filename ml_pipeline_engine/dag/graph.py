@@ -1,11 +1,12 @@
 import itertools
+import typing as t
 
 import networkx as nx
 
 
 class DiGraph(nx.DiGraph):
 
-    def __init__(self, is_recurrent: bool = False, **kwargs) -> None:
+    def __init__(self, is_recurrent: bool = False, **kwargs: t.Any) -> None:
         super().__init__(**kwargs)
 
         self.is_recurrent = is_recurrent
