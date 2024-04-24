@@ -23,3 +23,10 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
+  - repo: local
+    hooks:
+      - id: check-with-ruff
+        name: check-with-ruff
+        entry: bash -c 'ruff check --output-format=full --show-fixes .'
+        language: system
+        types: [python]
