@@ -1,0 +1,37 @@
+# This workflow will install ruff and uses it to lint all files.
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#using-ruff-to-lint-code
+
+name: tests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - LICENSE
+      - AUTHORS
+      - README.md
+
+jobs:
+  lint_ruff:
+    name: lint with ruff
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout changes
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
+          poetry install --no-root
+
+      - name: Lint with Ruff
+        run: |
+          ruff check --output-format=github --show-fixes .
