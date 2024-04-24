@@ -8,7 +8,7 @@ from ml_pipeline_engine.types import PipelineContextLike
 
 
 class ArtifactStore(metaclass=ABCMeta):
-    def __init__(self, ctx: PipelineContextLike, *args: t.Any, **kwargs: t.Any) -> None:
+    def __init__(self, ctx: PipelineContextLike, *_: t.Any, **__: t.Any) -> None:
         self.ctx = ctx
 
     @abstractmethod
@@ -22,7 +22,7 @@ class ArtifactStore(metaclass=ABCMeta):
 
 class SerializedArtifactStore(ArtifactStore, metaclass=ABCMeta):
     def __init__(self, ctx: PipelineContextLike, *args: t.Any, **kwargs: t.Any) -> None:
-        super().__init__(ctx=ctx, *args, **kwargs)
+        super().__init__(ctx=ctx, *args, **kwargs)  # noqa: B026
 
     @abstractmethod
     async def save(self, node_id: NodeId, data: t.Any, fmt: DataFormat = None) -> None:

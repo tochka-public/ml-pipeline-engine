@@ -55,7 +55,7 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         if len(self._get_glob(node_id)):
             raise ArtifactFileAlreadyExists(f'Artifact file for {node_id} already exists')
 
-        with Path(self._ensure_dir() / f'{node_id}.{fmt.value}').open('wb') as file:
+        with Path(self._ensure_dir() / f'{node_id}.{fmt.value}').open('wb') as file:  # noqa: ASYNC101
             serializer_factory.from_data_format(fmt).dump(data, file)
 
     @dont_use_for_prod
@@ -65,5 +65,5 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         if not len(glob):
             raise ArtifactFileDoesNotExist(f'Artifact file for {node_id} does not exist')
 
-        with Path(glob[0]).open('rb') as file:
+        with Path(glob[0]).open('rb') as file:  # noqa: ASYNC101
             return serializer_factory.from_extension(glob[0].suffix[1:]).load(file)
