@@ -46,6 +46,7 @@ class DAGNodeStorage(DAGNodeStorageLike):
     processed_nodes: HiddenDict = field(default_factory=HiddenDict)
     switch_results: HiddenDict = field(default_factory=HiddenDict)
     recurrent_subgraph: HiddenDict = field(default_factory=HiddenDict)
+    waiting_list: HiddenDict = field(default_factory=HiddenDict)
 
     def set_node_result(self, node_id: NodeId, data: t.Any) -> None:
         self.node_results.set(node_id, data)
@@ -83,7 +84,17 @@ class DAGNodeStorage(DAGNodeStorageLike):
     def exists_active_rec_subgraph(self, source: NodeId, dest: NodeId) -> bool:
         return self.processed_nodes.exists((source, dest))
 
+    def set_node_in_waiting_list(self, node_id: NodeId) -> None:
+        self.waiting_list.set(node_id, 1)
+
+    def exists_node_in_waiting_list(self, node_id: NodeId, with_hidden: bool = False) -> bool:
+        return self.waiting_list.exists(node_id, with_hidden)
+
+    def hide_node_in_waiting_list(self, node_id: NodeId) -> None:
+        self.waiting_list.hide(node_id)
+
     def hide_last_execution(self, *node_ids: NodeId) -> None:
         for node_id in node_ids:
             self.hide_processed_node(node_id)
             self.hide_node_result(node_id)
+            self.hide_node_in_waiting_list(node_id)

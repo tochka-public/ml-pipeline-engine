@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import typing as t
+from collections import defaultdict
 from collections import deque
 from contextlib import suppress
 from dataclasses import dataclass
@@ -13,9 +14,9 @@ from cachetools.keys import hashkey
 from ml_pipeline_engine.dag.enums import EdgeField
 from ml_pipeline_engine.dag.enums import NodeField
 from ml_pipeline_engine.dag.graph import DiGraph
+from ml_pipeline_engine.dag.graph import get_connected_subgraph
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
 from ml_pipeline_engine.dag.storage import DAGNodeStorage
-from ml_pipeline_engine.dag.utils import get_connected_subgraph
 from ml_pipeline_engine.exceptions import NodeErrorType
 from ml_pipeline_engine.logs import logger_manager as logger
 from ml_pipeline_engine.node import run_node
@@ -23,22 +24,33 @@ from ml_pipeline_engine.node import run_node_default
 from ml_pipeline_engine.types import CaseResult
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import DAGNodeStorageLike
-from ml_pipeline_engine.types import DAGRunLockManagerLike
 from ml_pipeline_engine.types import DAGRunManagerLike
 from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import NodeResultT
 from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import Recurrent
 
+_EventDictT = t.Dict[NodeId, asyncio.Event]
+_EventConditionT = t.Dict[NodeId, asyncio.Condition]
 
-class DAGConcurrentManagerLock(DAGRunLockManagerLike):
 
-    def __init__(self, node_ids: t.Iterable[NodeId]) -> None:
-        self.lock_store = {node_id: asyncio.Event() for node_id in node_ids}
+@dataclass
+class DAGConcurrentManagerLock:
+    node_ids: t.Iterable[NodeId]
+    event_lock_store: _EventDictT = field(
+        default_factory=functools.partial(defaultdict, asyncio.Event),
+    )
+    condition_lock_store: _EventConditionT = field(
+        default_factory=functools.partial(defaultdict, asyncio.Condition),
+    )
 
-    def get_lock(self, node_id: NodeId) -> asyncio.Event:
-        self.lock_store.setdefault(node_id, asyncio.Event())
-        return self.lock_store[node_id]
+    @property
+    def conditions(self) -> _EventConditionT:
+        return self.condition_lock_store
+
+    @property
+    def events(self) -> _EventDictT:
+        return self.event_lock_store
 
 
 def cache_key(prefix: str, _: t.Any, *args: t.Any, **kwargs: t.Any) -> t.Type[tuple]:
@@ -53,12 +65,15 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     Производит конкурентное исполнение узлов.
     """
 
-    lock_manager: DAGRunLockManagerLike
     ctx: PipelineContextLike
     dag: DAGLike
     node_storage: DAGNodeStorageLike = field(default_factory=DAGNodeStorage)
 
+    _lock_manager: DAGConcurrentManagerLock = field(init=False)
     _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        self._lock_manager = DAGConcurrentManagerLock(self.dag.node_map.keys())
 
     async def run(self) -> NodeResultT:
         return await self._run_dag(self._get_reduced_dag(self.dag.input_node, self.dag.output_node))
@@ -150,12 +165,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node), source, dest,
         )
 
-    def _get_reduced_dag_input_one_of(self, source: NodeId, dest: NodeId) -> DiGraph:
+    def _get_reduced_dag_input_one_of(self, source: NodeId, dest: NodeId, is_oneof: bool) -> DiGraph:
         """
         Получить связный подграф между двумя заданными узлами графа InputOneOf
         """
 
-        return get_connected_subgraph(nx.subgraph_view(self.dag.graph), source, dest)
+        return get_connected_subgraph(nx.subgraph_view(self.dag.graph), source, dest, is_oneof=is_oneof)
 
     def _add_case_result(self, switch_node_id: NodeId) -> None:
         """
@@ -193,7 +208,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         if self.node_storage.exists_processed_node(node_id):
             logger.debug('Node %s has been executed. Stop new execution', node_id)
 
-            event_lock = self.lock_manager.get_lock(node_id)
+            event_lock = self._lock_manager.events[node_id]
             await event_lock.wait()
 
             return self.node_storage.get_node_result(node_id)
@@ -331,23 +346,42 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return predecessors
 
-    async def _is_ready_to_run(self, dag: DiGraph, node_id: NodeId) -> bool:
+    async def _is_ready_to_execute(self, dag: DiGraph, node_id: NodeId) -> bool:
         """
-        Метод проверяет возможность запуска узла
+        Check if the node is read to be executed
         """
+
+        logger.debug('Checking if the node can be executed node_id=%s', node_id)
+
+        def exist_predecessor_results() -> bool:
+            """
+            Check if the node's predecessors have executed and the have results
+            """
+
+            for pred_node_id in self._get_predecessors(dag, node_id):
+
+                if not self.node_storage.exists_node_result(pred_node_id):
+                    return False
+
+            return True
 
         # Switch context to collect any predecessors' results to approve the function for running.
         await asyncio.sleep(0)
 
+        # FIXME: It has to be different way to check oneof subgraph's nodes. PE-22
+        if not dag.is_oneof and self.node_storage.exists_node_in_waiting_list(node_id):
+            condition = self._lock_manager.conditions[node_id]
+
+            async with condition:
+                await condition.wait_for(exist_predecessor_results)
+
+        else:
+            self.node_storage.set_node_in_waiting_list(node_id)
+
         if self.node_storage.exists_processed_node(node_id):
             return False
 
-        for pred_node_id in self._get_predecessors(dag, node_id):
-
-            if not self.node_storage.exists_node_result(pred_node_id):
-                return False
-
-        return True
+        return exist_predecessor_results()
 
     async def _run_dag(self, dag: DiGraph) -> t.Union[NodeResultT, t.Any]:  # noqa: PLR0912,PLR0915
         """
@@ -380,7 +414,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             if self.node_storage.exists_processed_node(node_id):
                 continue
 
-            if await self._is_ready_to_run(dag, node_id):
+            if await self._is_ready_to_execute(dag, node_id):
                 logger.debug('Узел готов к обработке node_id=%s', node_id)
 
                 if self._is_switch(dag, node_id):
@@ -397,7 +431,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                         name=node_id,
                     )
 
-                elif dag.nodes[node_id].get(NodeField.is_first_success):
+                elif self._is_head_of_oneof(dag, node_id):
                     logger.debug('Узел является InputOneOf node_id=%s', node_id)
 
                     coro_to_run = asyncio.create_task(
@@ -405,6 +439,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             dag=self._get_reduced_dag_input_one_of(
                                 self.dag.input_node,
                                 node_id,
+                                is_oneof=True,
                             ),
                         ),
                         name=node_id,
@@ -514,8 +549,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                             # Для искусственной остановки пайплайна помечаем текущий узел как выходной
                             node_result_id = dag_output_node
 
-                        self.node_storage.set_node_result(node_result_id, node_result)
-                        self.lock_manager.get_lock(node_result_id).set()
+                        condition = self._lock_manager.conditions[node_id]
+
+                        async with condition:
+                            self.node_storage.set_node_result(node_result_id, node_result)
+                            self._lock_manager.events[node_id].set()
+                            condition.notify_all()
 
                         # FIXME: Set new abstractions for event managers
                         await self.ctx.save_node_result(node_result_id, node_result)

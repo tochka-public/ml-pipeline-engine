@@ -3,7 +3,6 @@ import typing as t
 from dataclasses import dataclass
 
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.manager import DAGConcurrentManagerLock
 from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
 from ml_pipeline_engine.parallelism import process_pool_registry
@@ -41,14 +40,7 @@ class DAG(DAGLike):
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         self._start_runtime_validation()
 
-        run_manager = self.run_manager(
-            lock_manager=DAGConcurrentManagerLock(
-                self.node_map.keys(),
-            ),
-            dag=self,
-            ctx=ctx,
-        )
-
+        run_manager = self.run_manager(dag=self, ctx=ctx)
         return await run_manager.run()
 
     def visualize(  # type: ignore
@@ -59,7 +51,7 @@ class DAG(DAGLike):
         **kwargs: t.Any,
     ) -> None:
         """
-        Create a static for graph visualization
+        Create static files for graph visualization
 
         Args:
             name: Tech name for the dag

@@ -7,7 +7,7 @@ from ml_pipeline_engine.dag import DAG
 from ml_pipeline_engine.dag import EdgeField
 from ml_pipeline_engine.dag import NodeField
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.utils import get_connected_subgraph
+from ml_pipeline_engine.dag.graph import get_connected_subgraph
 from ml_pipeline_engine.dag_builders.annotation import errors
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGenericMark
 from ml_pipeline_engine.dag_builders.annotation.marks import InputMark
