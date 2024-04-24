@@ -436,9 +436,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                         pending_nodes, return_when=asyncio.FIRST_COMPLETED,
                     )
 
-                    for node_result in node_results:
-                        node_result_id = node_result.get_name()
-                        node_result = await node_result
+                    for node in node_results:
+                        node_result_id = node.get_name()
+                        node_result = await node
 
                         if isinstance(node_result, Recurrent):
                             max_iterations = dag.nodes[node_result_id].get(NodeField.max_iterations)
@@ -468,7 +468,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                                     start_node = self.dag.graph.nodes[start_from_node_id]
                                     start_node[NodeField.additional_data] = node_result.data
 
-                                    node_result = await self._run_dag(dag=recurrent_subgraph)
+                                    node_result = await self._run_dag(dag=recurrent_subgraph)  # noqa: PLW2901,RUF100
 
                                     if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
 
@@ -481,7 +481,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                                         self.node_storage.hide_last_execution(node_result_id)
 
-                                        node_result = await self._run_node(
+                                        node_result = await self._run_node(  # noqa: PLW2901,RUF100
                                             node_result_id,
                                             is_node_from_success_pool=self._is_node_in_oneof(dag, node_result_id),
                                             force_default=True,
