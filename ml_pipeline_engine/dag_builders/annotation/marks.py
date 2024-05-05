@@ -1,7 +1,8 @@
 import typing as t
 from dataclasses import dataclass
 
-from ml_pipeline_engine.types import CaseLabel, NodeLike
+from ml_pipeline_engine.types import CaseLabel
+from ml_pipeline_engine.types import NodeLike
 
 NodeResultT = t.TypeVar('NodeResultT')
 
@@ -21,18 +22,18 @@ class InputOneOfMark:
     nodes: t.List[NodeLike[t.Any]]
 
 
-def InputOneOf(nodes: t.List[NodeLike[NodeResultT]]) -> t.Type[NodeResultT]:  # noqa
+def InputOneOf(nodes: t.List[NodeLike[NodeResultT]]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     """
     Принимает список нод, возвращает результат первой успешно выполненной ноды
     """
     return t.cast(t.Any, InputOneOfMark(nodes))
 
 
-def InputGeneric(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa
+def InputGeneric(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     return t.cast(t.Any, InputGenericMark(node))
 
 
-def Input(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa
+def Input(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     return t.cast(t.Any, InputMark(node))
 
 
@@ -41,7 +42,7 @@ class GenericInputMark:
     node: NodeLike[t.Any]
 
 
-def GenericInput(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa
+def GenericInput(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     return t.cast(t.Any, GenericInputMark(node))
 
 
@@ -52,10 +53,10 @@ class SwitchCaseMark:
     name: str
 
 
-def SwitchCase(  # noqa
+def SwitchCase(  # noqa:  N802,RUF100
     switch: NodeLike[t.Any],
     cases: t.List[t.Tuple[CaseLabel, NodeLike[NodeResultT]]],
-    name=None,
+    name: t.Optional[str] = None,
 ) -> t.Type[NodeResultT]:
     return t.cast(t.Any, SwitchCaseMark(switch, cases, name))
 
@@ -67,7 +68,7 @@ class RecurrentSubGraphMark:
     max_iterations: int
 
 
-def RecurrentSubGraph(  # noqa
+def RecurrentSubGraph(  # noqa:  N802,RUF100
     start_node: t.Type[NodeLike[NodeResultT]],
     dest_node: t.Type[NodeLike[NodeResultT]],
     max_iterations: int,

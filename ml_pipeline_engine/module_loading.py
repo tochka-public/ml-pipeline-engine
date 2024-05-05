@@ -8,17 +8,17 @@ __all__ = [
 ]
 
 
-def _cached_import(module_path, class_name) -> t.Type:
+def _cached_import(module_path: str, class_name: str) -> t.Type:
     if not (
         (module := sys.modules.get(module_path))
         and (spec := getattr(module, '__spec__', None))
-        and getattr(spec, '_initializing', False) is False  # noqa
+        and getattr(spec, '_initializing', False) is False
     ):
         module = import_module(module_path)
     return getattr(module, class_name)
 
 
-def import_string(dotted_path) -> t.Type:
+def import_string(dotted_path: str) -> t.Type:
     try:
         module_path, class_name = dotted_path.rsplit('.', 1)
     except ValueError as err:
@@ -30,7 +30,7 @@ def import_string(dotted_path) -> t.Type:
         raise ImportError(f'Module "{module_path}" does not define a "{class_name}" attribute/class') from err
 
 
-def get_instance(cls: t.Type, *args, **kwargs) -> t.Any:
+def get_instance(cls: t.Type, *args: t.Any, **kwargs: t.Any) -> t.Any:
     default_factory = getattr(cls, 'default_factory', None)
     if default_factory is None:
         return cls(*args, **kwargs)

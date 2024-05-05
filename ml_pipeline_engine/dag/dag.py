@@ -1,23 +1,19 @@
 import pathlib
+import typing as t
 from dataclasses import dataclass
-from typing import Dict, Type, Optional, Union
 
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager, DAGConcurrentManagerLock
+from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager
 from ml_pipeline_engine.dag.retrying import DagRetryPolicy
-from ml_pipeline_engine.parallelism import (
-    process_pool_registry,
-    threads_pool_registry,
-)
-from ml_pipeline_engine.types import (
-    DAGLike,
-    DAGRunManagerLike,
-    NodeId,
-    NodeResultT,
-    NodeLike,
-    PipelineContextLike,
-    RetryPolicyLike,
-)
+from ml_pipeline_engine.parallelism import process_pool_registry
+from ml_pipeline_engine.parallelism import threads_pool_registry
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import DAGRunManagerLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeResultT
+from ml_pipeline_engine.types import PipelineContextLike
+from ml_pipeline_engine.types import RetryPolicyLike
 
 
 @dataclass()
@@ -27,9 +23,9 @@ class DAG(DAGLike):
     output_node: NodeId
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
-    node_map: Dict[NodeId, NodeLike]
-    retry_policy: Type[RetryPolicyLike] = DagRetryPolicy
-    run_manager: Type[DAGRunManagerLike] = DAGRunConcurrentManager
+    node_map: t.Dict[NodeId, NodeLike]
+    retry_policy: t.Type[RetryPolicyLike] = DagRetryPolicy
+    run_manager: t.Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
     def _start_runtime_validation(self) -> None:
         self._validate_pool_executors()
@@ -47,12 +43,12 @@ class DAG(DAGLike):
         run_manager = self.run_manager(dag=self, ctx=ctx)
         return await run_manager.run()
 
-    def visualize(  # noqa
+    def visualize(  # type: ignore
         self,
         name: str,
-        verbose_name: Optional[str] = None,
-        target_dir: Optional[Union[pathlib.Path, str]] = None,
-        **kwargs,
+        verbose_name: t.Optional[str] = None,
+        target_dir: t.Optional[t.Union[pathlib.Path, str]] = None,
+        **kwargs: t.Any,
     ) -> None:
         """
         Create static files for graph visualization
@@ -64,7 +60,8 @@ class DAG(DAGLike):
             **kwargs: Graph config kwargs
         """
 
-        from ml_pipeline_engine.visualization.dag import GraphConfigImpl, build_static
+        from ml_pipeline_engine.visualization.dag import GraphConfigImpl
+        from ml_pipeline_engine.visualization.dag import build_static
 
         config = GraphConfigImpl(self).generate(
             name=name or 'Dag',

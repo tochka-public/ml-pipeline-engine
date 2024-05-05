@@ -1,24 +1,23 @@
 from concurrent.futures import ProcessPoolExecutor
-from multiprocessing import Manager, get_context
+from multiprocessing import Manager
+from multiprocessing import get_context
 from typing import Optional
 
 from ml_pipeline_engine.logs import logger_parallelism as logger
-from ml_pipeline_engine.parallelism.basic import (
-    PoolExecutorRegistry as BasePoolExecutorRegistry,
-)
+from ml_pipeline_engine.parallelism.basic import PoolExecutorRegistry as BasePoolExecutorRegistry
 
 __all__ = ('process_pool_registry', )
 
 
 class PoolExecutorRegistry(BasePoolExecutorRegistry):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._process_manager: Optional[Manager] = None
 
     def is_ready(self) -> None:
 
-        if not self._pool_executor or self._pool_executor._shutdown_thread:  # noqa
+        if not self._pool_executor or self._pool_executor._shutdown_thread:
             raise RuntimeError('Исполнение невозможно без указания пула процессов')
 
         if not self._process_manager:

@@ -1,18 +1,17 @@
 import functools
-import os
 import typing as t
 import warnings
 from enum import Enum
 from pathlib import Path
 
 from ml_pipeline_engine.artifact_store.enums import DataFormat
-from ml_pipeline_engine.artifact_store.errors import (
-    ArtifactAlreadyExists,
-    ArtifactDoesNotExist,
-)
+from ml_pipeline_engine.artifact_store.errors import ArtifactAlreadyExists
+from ml_pipeline_engine.artifact_store.errors import ArtifactDoesNotExist
 from ml_pipeline_engine.artifact_store.serializers import serializer_factory
 from ml_pipeline_engine.artifact_store.store.base import SerializedArtifactStore
-from ml_pipeline_engine.types import NodeId, NodeResultT, PipelineContextLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeResultT
+from ml_pipeline_engine.types import PipelineContextLike
 
 
 class ArtifactFileAlreadyExists(ArtifactAlreadyExists):
@@ -23,18 +22,18 @@ class ArtifactFileDoesNotExist(ArtifactDoesNotExist):
     pass
 
 
-def dont_use_for_prod(func: t.Callable):
+def dont_use_for_prod(func: t.Callable) -> t.Callable[..., t.Any]:
 
     @functools.wraps(func)
-    async def wrap(*args, **kwargs):
-        warnings.warn(f'Функция {func.__name__} предназначена для локального использования')
+    async def wrap(*args: t.Any, **kwargs: t.Any) -> t.Any:
+        warnings.warn(f'Функция {func.__name__} предназначена для локального использования', stacklevel=1)
         return await func(*args, **kwargs)
 
     return wrap
 
 
 class FileSystemArtifactStore(SerializedArtifactStore):
-    def __init__(self, ctx: PipelineContextLike, artifact_dir: t.Union[Path, str]):
+    def __init__(self, ctx: PipelineContextLike, artifact_dir: t.Union[Path, str]) -> None:
         super().__init__(ctx)
 
         self.artifact_dir = Path(artifact_dir)
@@ -44,7 +43,7 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         path = Path(self.artifact_dir / model_name / str(self.ctx.pipeline_id))
 
         if not path.exists():
-            os.makedirs(path)
+            path.mkdir(parents=True)
 
         return path
 
@@ -56,7 +55,7 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         if len(self._get_glob(node_id)):
             raise ArtifactFileAlreadyExists(f'Artifact file for {node_id} already exists')
 
-        with open(self._ensure_dir() / f'{node_id}.{fmt.value}', 'wb') as file:
+        with Path(self._ensure_dir() / f'{node_id}.{fmt.value}').open('wb') as file:  # noqa: ASYNC101
             serializer_factory.from_data_format(fmt).dump(data, file)
 
     @dont_use_for_prod
@@ -66,5 +65,5 @@ class FileSystemArtifactStore(SerializedArtifactStore):
         if not len(glob):
             raise ArtifactFileDoesNotExist(f'Artifact file for {node_id} does not exist')
 
-        with open(glob[0], 'rb') as file:
+        with Path(glob[0]).open('rb') as file:  # noqa: ASYNC101
             return serializer_factory.from_extension(glob[0].suffix[1:]).load(file)

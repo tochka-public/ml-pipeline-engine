@@ -1,5 +1,4 @@
 import abc
-import asyncio
 import typing as t
 from dataclasses import dataclass
 from uuid import UUID
@@ -35,7 +34,7 @@ class RetryProtocol(t.Protocol):
     exceptions: t.ClassVar[t.Optional[t.Tuple[t.Type[BaseException], ...]]] = None
     use_default: t.ClassVar[bool] = False
 
-    def get_default(self, **kwargs) -> NodeResultT:
+    def get_default(self, **kwargs: t.Any) -> NodeResultT:
         ...
 
 
@@ -87,36 +86,36 @@ class NodeBase(NodeProtocol, RetryProtocol, TagProtocol):
     pass
 
 
-class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):  # noqa
+class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):
     """
     Узел общего назначения
     """
 
     process: t.Union[
         t.Callable[..., ProcessorResultT],
-        t.Callable[..., t.Awaitable[ProcessorResultT]]
+        t.Callable[..., t.Awaitable[ProcessorResultT]],
     ]
 
 
-class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):  # noqa
+class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):
     """
     Источник данных
     """
 
     collect: t.Union[
         t.Callable[..., DataSourceResultT],
-        t.Callable[..., t.Awaitable[DataSourceResultT]]
+        t.Callable[..., t.Awaitable[DataSourceResultT]],
     ]
 
 
-class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):  # noqa
+class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):
     """
     Фича
     """
 
     extract: t.Union[
         t.Callable[..., FeatureResultT],
-        t.Callable[..., t.Awaitable[FeatureResultT]]
+        t.Callable[..., t.Awaitable[FeatureResultT]],
     ]
 
 
@@ -127,7 +126,7 @@ class FeatureVectorizerLike(RetryProtocol, TagProtocol, t.Protocol[FeatureVector
 
     vectorize: t.Union[
         t.Callable[..., FeatureVectorizerResultT],
-        t.Callable[..., t.Awaitable[FeatureVectorizerResultT]]
+        t.Callable[..., t.Awaitable[FeatureVectorizerResultT]],
     ]
 
 
@@ -138,7 +137,7 @@ class MLModelLike(RetryProtocol, TagProtocol, t.Protocol[MLModelResultT]):
 
     predict: t.Union[
         t.Callable[..., MLModelResultT],
-        t.Callable[..., t.Awaitable[MLModelResultT]]
+        t.Callable[..., t.Awaitable[MLModelResultT]],
     ]
 
 
@@ -211,16 +210,16 @@ class PipelineContextLike(t.Protocol):
     meta: t.Dict[str, t.Any]
     artifact_store: 'ArtifactStoreLike'
 
-    async def emit_on_node_start(self, node_id: NodeId):
+    async def emit_on_node_start(self, node_id: NodeId) -> t.Any:
         ...
 
-    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[Exception]):
+    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[Exception]) -> t.Any:
         ...
 
-    async def emit_on_pipeline_start(self):
+    async def emit_on_pipeline_start(self) -> t.Any:
         ...
 
-    async def emit_on_pipeline_complete(self, result: PipelineResult):
+    async def emit_on_pipeline_complete(self, result: PipelineResult) -> t.Any:
         ...
 
     # TODO: Remove it in the future!
@@ -228,7 +227,7 @@ class PipelineContextLike(t.Protocol):
         ...
 
     @property
-    def model_name(self) -> ModelName:  # noqa
+    def model_name(self) -> ModelName:
         ...
 
     def _get_event_managers(self) -> t.List['EventManagerLike']:
@@ -258,7 +257,7 @@ class ArtifactStoreLike(t.Protocol):
     Хранилище артефактов - результатов расчета узлов
     """
 
-    def __init__(self, ctx: PipelineContextLike, *args, **kwargs):
+    def __init__(self, ctx: PipelineContextLike, *args: t.Any, **kwargs: t.Any) -> None:
         ...
 
     async def save(self, node_id: NodeId, data: t.Any) -> None:
@@ -274,7 +273,7 @@ class DAGCacheManagerLike(t.Protocol):
     """
 
     @abc.abstractmethod
-    def save(self, node_id: NodeId, data: t.Any):
+    def save(self, node_id: NodeId, data: t.Any) -> t.Any:
         ...
 
     @abc.abstractmethod
@@ -315,7 +314,7 @@ class HiddenDictLike(t.Protocol):
         ...
 
     @abc.abstractmethod
-    def exists(self, key, with_hidden: bool = True) -> bool:
+    def exists(self, key: t.Any, with_hidden: bool = True) -> bool:
         ...
 
     @abc.abstractmethod
@@ -444,5 +443,5 @@ class DAGLike(t.Protocol[NodeResultT]):
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         ...
 
-    def visualize(self, *args, **kwargs) -> None:
+    def visualize(self, *args: t.Any, **kwargs: t.Any) -> None:
         ...

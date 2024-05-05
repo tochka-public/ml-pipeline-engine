@@ -1,14 +1,15 @@
 import typing as t
 
-from ml_pipeline_engine.base_nodes.processors import (
-    ProcessorBase,
-    RecurrentProcessor,
-)
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    Input,
-    RecurrentSubGraph,
-)
+import pytest
+
+from ml_pipeline_engine.base_nodes.processors import ProcessorBase
+from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
+from ml_pipeline_engine.context.dag import DAGPipelineContext
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.types import AdditionalDataT
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import Recurrent
 
 
 class InvertNumber(RecurrentProcessor):
@@ -32,17 +33,17 @@ class InvertNumber(RecurrentProcessor):
 
 
 class JustPassNum(RecurrentProcessor):
-    def process(self, num: Input(InvertNumber)):
+    def process(self, num: Input(InvertNumber)) -> float:
         return num
 
 
 class DoubleNumber(RecurrentProcessor):
     use_default = True
 
-    def get_default(self):
+    def get_default(self) -> t.Any:
         ...
 
-    async def process(self, num: Input(JustPassNum)):
+    async def process(self, num: Input(JustPassNum)) -> t.Union[Recurrent, float]:
 
         if num == 3:
             return self.next_iteration(5)
@@ -64,9 +65,13 @@ recurrent_double_number = RecurrentSubGraph(
 
 
 class JustANode(ProcessorBase):
-    def process(self, num2: recurrent_double_number):
+    def process(self, num2: recurrent_double_number) -> float:
         return num2
 
 
-async def test_dag(build_dag, pipeline_context, caplog_debug):
+async def test_dag(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+    caplog_debug: pytest.LogCaptureFixture,
+) -> None:
     assert await build_dag(input_node=InvertNumber, output_node=JustANode).run(pipeline_context(num=3)) == 11

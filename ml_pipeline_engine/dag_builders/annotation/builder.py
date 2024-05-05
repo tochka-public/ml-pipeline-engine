@@ -3,31 +3,27 @@ import inspect
 import typing as t
 from collections import deque
 
-from ml_pipeline_engine.dag import DAG, EdgeField, NodeField
+from ml_pipeline_engine.dag import DAG
+from ml_pipeline_engine.dag import EdgeField
+from ml_pipeline_engine.dag import NodeField
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.graph import get_connected_subgraph
 from ml_pipeline_engine.dag_builders.annotation import errors
-from ml_pipeline_engine.dag_builders.annotation.marks import (
-    InputGenericMark,
-    InputMark,
-    InputOneOfMark,
-    RecurrentSubGraphMark,
-    SwitchCaseMark,
-)
-from ml_pipeline_engine.node import (
-    NodeTag,
-    NodeType,
-    generate_node_id,
-    get_callable_run_method,
-    get_node_id,
-)
-from ml_pipeline_engine.types import (
-    DAGLike,
-    NodeBase,
-    NodeId,
-    NodeLike,
-    RecurrentProtocol,
-)
+from ml_pipeline_engine.dag_builders.annotation.marks import InputGenericMark
+from ml_pipeline_engine.dag_builders.annotation.marks import InputMark
+from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOfMark
+from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraphMark
+from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCaseMark
+from ml_pipeline_engine.node import NodeTag
+from ml_pipeline_engine.node import NodeType
+from ml_pipeline_engine.node import generate_node_id
+from ml_pipeline_engine.node import get_callable_run_method
+from ml_pipeline_engine.node import get_node_id
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import RecurrentProtocol
 
 __all__ = [
     'build_dag',
@@ -42,7 +38,7 @@ NodeResultT = t.TypeVar('NodeResultT')
 
 
 class AnnotationDAGBuilder:
-    def __init__(self):
+    def __init__(self) -> None:
         self._dag = DiGraph()
         self._node_map: t.Dict[NodeId, NodeLike] = dict()
         self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
@@ -102,7 +98,7 @@ class AnnotationDAGBuilder:
         node = get_callable_run_method(node)
 
         inputs = []
-        for name, annotation in node.__annotations__.items():  # noqa
+        for name, annotation in node.__annotations__.items():
 
             if isinstance(annotation, InputGenericMark):
                 raise errors.NonRedefinedGenericTypeError(
@@ -124,7 +120,7 @@ class AnnotationDAGBuilder:
 
         self._node_map[get_node_id(node)] = node
 
-    def _add_node_pair_to_dag(self, source_node_id: NodeId, dest_node_id: NodeId, **edge_data) -> None:
+    def _add_node_pair_to_dag(self, source_node_id: NodeId, dest_node_id: NodeId, **edge_data: t.Any) -> None:
         """
         Добавить в граф пару узлов, связанных ребром
         """
@@ -221,13 +217,13 @@ class AnnotationDAGBuilder:
 
                     self._synthetic_nodes.append(synthetic_node_id)
                     self._dag.add_edge(
-                        synthetic_node_id, get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name}
+                        synthetic_node_id, get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name},
                     )
 
                 if isinstance(input_mark, InputMark):
                     self._add_node_to_map(input_mark.node)
                     self._add_node_pair_to_dag(
-                        get_node_id(input_mark.node), get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name}
+                        get_node_id(input_mark.node), get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name},
                     )
                     _set_visited(input_mark.node)
 
@@ -242,7 +238,7 @@ class AnnotationDAGBuilder:
                     for case_branch, case_node in input_mark.cases:
                         self._add_node_to_map(case_node)
                         self._dag.add_edge(
-                            get_node_id(case_node), switch_node_id, **{EdgeField.case_branch: case_branch}
+                            get_node_id(case_node), switch_node_id, **{EdgeField.case_branch: case_branch},
                         )
                         _set_visited(case_node)
 
@@ -279,7 +275,7 @@ class AnnotationDAGBuilder:
 
             method = get_callable_run_method(self._node_map[source])
 
-            if 'additional_data' not in method.__annotations__:  # noqa
+            if 'additional_data' not in method.__annotations__:
                 raise errors.IncorrectParamsRecurrentNode(
                     f'В {method} отсутствует системный параметр "additional_data" для получения данных от узла, '
                     'который может перезапустить подграф',
@@ -289,7 +285,7 @@ class AnnotationDAGBuilder:
             if not dest_node.use_default:
                 raise errors.IncorrectParamsRecurrentNode(
                     f'Для участия в рекуррентном подграфе {dest_node} должен устанавливать параметр use_default=True. '
-                    'Дополнительно должен быть переопределен метод get_default()'
+                    'Дополнительно должен быть переопределен метод get_default()',
                 )
 
     def _validate_graph(self) -> None:

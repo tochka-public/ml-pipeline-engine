@@ -37,6 +37,7 @@ pre-commit = ">=2.0.0"
 flake8 = ">=3.8.3"
 pytest-cov = ">=2.11.0"
 pytest-asyncio = ">=0.18.3"
+ruff = "~0.2.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -45,3 +46,86 @@ addopts = "-s -vv"
 [build-system]
 requires = ["setuptools >= 69.0"]  # nice
 build-backend = "setuptools.build_meta"
+
+[tool.autopep8]
+max_line_length = 120
+
+[tool.isort]
+combine_as_imports = false
+force_single_line = true
+force_to_top = ["ml_pipeline_engine"]
+known_local_folder = ["ml_pipeline_engine"]
+no_lines_before = ["future", "standard-library"]
+profile = "black"
+line_length=120
+
+[tool.ruff]
+line-length = 120
+target-version = 'py38'
+
+[tool.ruff.lint]
+ignore = [
+  "ANN101",  # Annotate "self" argument  (FFS)
+  "ANN102",  # Annotate "cls" argument  (FFS)
+  "ANN401",  # Disallow "Any" generic
+  "B008",  # Do not perform function call for default args definition
+  "A003",  # bulitin shadowing for class attributes
+  "PT012",  # pytest.raises should contain a single token of stmt
+  "RET501",  # Explicit return None if it is the only possible value
+  "RUF001", "RUF002", "RUF003",  # docstring related rules
+  "PLE1205",  # logging compat breaks formatting
+]
+
+select = [
+  "A",  # flake8-builtins
+  "ANN",  # flake8-annotations
+  "ARG",
+  "ASYNC",  # flake8-async
+  "B",  # flake8-bugbear
+  "COM",  # flake8-commas
+  "DTZ",  # flake8-datetimez
+  "E",  # pycodestyle [Error]
+  "ERA",  # eradicate
+  "F",  # PyFlakes
+  "I",  # isort
+  "TID252",  # flake8-tidy imports [Only to disallow relative importts]
+  "ICN001",  # flake8-import-conventions [Only disallow unconventional imports]
+  "G002",  # flake8-logging-format [Only %s rule enforcement]
+  "PERF",  # Perflint
+  "PIE",  # flake8-pie
+  "PL",  # PyLint [ALL]
+  "PT01",  # flake8-pytest-style [exlcuded 00* block that forces strange
+  "PT02",  # naming conventions and do not contribute anything meaningful :)]
+  "PTH",  # flake8-use-pathlib
+  "PYI",  # flake8-pyi
+  "RET",  # flake8-return (controvertial, consider revisiting ruleset)
+  "RSE",  # flake8-raise
+  "RUF",  # Ruff specific rules
+  "SIM2",  # flake8-simplify [conditional "expr" rules]
+  "T20",  # flake8-print (LOL)
+  "TID",  # flake8-tidy-imports,
+  "Q",  # flake8-quotes
+  "W",  # pycodestyle [Warning]
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+  "ARG001",  # fixtures are banned otherwise
+  "PLR2004", #  Use magic value in comparison
+]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+multiline-quotes = "double"
+
+
+[tool.ruff.lint.isort]
+combine-as-imports = false
+force-single-line = true
+force-to-top = ["ml_pipeline_engine"]
+known-local-folder = ["ml_pipeline_engine"]
+no-lines-before = ["future", "standard-library"]
+
+[tool.ruff.lint.pylint]
+max-args = 10

@@ -1,13 +1,16 @@
 import typing as t
 from collections import UserDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 
-from ml_pipeline_engine.types import HiddenDictLike, DAGNodeStorageLike, NodeId
+from ml_pipeline_engine.types import DAGNodeStorageLike
+from ml_pipeline_engine.types import HiddenDictLike
+from ml_pipeline_engine.types import NodeId
 
 
 class HiddenDict(UserDict, HiddenDictLike):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super().__init__(*args, **kwargs)
         self._hidden_keys: set = set()
 
@@ -17,7 +20,7 @@ class HiddenDict(UserDict, HiddenDictLike):
 
         return super().get(key)
 
-    def exists(self, key, with_hidden: bool = True) -> bool:
+    def exists(self, key: t.Any, with_hidden: bool = True) -> bool:
         if with_hidden is False and key in self._hidden_keys:
             return False
 

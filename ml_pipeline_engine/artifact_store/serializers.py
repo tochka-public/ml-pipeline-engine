@@ -2,7 +2,8 @@ import io
 import json
 import pickle
 import typing as t
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 from ml_pipeline_engine.artifact_store.enums import DataFormat
 
@@ -65,7 +66,7 @@ class SerializerFactory:
         try:
             fmt = DataFormat(extension)
         except ValueError:
-            raise SerializerInitializationError(f'No suitable serializer for {extension} extension')
+            raise SerializerInitializationError(f'No suitable serializer for {extension} extension') from None
 
         return self.from_data_format(fmt)
 

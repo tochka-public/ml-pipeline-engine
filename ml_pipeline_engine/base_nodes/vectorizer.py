@@ -1,5 +1,7 @@
-from ml_pipeline_engine.types import NodeBase
+import typing as t
+
 from ml_pipeline_engine.node.enums import NodeType
+from ml_pipeline_engine.types import NodeBase
 
 
 class FeatureVectorizerBase(NodeBase):
@@ -9,5 +11,5 @@ class FeatureVectorizerBase(NodeBase):
 
     node_type = NodeType.vectorizer.value
 
-    def vectorize(self, *args, **kwargs):
+    def vectorize(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         raise NotImplementedError('Method vectorize() is not implemented')

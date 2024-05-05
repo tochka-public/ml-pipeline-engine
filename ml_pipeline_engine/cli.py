@@ -1,5 +1,7 @@
 import pathlib
-from typing import Optional, List, Tuple
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import click
 
@@ -7,7 +9,7 @@ from ml_pipeline_engine.node.enums import NodeType
 
 
 @click.group()
-def main():
+def main() -> None:
     """Cli"""
 
 
@@ -25,11 +27,13 @@ def build_static(
     target_dir: pathlib.Path,
     repo_link: Optional[str] = None,
     color: Optional[List[Tuple[NodeType, str]]] = None,
-):
+) -> None:
     """Build static for a dag by path"""
 
     import importlib
-    from ml_pipeline_engine.visualization.dag import build_static, GraphConfigImpl
+
+    from ml_pipeline_engine.visualization.dag import GraphConfigImpl
+    from ml_pipeline_engine.visualization.dag import build_static
 
     module, dag_object_name = dag_path.rsplit(':', 1)
     module = importlib.import_module(module)

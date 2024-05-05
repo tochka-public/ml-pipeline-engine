@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from typing import Tuple, Type
+from typing import Tuple
+from typing import Type
 
-from ml_pipeline_engine.types import NodeLike, RetryPolicyLike
+from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import RetryPolicyLike
 
 
 @dataclass(frozen=True)

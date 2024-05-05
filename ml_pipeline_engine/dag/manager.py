@@ -1,35 +1,34 @@
 import asyncio
 import functools
 import typing as t
+from collections import defaultdict
 from collections import deque
 from contextlib import suppress
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 
 import networkx as nx
-
-from ml_pipeline_engine.dag.enums import EdgeField, NodeField
-from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.retrying import DagRetryPolicy
-from ml_pipeline_engine.dag.graph import get_connected_subgraph
-from ml_pipeline_engine.exceptions import NodeErrorType
-from ml_pipeline_engine.dag.storage import DAGNodeStorage
-from ml_pipeline_engine.node import run_node, run_node_default
-from ml_pipeline_engine.types import (
-    CaseResult,
-    DAGLike,
-    DAGRunManagerLike,
-    NodeId,
-    NodeResultT,
-    PipelineContextLike,
-    Recurrent,
-    DAGNodeStorageLike,
-)
-
-from ml_pipeline_engine.logs import logger_manager as logger
 from cachetools import cachedmethod
 from cachetools.keys import hashkey
-from collections import defaultdict
 
+from ml_pipeline_engine.dag.enums import EdgeField
+from ml_pipeline_engine.dag.enums import NodeField
+from ml_pipeline_engine.dag.graph import DiGraph
+from ml_pipeline_engine.dag.graph import get_connected_subgraph
+from ml_pipeline_engine.dag.retrying import DagRetryPolicy
+from ml_pipeline_engine.dag.storage import DAGNodeStorage
+from ml_pipeline_engine.exceptions import NodeErrorType
+from ml_pipeline_engine.logs import logger_manager as logger
+from ml_pipeline_engine.node import run_node
+from ml_pipeline_engine.node import run_node_default
+from ml_pipeline_engine.types import CaseResult
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import DAGNodeStorageLike
+from ml_pipeline_engine.types import DAGRunManagerLike
+from ml_pipeline_engine.types import NodeId
+from ml_pipeline_engine.types import NodeResultT
+from ml_pipeline_engine.types import PipelineContextLike
+from ml_pipeline_engine.types import Recurrent
 
 _EventDictT = t.Dict[NodeId, asyncio.Event]
 _EventConditionT = t.Dict[NodeId, asyncio.Condition]
@@ -54,7 +53,7 @@ class DAGConcurrentManagerLock:
         return self.event_lock_store
 
 
-def cache_key(prefix, _, *args, **kwargs) -> t.Type[tuple]:
+def cache_key(prefix: str, _: t.Any, *args: t.Any, **kwargs: t.Any) -> t.Type[tuple]:
     """Custom func key generation excluding 'self'."""
     return hashkey(*args, prefix, **kwargs)
 
@@ -73,7 +72,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     _lock_manager: DAGConcurrentManagerLock = field(init=False)
     _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._lock_manager = DAGConcurrentManagerLock(self.dag.node_map.keys())
 
     async def run(self) -> NodeResultT:
@@ -143,7 +142,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Получить связный подграф между двумя заданными узлами графа с удаленными ребрами условных операторов
         """
 
-        def _filter(u, v) -> bool:
+        def _filter(u: str, v: str) -> bool:
             """
             Удаляет ребра с меткой EdgeField.case_branch из subgraph_view
 
@@ -153,7 +152,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             """
             return not self.dag.graph.edges[u, v].get(EdgeField.case_branch)
 
-        def _filter_node(u) -> bool:
+        def _filter_node(u: str) -> bool:
             """
             Удаляет ноды с меткой NodeField.is_first_success_pool из subgraph_view
 
@@ -163,7 +162,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             return not self.dag.graph.nodes[u].get(NodeField.is_first_success_pool)
 
         return get_connected_subgraph(
-            nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node), source, dest
+            nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node), source, dest,
         )
 
     def _get_reduced_dag_input_one_of(self, source: NodeId, dest: NodeId, is_oneof: bool) -> DiGraph:
@@ -254,7 +253,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         self,
         node_id: NodeId,
         force_default: bool,
-        **kwargs,
+        **kwargs: t.Any,
     ) -> t.Union[NodeResultT, t.Any]:
         """
         Запуск ноды с дополнительной обработкой
@@ -278,7 +277,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 return await run_node(**kwargs, node=node)
 
-            except retry_policy.exceptions as error:
+            except retry_policy.exceptions as error:  # noqa: PERF203
                 logger.debug(
                     'Node %s will be restarted in %s seconds...',
                     node_id,
@@ -336,7 +335,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         predecessors = list(
             self._get_node_dependencies(dag, node_id)
             if self._is_switch(dag, node_id) or self._is_head_of_oneof(dag, node_id) or dag.is_recurrent
-            else self.dag.graph.predecessors(node_id)
+            else self.dag.graph.predecessors(node_id),
         )
 
         for idx, node_id in enumerate(predecessors):
@@ -384,7 +383,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return exist_predecessor_results()
 
-    async def _run_dag(self, dag: DiGraph) -> t.Union[NodeResultT, t.Any]:
+    async def _run_dag(self, dag: DiGraph) -> t.Union[NodeResultT, t.Any]:  # noqa: PLR0912,PLR0915
         """
         Запустить граф / подграф
         """
@@ -397,7 +396,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             self.node_storage.hide_last_execution(*list_node_ids)
 
         if len(list_node_ids) == 0:
-            return
+            return None
 
         dag_output_node = list_node_ids[-1]
         list_node_ids = deque(list_node_ids)
@@ -415,7 +414,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             if self.node_storage.exists_processed_node(node_id):
                 continue
 
-            elif await self._is_ready_to_execute(dag, node_id):
+            if await self._is_ready_to_execute(dag, node_id):
                 logger.debug('Узел готов к обработке node_id=%s', node_id)
 
                 if self._is_switch(dag, node_id):
@@ -472,9 +471,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                         pending_nodes, return_when=asyncio.FIRST_COMPLETED,
                     )
 
-                    for node_result in node_results:
-                        node_result_id = node_result.get_name()
-                        node_result = await node_result
+                    for node in node_results:
+                        node_result_id = node.get_name()
+                        node_result = await node
 
                         if isinstance(node_result, Recurrent):
                             max_iterations = dag.nodes[node_result_id].get(NodeField.max_iterations)
@@ -495,14 +494,16 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                                 for current_iter in range(max_iterations):
                                     logger.debug(
-                                        'Executing the %s attempt of the recurrent subgraph start_node=%s, dest_node=%s',
+                                        'Executing the %s attempt of the recurrent subgraph '
+                                        'start_node=%s, dest_node=%s',
                                         current_iter,
                                         start_from_node_id,
                                         node_result_id,
                                     )
-                                    self.dag.graph.nodes[start_from_node_id][NodeField.additional_data] = node_result.data
+                                    start_node = self.dag.graph.nodes[start_from_node_id]
+                                    start_node[NodeField.additional_data] = node_result.data
 
-                                    node_result = await self._run_dag(dag=recurrent_subgraph)
+                                    node_result = await self._run_dag(dag=recurrent_subgraph)  # noqa: PLW2901,RUF100
 
                                     if current_iter + 1 == max_iterations and isinstance(node_result, Recurrent):
 
@@ -515,7 +516,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                                         self.node_storage.hide_last_execution(node_result_id)
 
-                                        node_result = await self._run_node(
+                                        node_result = await self._run_node(  # noqa: PLW2901,RUF100
                                             node_result_id,
                                             is_node_from_success_pool=self._is_node_in_oneof(dag, node_result_id),
                                             force_default=True,
@@ -527,7 +528,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                                 self.node_storage.delete_active_rec_subgraph(start_from_node_id, node_result_id)
 
                             else:
-                                # В случае, если исполняемый узел рекуррентного подграфа не завершается ожидаемым образом,
+                                # В случае, если исполняемый узел рекуррентного подграфа
+                                # не завершается ожидаемым образом,
                                 # то его нужно вернуть обратно к управляющей конструкции
                                 logger.debug(
                                     'Finish the process of the recurrent subgraph for nodes '
@@ -562,6 +564,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 awaitable_nodes.clear()
                 list_node_ids.appendleft(node_id)
+        return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'<{self.__class__.__name__} nnodes="{len(self.dag.graph.nodes)}" nedges="{len(self.dag.graph.edges)}">'

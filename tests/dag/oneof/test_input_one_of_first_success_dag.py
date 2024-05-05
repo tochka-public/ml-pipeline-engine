@@ -1,6 +1,11 @@
+import typing as t
+
 from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputOneOf
+from ml_pipeline_engine.context.dag import DAGPipelineContext
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 
 
@@ -18,7 +23,7 @@ class SomeDataSource(DataSource):
     name = 'some_data_source'
     title = 'SomeDataSource'
 
-    def collect(self, inp: Input(SomeInput)) -> int:
+    def collect(self, _: Input(SomeInput)) -> int:
         return 110
 
 
@@ -27,7 +32,7 @@ class ErrorDataSource(DataSource):
     title = 'SomeDataSource'
 
     @guard_datasource_error()
-    def collect(self, inp: Input(SomeInput)) -> int:
+    def collect(self, _: Input(SomeInput)) -> int:
         raise Exception
 
 
@@ -69,11 +74,14 @@ class NoneVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeVectorizer), none_value: Input(NoneVectorizer)):
+    def predict(self, vec_value: Input(SomeVectorizer), none_value: Input(NoneVectorizer)) -> float:
         assert none_value is None
         return (vec_value + 30) / 100
 
 
-async def test_input_one_of_first_success_dag(pipeline_context, build_dag):
+async def test_input_one_of_first_success_dag(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
     assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75

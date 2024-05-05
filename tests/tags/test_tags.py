@@ -1,6 +1,13 @@
+import typing as t
+
+import pytest_mock
+
+from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.node.enums import NodeTag
-from ml_pipeline_engine.parallelism import processes, threads
+from ml_pipeline_engine.parallelism import processes
+from ml_pipeline_engine.parallelism import threads
+from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 
 
@@ -41,15 +48,15 @@ class SomeVectorizer(NodeBase):
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    async def predict(self, vec_value: Input(SomeVectorizer)):
+    async def predict(self, vec_value: Input(SomeVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
 async def test_tags__with_thread_process(
-    pipeline_context,
-    build_dag,
-    mocker,
-):
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+    mocker: pytest_mock.MockerFixture,
+) -> None:
     threads_get_pool_executor = mocker.spy(threads.PoolExecutorRegistry, 'get_pool_executor')
     processes_get_pool_executor = mocker.spy(processes.PoolExecutorRegistry, 'get_pool_executor')
 

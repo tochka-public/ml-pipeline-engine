@@ -1,6 +1,12 @@
-from ml_pipeline_engine.dag_builders.annotation.marks import Input, InputGeneric
+import typing as t
+
+from ml_pipeline_engine.context.dag import DAGPipelineContext
+from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.node import build_node
-from ml_pipeline_engine.types import NodeBase, NodeLike
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeLike
 
 
 class SomeInput(NodeBase):
@@ -43,7 +49,7 @@ class AnotherFeature(NodeBase):
 
 
 # Первый переопределенный подграф
-SomeParticularVectorizer = build_node(  # noqa
+SomeParticularVectorizer = build_node(
     GenericVectorizer,
     feature_value=Input(SomeCommonFeature),
     dependencies_default=dict(
@@ -52,7 +58,7 @@ SomeParticularVectorizer = build_node(  # noqa
 )
 
 # Второй переопределенный подграф
-AnotherParticularVectorizer = build_node(  # noqa
+AnotherParticularVectorizer = build_node(
     GenericVectorizer,
     feature_value=Input(AnotherFeature),
     dependencies_default=dict(
@@ -64,18 +70,21 @@ AnotherParticularVectorizer = build_node(  # noqa
 class SomeMLModel(NodeBase):
     name = 'some_model'
 
-    def predict(self, vec_value: Input(SomeParticularVectorizer)):
+    def predict(self, vec_value: Input(SomeParticularVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
 class AnotherMlModel(NodeBase):
     name = 'another_model'
 
-    def predict(self, vec_value: Input(AnotherParticularVectorizer)):
+    def predict(self, vec_value: Input(AnotherParticularVectorizer)) -> float:
         return (vec_value + 30) / 100
 
 
-async def test_reusable_nodes(build_dag, pipeline_context):
+async def test_reusable_nodes(
+    pipeline_context: t.Callable[..., DAGPipelineContext],
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
 
     # Проверяем корректность первого графа
     some_dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
