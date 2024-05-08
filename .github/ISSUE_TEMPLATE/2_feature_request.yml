@@ -1,0 +1,23 @@
+name: 💡 Feature request
+description: 'Suggest an idea for this project'
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Please give as much detail as possible about the feature you would like to suggest. 🙏
+        - Is your feature request related to a problem?
+        - What were you trying to accomplish and how would you like to do it differently?
+        - Is there something you currently cannot do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: |
+        Please outline the motivation for the proposal.
+        Why is this feature important to you? How can it benefit other users?
