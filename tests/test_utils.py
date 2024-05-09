@@ -1,12 +1,6 @@
 from uuid import UUID
 
-import pytest
-
-from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.base_nodes.feature import FeatureBase
-from ml_pipeline_engine.base_nodes.ml_model import MLModelBase
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
-from ml_pipeline_engine.base_nodes.vectorizer import FeatureVectorizerBase
 from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.node import get_run_method
@@ -42,49 +36,3 @@ async def test_run_method() -> None:
 
     assert get_run_method(SomeNode) == 'process'
     assert await run_node(SomeNode, x=10) == 10
-
-    class SomeNode(FeatureBase):
-        @staticmethod
-        def extract(x: int) -> int:
-            return x
-
-    assert get_run_method(SomeNode) == 'extract'
-    assert await run_node(SomeNode, x=10) == 10
-
-    class SomeNode(DataSource):
-        @staticmethod
-        def collect(x: int) -> int:
-            return x
-
-    assert get_run_method(SomeNode) == 'collect'
-    assert await run_node(SomeNode, x=10) == 10
-
-    class SomeNode(FeatureVectorizerBase):
-        @staticmethod
-        def vectorize(x: int) -> int:
-            return x
-
-    assert get_run_method(SomeNode) == 'vectorize'
-    assert await run_node(SomeNode, x=10) == 10
-
-    class SomeNode(MLModelBase):
-        @staticmethod
-        def predict(x: int) -> int:
-            return x
-
-    assert get_run_method(SomeNode) == 'predict'
-    assert await run_node(SomeNode, x=10) == 10
-
-
-def test_get_run_method_2_methods_error() -> None:
-    class SomeNode(NodeBase):
-        @staticmethod
-        def extract(x: int) -> int:
-            return x
-
-        @staticmethod
-        def collect(x: int) -> int:
-            return x
-
-    with pytest.raises(AssertionError):
-        get_run_method(SomeNode)

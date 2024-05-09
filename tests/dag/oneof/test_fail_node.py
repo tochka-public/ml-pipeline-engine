@@ -3,6 +3,7 @@ import typing as t
 import pytest_mock
 
 from ml_pipeline_engine.base_nodes.datasources import DataSource
+from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
@@ -10,11 +11,10 @@ from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.types import DAGLike
-from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeLike
 
 
-class SomeInput(NodeBase):
+class SomeInput(ProcessorBase):
     name = 'input'
     title = 'input'
 
@@ -37,19 +37,19 @@ FlDataSource = build_node(
 )
 
 
-class SomeFeatureGeneric(NodeBase):
+class SomeFeatureGeneric(ProcessorBase):
     title = 'feature'
 
-    def extract(self, fl_credit_history: InputGeneric(NodeLike)) -> int:
+    def process(self, fl_credit_history: InputGeneric(NodeLike)) -> int:
         # Не должно запускаться, так как fl_credit_history будет заполнено ошибкой.
         # Как следствие, эта нода обязана быть прощенной
         return len(fl_credit_history)
 
 
-class SomeFeatureFallback(NodeBase):
+class SomeFeatureFallback(ProcessorBase):
     title = 'feature_fallback'
 
-    def extract(self) -> int:
+    def process(self) -> int:
         return 777_777
 
 
@@ -60,10 +60,10 @@ SomeFeature = build_node(
 )
 
 
-class SomeMLModel(NodeBase):
+class SomeMLModel(ProcessorBase):
     name = 'some_model'
 
-    def predict(self, fl_credit_history_feature: InputOneOf([SomeFeature, SomeFeatureFallback])) -> int:
+    def process(self, fl_credit_history_feature: InputOneOf([SomeFeature, SomeFeatureFallback])) -> int:
         return fl_credit_history_feature
 
 
@@ -72,7 +72,7 @@ async def test_fail_node(
     build_dag: t.Callable[..., DAGLike],
     mocker: pytest_mock.MockerFixture,
 ) -> None:
-    extract_patch = mocker.patch.object(SomeFeatureGeneric, 'extract')
+    extract_patch = mocker.patch.object(SomeFeatureGeneric, 'process')
     dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
 
     assert await dag.run(pipeline_context(base_num=10)) == 777_777
