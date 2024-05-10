@@ -16,14 +16,12 @@ from ml_pipeline_engine.types import NodeLike
 
 class SomeInput(ProcessorBase):
     name = 'input'
-    title = 'input'
 
     def process(self, base_num: int) -> int:
         return base_num
 
 
 class FlDataSourceGeneric(DataSource):
-    title = 'source'
     name = 'source'
 
     @guard_datasource_error()
@@ -38,7 +36,7 @@ FlDataSource = build_node(
 
 
 class SomeFeatureGeneric(ProcessorBase):
-    title = 'feature'
+    name = 'feature'
 
     def process(self, fl_credit_history: InputGeneric(NodeLike)) -> int:
         # Не должно запускаться, так как fl_credit_history будет заполнено ошибкой.
@@ -47,7 +45,7 @@ class SomeFeatureGeneric(ProcessorBase):
 
 
 class SomeFeatureFallback(ProcessorBase):
-    title = 'feature_fallback'
+    name = 'feature_fallback'
 
     def process(self) -> int:
         return 777_777

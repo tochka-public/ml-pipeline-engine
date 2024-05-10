@@ -21,7 +21,6 @@ class SomeInput(ProcessorBase):
 
 class SomeDataSource(DataSource):
     name = 'some_data_source'
-    title = 'SomeDataSource'
 
     def collect(self, _: Input(SomeInput)) -> int:
         return 110
@@ -29,7 +28,6 @@ class SomeDataSource(DataSource):
 
 class ErrorDataSource(DataSource):
     name = 'some_data_source_second'
-    title = 'SomeDataSource'
 
     @guard_datasource_error()
     def collect(self, _: Input(SomeInput)) -> t.Type[Exception]:
