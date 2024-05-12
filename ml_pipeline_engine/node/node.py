@@ -39,15 +39,8 @@ def get_node_id(node: NodeLike) -> NodeId:
 
 
 def get_run_method(node: NodeLike) -> t.Optional[str]:
-    run_method = None
-
-    for method in NodeBase.RUN_METHOD_ALIASES:
-        if callable(getattr(node, method, None)):
-            if run_method is not None:
-                raise AssertionError(f'Node should have only one run method. {run_method} + {method} detected')
-            run_method = method
-
-    return run_method
+    run_method = NodeBase.RUN_METHOD_ALIAS
+    return run_method if callable(getattr(node, run_method, None)) else None
 
 
 def get_callable_run_method(node: NodeLike) -> t.Callable:
@@ -131,7 +124,7 @@ def build_node(
     run_method = get_run_method(node)
     if not run_method:
         raise RunMethodExpectedError(
-            f'Ожидается наличие хотя бы одного run-метода. methods={NodeBase.RUN_METHOD_ALIASES}',
+            f'Missing method for node execution. Expected name={NodeBase.RUN_METHOD_ALIAS}',
         )
 
     if inspect.iscoroutinefunction(getattr(node, run_method)):

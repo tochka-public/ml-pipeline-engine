@@ -2,7 +2,6 @@ import typing as t
 
 import pytest
 
-from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
@@ -21,19 +20,19 @@ class SomeInput(ProcessorBase):
         }
 
 
-class ErrorDataSource(DataSource):
+class ErrorDataSource(ProcessorBase):
     name = 'some_data_source'
 
     @guard_datasource_error()
-    def collect(self, _: Input(SomeInput)) -> t.Type[Exception]:
+    def process(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 
-class ErrorDataSourceSecond(DataSource):
+class ErrorDataSourceSecond(ProcessorBase):
     name = 'some_data_source_second'
 
     @guard_datasource_error()
-    def collect(self, _: Input(SomeInput)) -> t.Type[Exception]:
+    def process(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
 

@@ -6,10 +6,6 @@ from uuid import UUID
 import networkx as nx
 
 ProcessorResultT = t.TypeVar('ProcessorResultT')
-DataSourceResultT = t.TypeVar('DataSourceResultT')
-FeatureResultT = t.TypeVar('FeatureResultT')
-FeatureVectorizerResultT = t.TypeVar('FeatureVectorizerResultT')
-MLModelResultT = t.TypeVar('MLModelResultT')
 
 NodeResultT = t.TypeVar('NodeResultT')
 AdditionalDataT = t.TypeVar('AdditionalDataT', bound=t.Any)
@@ -68,13 +64,7 @@ class NodeProtocol(t.Protocol):
     Узел графа модели
     """
 
-    RUN_METHOD_ALIASES = (
-        'process',
-        'extract',
-        'collect',
-        'vectorize',
-        'predict',
-    )
+    RUN_METHOD_ALIAS = 'process'
 
     node_type: t.ClassVar[str] = None
     name: t.ClassVar[str] = None
@@ -97,57 +87,7 @@ class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):
     ]
 
 
-class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):
-    """
-    Источник данных
-    """
-
-    collect: t.Union[
-        t.Callable[..., DataSourceResultT],
-        t.Callable[..., t.Awaitable[DataSourceResultT]],
-    ]
-
-
-class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):
-    """
-    Фича
-    """
-
-    extract: t.Union[
-        t.Callable[..., FeatureResultT],
-        t.Callable[..., t.Awaitable[FeatureResultT]],
-    ]
-
-
-class FeatureVectorizerLike(RetryProtocol, TagProtocol, t.Protocol[FeatureVectorizerResultT]):
-    """
-    Векторизатор фичей
-    """
-
-    vectorize: t.Union[
-        t.Callable[..., FeatureVectorizerResultT],
-        t.Callable[..., t.Awaitable[FeatureVectorizerResultT]],
-    ]
-
-
-class MLModelLike(RetryProtocol, TagProtocol, t.Protocol[MLModelResultT]):
-    """
-    ML-модель
-    """
-
-    predict: t.Union[
-        t.Callable[..., MLModelResultT],
-        t.Callable[..., t.Awaitable[MLModelResultT]],
-    ]
-
-
-NodeLike = t.Union[
-    t.Type[ProcessorLike[NodeResultT]],
-    t.Type[DataSourceLike[NodeResultT]],
-    t.Type[FeatureLike[NodeResultT]],
-    t.Type[FeatureVectorizerLike[NodeResultT]],
-    t.Type[MLModelLike[NodeResultT]],
-]
+NodeLike = t.Type[ProcessorLike[NodeResultT]]
 
 
 @dataclass(frozen=True)

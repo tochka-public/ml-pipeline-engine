@@ -2,7 +2,6 @@ import typing as t
 
 import pytest_mock
 
-from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
@@ -21,11 +20,11 @@ class SomeInput(ProcessorBase):
         return base_num
 
 
-class FlDataSourceGeneric(DataSource):
+class FlDataSourceGeneric(ProcessorBase):
     name = 'source'
 
     @guard_datasource_error()
-    def collect(self, _: InputGeneric(NodeLike)) -> t.Type[Exception]:
+    def process(self, _: InputGeneric(NodeLike)) -> t.Type[Exception]:
         raise Exception
 
 

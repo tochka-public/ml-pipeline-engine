@@ -4,7 +4,6 @@ from uuid import UUID
 
 import pytest_mock
 
-from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.context.dag import DAGPipelineContext
@@ -16,10 +15,10 @@ from ml_pipeline_engine.types import PipelineResult
 
 
 async def test_pipeline_chart_events_success(mocker: pytest_mock.MockerFixture, model_name_op: str) -> None:
-    class SomeDataSourceNode(DataSource):
+    class SomeDataSourceNode(ProcessorBase):
         name = 'some_datasource'
 
-        def collect(self, x: int) -> int:
+        def process(self, x: int) -> int:
             return x * -1
 
     class SomeOutputNode(ProcessorBase):
@@ -75,7 +74,7 @@ async def test_pipeline_chart_events_success(mocker: pytest_mock.MockerFixture, 
 
     assert on_node_start.call_args_list[0].kwargs == {
         'ctx': ANY,
-        'node_id': 'datasource__some_datasource',
+        'node_id': 'processor__some_datasource',
     }
 
     assert on_node_start.call_args_list[1].kwargs == {
@@ -87,7 +86,7 @@ async def test_pipeline_chart_events_success(mocker: pytest_mock.MockerFixture, 
 
     assert on_node_complete.call_args_list[0].kwargs == {
         'ctx': ANY,
-        'node_id': 'datasource__some_datasource',
+        'node_id': 'processor__some_datasource',
         'error': None,
     }
 
@@ -99,10 +98,10 @@ async def test_pipeline_chart_events_success(mocker: pytest_mock.MockerFixture, 
 
 
 async def test_pipeline_chart_events_error(mocker: pytest_mock.MockerFixture, model_name_op: str) -> None:
-    class SomeDataSourceNode(DataSource):
+    class SomeDataSourceNode(ProcessorBase):
         name = 'some_datasource'
 
-        async def collect(self, x: int) -> int:
+        async def process(self, x: int) -> int:
             return x * -1
 
     class SomeOutputNode(ProcessorBase):
@@ -160,7 +159,7 @@ async def test_pipeline_chart_events_error(mocker: pytest_mock.MockerFixture, mo
 
     assert on_node_start.call_args_list[0].kwargs == {
         'ctx': ANY,
-        'node_id': 'datasource__some_datasource',
+        'node_id': 'processor__some_datasource',
     }
 
     assert on_node_start.call_args_list[1].kwargs == {
@@ -172,7 +171,7 @@ async def test_pipeline_chart_events_error(mocker: pytest_mock.MockerFixture, mo
 
     assert on_node_complete.call_args_list[0].kwargs == {
         'ctx': ANY,
-        'node_id': 'datasource__some_datasource',
+        'node_id': 'processor__some_datasource',
         'error': None,
     }
 
