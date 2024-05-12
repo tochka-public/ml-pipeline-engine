@@ -2,7 +2,7 @@ import typing as t
 
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation import build_dag_single
-from ml_pipeline_engine.node.base_nodes import ProcessorBase
+from ml_pipeline_engine.node import ProcessorBase
 
 
 class DoubleNumber(ProcessorBase):

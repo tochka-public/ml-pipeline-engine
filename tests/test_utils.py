@@ -1,10 +1,10 @@
 from uuid import UUID
 
+from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.node import get_run_method
 from ml_pipeline_engine.node import run_node
-from ml_pipeline_engine.node.base_nodes import ProcessorBase
 from ml_pipeline_engine.types import NodeBase
 
 
