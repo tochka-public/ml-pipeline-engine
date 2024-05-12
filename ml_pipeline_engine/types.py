@@ -66,7 +66,6 @@ class NodeProtocol(t.Protocol):
 
     node_type: t.ClassVar[str] = None
     name: t.ClassVar[str] = None
-    title: t.ClassVar[str] = None  # TODO: Remove it in the future
     verbose_name: t.ClassVar[str] = None
 
 
