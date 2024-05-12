@@ -8,13 +8,13 @@ from unittest.mock import ANY
 import pytest
 from click.testing import CliRunner
 
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.cli import build_static
 from ml_pipeline_engine.dag_builders.annotation.builder import build_dag
 from ml_pipeline_engine.dag_builders.annotation.marks import GenericInput
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 from ml_pipeline_engine.node import build_node
+from ml_pipeline_engine.node.base_nodes import ProcessorBase
 
 
 class InvertNumber(ProcessorBase):

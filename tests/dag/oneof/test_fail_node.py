@@ -2,13 +2,13 @@ import typing as t
 
 import pytest_mock
 
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.node import build_node
+from ml_pipeline_engine.node.base_nodes import ProcessorBase
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeLike
 

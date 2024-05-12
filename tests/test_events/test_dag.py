@@ -4,11 +4,11 @@ from uuid import UUID
 
 import pytest_mock
 
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation import build_dag
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.node.base_nodes import ProcessorBase
 from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import PipelineResult

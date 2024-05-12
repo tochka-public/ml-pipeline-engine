@@ -5,11 +5,11 @@ import pytest
 from tests.helpers import FactoryMocker
 from tests.helpers import call_object
 
-from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
+from ml_pipeline_engine.node.base_nodes import RecurrentProcessor
 from ml_pipeline_engine.types import AdditionalDataT
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import Recurrent
