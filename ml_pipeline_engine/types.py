@@ -5,8 +5,6 @@ from uuid import UUID
 
 import networkx as nx
 
-ProcessorResultT = t.TypeVar('ProcessorResultT')
-
 NodeResultT = t.TypeVar('NodeResultT')
 AdditionalDataT = t.TypeVar('AdditionalDataT', bound=t.Any)
 
@@ -72,22 +70,15 @@ class NodeProtocol(t.Protocol):
     verbose_name: t.ClassVar[str] = None
 
 
-class NodeBase(NodeProtocol, RetryProtocol, TagProtocol):
-    pass
-
-
-class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):
+class NodeBase(NodeProtocol, RetryProtocol, TagProtocol, t.Protocol[NodeResultT]):
     """
-    Узел общего назначения
+    Basic node interface
     """
 
     process: t.Union[
-        t.Callable[..., ProcessorResultT],
-        t.Callable[..., t.Awaitable[ProcessorResultT]],
+        t.Callable[..., NodeResultT],
+        t.Callable[..., t.Awaitable[NodeResultT]],
     ]
-
-
-NodeLike = t.Type[ProcessorLike[NodeResultT]]
 
 
 @dataclass(frozen=True)
@@ -123,7 +114,7 @@ class PipelineChartLike(t.Protocol[NodeResultT]):
     """
 
     model_name: ModelName
-    entrypoint: t.Optional[t.Union[NodeLike[NodeResultT], 'DAGLike[NodeResultT]']]
+    entrypoint: t.Optional[t.Union[NodeBase[NodeResultT], 'DAGLike[NodeResultT]']]
     event_managers: t.List[t.Type['EventManagerLike']]
     artifact_store: t.Optional[t.Type['ArtifactStoreLike']]
 
@@ -226,7 +217,7 @@ class DAGCacheManagerLike(t.Protocol):
 
 
 class RetryPolicyLike(t.Protocol):
-    node: NodeLike
+    node: NodeBase
 
     @property
     @abc.abstractmethod
@@ -373,7 +364,7 @@ class DAGLike(t.Protocol[NodeResultT]):
     graph: nx.DiGraph
     input_node: NodeId
     output_node: NodeId
-    node_map: t.Dict[NodeId, NodeLike]
+    node_map: t.Dict[NodeId, NodeBase]
     run_manager: DAGRunManagerLike
     retry_policy: RetryPolicyLike
     is_process_pool_needed: bool

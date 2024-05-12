@@ -10,7 +10,7 @@ from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.node.base_nodes import ProcessorBase
 from ml_pipeline_engine.types import DAGLike
-from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeBase
 
 
 class SomeInput(ProcessorBase):
@@ -24,7 +24,7 @@ class FlDataSourceGeneric(ProcessorBase):
     name = 'source'
 
     @guard_datasource_error()
-    def process(self, _: InputGeneric(NodeLike)) -> t.Type[Exception]:
+    def process(self, _: InputGeneric(NodeBase)) -> t.Type[Exception]:
         raise Exception
 
 
@@ -37,7 +37,7 @@ FlDataSource = build_node(
 class SomeFeatureGeneric(ProcessorBase):
     name = 'feature'
 
-    def process(self, fl_credit_history: InputGeneric(NodeLike)) -> int:
+    def process(self, fl_credit_history: InputGeneric(NodeBase)) -> int:
         # Не должно запускаться, так как fl_credit_history будет заполнено ошибкой.
         # Как следствие, эта нода обязана быть прощенной
         return len(fl_credit_history)

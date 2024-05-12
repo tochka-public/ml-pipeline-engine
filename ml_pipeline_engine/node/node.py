@@ -14,7 +14,6 @@ from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import NodeLike
 
 NodeResultT = t.TypeVar('NodeResultT')
 
@@ -27,7 +26,7 @@ def generate_node_id(prefix: str, name: t.Optional[str] = None) -> str:
     return f'{prefix}__{name if name is not None else uuid.uuid4().hex[-8:]}'
 
 
-def get_node_id(node: NodeLike) -> NodeId:
+def get_node_id(node: NodeBase) -> NodeId:
     node_type = node.node_type if getattr(node, 'node_type', None) else 'node'
 
     if getattr(node, 'name', None):
@@ -38,12 +37,12 @@ def get_node_id(node: NodeLike) -> NodeId:
     return '__'.join([node_type, node_name])
 
 
-def get_run_method(node: NodeLike) -> t.Optional[str]:
+def get_run_method(node: NodeBase) -> t.Optional[str]:
     run_method = NodeBase.RUN_METHOD_ALIAS
     return run_method if callable(getattr(node, run_method, None)) else None
 
 
-def get_callable_run_method(node: NodeLike) -> t.Callable:
+def get_callable_run_method(node: NodeBase) -> t.Callable:
     run_method_name = get_run_method(node)
 
     if run_method_name is not None:
@@ -53,14 +52,14 @@ def get_callable_run_method(node: NodeLike) -> t.Callable:
     return node
 
 
-def run_node_default(node: NodeLike[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
+def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Запуск получения дефолтного значения узла
     """
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeLike[NodeResultT], *args: t.Any, **kwargs: t.Any) -> t.Type[NodeResultT]:
+async def run_node(node: NodeBase[NodeResultT], *args: t.Any, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Функция для запуска узла.
     Запуск учитывает наличие тега для декларирования запуска узлов.
@@ -98,13 +97,13 @@ async def run_node(node: NodeLike[NodeResultT], *args: t.Any, **kwargs: t.Any) -
 
 
 def build_node(
-    node: NodeLike,
+    node: NodeBase,
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
     atts: t.Optional[t.Dict[str, t.Any]] = None,
     dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
     **target_dependencies: t.Any,
-) -> t.Type[NodeLike]:
+) -> t.Type[NodeBase]:
     """
     Функция создает новый узел графа на основе generic-узлов.
     НЕ generic узел отличается тем, что целевой метод начинает зависеть от конкретных узлов

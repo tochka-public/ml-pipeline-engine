@@ -6,7 +6,7 @@ from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.node.base_nodes import ProcessorBase
 from ml_pipeline_engine.types import DAGLike
-from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeBase
 
 
 class SomeInput(ProcessorBase):
@@ -37,7 +37,7 @@ class SomeCommonFeature(ProcessorBase):
 class GenericVectorizer(ProcessorBase):
     name = 'some_vectorizer'
 
-    async def process(self, feature_value: InputGeneric(NodeLike), const: int) -> int:
+    async def process(self, feature_value: InputGeneric(NodeBase), const: int) -> int:
         return feature_value + 20 + const
 
 

@@ -9,8 +9,8 @@ from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import DAGRunManagerLike
+from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import NodeLike
 from ml_pipeline_engine.types import NodeResultT
 from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import RetryPolicyLike
@@ -23,7 +23,7 @@ class DAG(DAGLike):
     output_node: NodeId
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
-    node_map: t.Dict[NodeId, NodeLike]
+    node_map: t.Dict[NodeId, NodeBase]
     retry_policy: t.Type[RetryPolicyLike] = DagRetryPolicy
     run_manager: t.Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
