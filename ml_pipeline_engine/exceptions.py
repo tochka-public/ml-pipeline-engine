@@ -7,10 +7,9 @@ class NodeErrorType(str, Enum):
 
 
 class DataSourceCollectError(Exception):
-    def __init__(self, source_title: str, source_name: t.Optional[str] = None, *args: t.Any) -> None:
+    def __init__(self, name: t.Optional[str] = None, *args: t.Any) -> None:
         super().__init__(args)
-        self.source_title = source_title
-        self.source_name = source_name
+        self.name = name
 
     def __str__(self) -> str:
-        return f'Не удалось получить данные из источника "{self.source_title}"'
+        return f'Не удалось получить данные из источника "{self.name}"'
