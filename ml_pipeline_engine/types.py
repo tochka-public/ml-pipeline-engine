@@ -304,121 +304,13 @@ class RetryPolicyLike(t.Protocol):
         ...
 
 
-class HiddenDictLike(t.Protocol):
-    """
-    Dict object that can hide some keys until they are set again
-    """
-
-    @abc.abstractmethod
-    def get(self, key: t.Any, with_hidden: bool = True) -> t.Any:
-        ...
-
-    @abc.abstractmethod
-    def exists(self, key: t.Any, with_hidden: bool = True) -> bool:
-        ...
-
-    @abc.abstractmethod
-    def set(self, key: t.Any, value: t.Any) -> None:
-        ...
-
-    @abc.abstractmethod
-    def hide(self, key: t.Any) -> None:
-        ...
-
-    @abc.abstractmethod
-    def delete(self, key: t.Any) -> None:
-        ...
-
-
-class DAGNodeStorageLike(t.Protocol):
-    """
-    A container for all information about node results
-    """
-
-    # FIXME: If we want to show these methods and structures, we have to declare switch in types.py,
-    #        as well as recurrent subgraph
-
-    processed_nodes: HiddenDictLike
-    node_results: HiddenDictLike
-    switch_results: HiddenDictLike
-    recurrent_subgraph: HiddenDictLike
-    waiting_list: HiddenDictLike
-
-    @abc.abstractmethod
-    def set_node_result(self, node_id: NodeId, data: t.Any) -> None:
-        ...
-
-    @abc.abstractmethod
-    def get_node_result(self, node_id: NodeId, with_hidden: bool = False) -> t.Any:
-        ...
-
-    @abc.abstractmethod
-    def hide_node_result(self, node_id: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def exists_node_result(self, node_id: NodeId, with_hidden: bool = False) -> bool:
-        ...
-
-    @abc.abstractmethod
-    def set_switch_result(self, node_id: NodeId, data: t.Any) -> t.Any:
-        ...
-
-    @abc.abstractmethod
-    def get_switch_result(self, node_id: NodeId, with_hidden: bool = False) -> t.Any:
-        ...
-
-    @abc.abstractmethod
-    def set_node_as_processed(self, node_id: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def hide_processed_node(self, node_id: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def exists_processed_node(self, node_id: NodeId, with_hidden: bool = False) -> bool:
-        ...
-
-    @abc.abstractmethod
-    def set_active_rec_subgraph(self, source: NodeId, dest: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def delete_active_rec_subgraph(self, source: NodeId, dest: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def exists_active_rec_subgraph(self, source: NodeId, dest: NodeId) -> bool:
-        ...
-
-    @abc.abstractmethod
-    def hide_last_execution(self, *node_ids: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def set_node_in_waiting_list(self, node_id: NodeId) -> None:
-        ...
-
-    @abc.abstractmethod
-    def exists_node_in_waiting_list(self, node_id: NodeId, with_hidden: bool = False) -> bool:
-        ...
-
-    @abc.abstractmethod
-    def hide_node_in_waiting_list(self, node_id: NodeId) -> None:
-        ...
-
-
 class DAGRunManagerLike(t.Protocol):
     """
     Менеджер управлением запуска графа
     """
 
-    node_storage: DAGNodeStorageLike
     ctx: PipelineContextLike
     dag: 'DAGLike'
-
-    _memorization_store: t.Dict[t.Any, t.Any]
 
     @abc.abstractmethod
     async def run(self) -> NodeResultT:

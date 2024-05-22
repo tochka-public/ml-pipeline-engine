@@ -8,3 +8,7 @@ class ClassExpectedError(BaseNodeError):
 
 class RunMethodExpectedError(BaseNodeError):
     pass
+
+
+class DefaultMethodDoesNotExistError(BaseNodeError):
+    pass

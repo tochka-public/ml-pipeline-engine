@@ -15,6 +15,8 @@ from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.logs import logger_node as logger
+
 
 NodeResultT = t.TypeVar('NodeResultT')
 
@@ -67,7 +69,7 @@ def run_node_default(node: NodeLike[NodeResultT], **kwargs: t.Any) -> t.Type[Nod
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeLike[NodeResultT], *args: t.Any, **kwargs: t.Any) -> t.Type[NodeResultT]:
+async def run_node(node: NodeLike[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Функция для запуска узла.
     Запуск учитывает наличие тега для декларирования запуска узлов.
@@ -84,9 +86,11 @@ async def run_node(node: NodeLike[NodeResultT], *args: t.Any, **kwargs: t.Any) -
     tags = node.tags or ()
 
     if inspect.iscoroutinefunction(run_method):
+        logger.debug('The node will be executed as coroutine function in the loop, node_id=%s', node_id)
         result = await run_method(*args, **kwargs)
 
     elif NodeTag.non_async in tags:
+        logger.debug('The node will be executed as sync function, node_id=%s', node_id)
         result = run_method(*args, **kwargs)
 
     else:
@@ -94,6 +98,12 @@ async def run_node(node: NodeLike[NodeResultT], *args: t.Any, **kwargs: t.Any) -
             process_pool_registry.get_pool_executor()
             if NodeTag.process in tags
             else threads_pool_registry.get_pool_executor()
+        )
+
+        logger.debug(
+            'The node will be executed using the executor, executor=%s, node_id=%s',
+            executor.__class__.__name__,
+            node_id,
         )
 
         result = await loop.run_in_executor(

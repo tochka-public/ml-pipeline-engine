@@ -25,6 +25,7 @@ def get_loggers() -> t.Tuple[logging.Logger, ...]:
         logs.logger_manager,
         logs.logger_decorators,
         logs.logger_parallelism,
+        logs.logger_manager_lock,
     )
 
 

@@ -35,5 +35,6 @@ def get_connected_subgraph(
     subgraph: DiGraph = dag.subgraph({node_id for path in nx.all_simple_paths(dag, source, dest) for node_id in path})
     subgraph.is_recurrent = is_recurrent
     subgraph.is_oneof = is_oneof
+    subgraph.name = f'{source} —> {dest}, rec={is_recurrent}, oneof={is_oneof}'
 
     return subgraph

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.manager import DAGRunConcurrentManager
-from ml_pipeline_engine.dag.retrying import DagRetryPolicy
+from ml_pipeline_engine.node.retrying import NodeRetryPolicy
 from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import DAGLike
@@ -24,7 +24,7 @@ class DAG(DAGLike):
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
     node_map: t.Dict[NodeId, NodeLike]
-    retry_policy: t.Type[RetryPolicyLike] = DagRetryPolicy
+    retry_policy: t.Type[RetryPolicyLike] = NodeRetryPolicy
     run_manager: t.Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
     def _start_runtime_validation(self) -> None:

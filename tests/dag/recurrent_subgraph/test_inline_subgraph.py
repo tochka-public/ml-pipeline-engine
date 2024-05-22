@@ -79,5 +79,6 @@ class AddNumbers(ProcessorBase):
 async def test_dag(
     pipeline_context: t.Callable[..., DAGPipelineContext],
     build_dag: t.Callable[..., DAGLike],
+    caplog_debug,
 ) -> None:
     assert await build_dag(input_node=InvertNumber, output_node=AddNumbers).run(pipeline_context(num=3.0)) == -7.8

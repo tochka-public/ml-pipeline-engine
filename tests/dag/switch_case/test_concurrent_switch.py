@@ -73,7 +73,7 @@ class Out(ProcessorBase):
         return num1 + num2
 
 
-async def test_dag_multiple_switch_cases(
+async def test_dag_concurrent_switch_cases(
     pipeline_context: t.Callable[..., DAGPipelineContext],
     build_dag: t.Callable[..., DAGLike],
     caplog_debug: pytest.LogCaptureFixture,
