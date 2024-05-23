@@ -12,8 +12,9 @@ from cachetools.keys import hashkey
 
 from ml_pipeline_engine.dag.enums import EdgeField
 from ml_pipeline_engine.dag.enums import NodeField
-from ml_pipeline_engine.dag.errors import OneOfDoesNotHaveResultError, RecurrentSubgraphDoesNotHaveResultError
+from ml_pipeline_engine.dag.errors import OneOfDoesNotHaveResultError
 from ml_pipeline_engine.dag.errors import OneOfSubgraphDagError
+from ml_pipeline_engine.dag.errors import RecurrentSubgraphDoesNotHaveResultError
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.graph import get_connected_subgraph
 from ml_pipeline_engine.dag.storage import DAGNodeStorage
@@ -52,7 +53,7 @@ class DAGConcurrentManagerLock:
     def events(self) -> _EventDictT:
         return self.event_lock_store
 
-    async def wait_for_condition(self, condition_name, condition) -> None:
+    async def wait_for_condition(self, condition_name: t.Any, condition: t.Callable) -> None:
         cond = self.conditions[condition_name]
 
         async with cond:
@@ -61,7 +62,7 @@ class DAGConcurrentManagerLock:
 
         lock_logger.debug('Unlock %s', condition_name)
 
-    async def unlock_condition(self, condition_name: str) -> None:
+    async def unlock_condition(self, condition_name: t.Any) -> None:
         """
         Send a notification to waiters
         """
@@ -171,7 +172,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Get the DAG's result or raise an error if there are any errors
         """
 
-        logger.debug('Getting the dag\'s result')
+        logger.debug('Getting the result of the dag')
 
         error = self._get_first_error_in_tasks(self._coro_tasks)
         if error:
@@ -386,7 +387,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 raise
 
-
     def _get_node_order(self, dag: DiGraph) -> t.List[NodeId]:
         """
         Calculate the order for nodes according to the dag's type
@@ -447,7 +447,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 or isinstance(self._node_storage.get_node_result(pred_node_id), Recurrent)
             ):
                 logger.debug(
-                    'The node %s cannot be executed due to absense the dependent node\'s %s result',
+                    'The node %s cannot be executed due to absense the dependent result of the node %s',
                     node_id,
                     pred_node_id,
                 )
@@ -616,13 +616,13 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         finally:
             if not to_unlock_descendants:
-                logger.debug('Skip unlocking the node\'s descendants, node_id=%s', node_id)
+                logger.debug('Skip unlocking the descendants of the node, node_id=%s', node_id)
                 self.__unlock_execution_lock(node_id)
 
                 # Unlock itself to perform the next step in the node's DAG
                 await self._lock_manager.unlock_condition(node_id)
 
-                return
+                return  # noqa: B012
 
             for node in node_ids:
                 logger.debug('Start the procedure of unlocking dependencies node_id=%s', node)

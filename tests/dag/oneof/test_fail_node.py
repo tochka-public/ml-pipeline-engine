@@ -25,7 +25,7 @@ class FlDataSourceGeneric(DataSource):
     title = 'source'
     name = 'source'
 
-    def collect(self, **__) -> t.Type[Exception]:
+    def collect(self, **__: t.Any) -> t.Type[Exception]:
         raise Exception('kek')
 
 
@@ -38,7 +38,7 @@ FlDataSource = build_node(
 class SomeFeatureGeneric(NodeBase):
     title = 'feature'
 
-    def extract(self, fl_credit_history: InputGeneric(NodeLike), **__) -> int:
+    def extract(self, fl_credit_history: InputGeneric(NodeLike), **__: t.Any) -> int:
         return len(fl_credit_history)
 
 

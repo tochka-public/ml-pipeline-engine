@@ -2,11 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.base_nodes.feature import FeatureBase
-from ml_pipeline_engine.base_nodes.ml_model import MLModelBase
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
-from ml_pipeline_engine.base_nodes.vectorizer import FeatureVectorizerBase
 from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.node import get_run_method

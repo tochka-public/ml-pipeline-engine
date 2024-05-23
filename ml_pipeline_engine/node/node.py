@@ -6,6 +6,7 @@ import uuid
 
 from ulid import ULID
 
+from ml_pipeline_engine.logs import logger_node as logger
 from ml_pipeline_engine.module_loading import get_instance
 from ml_pipeline_engine.node.enums import NodeTag
 from ml_pipeline_engine.node.errors import ClassExpectedError
@@ -15,8 +16,6 @@ from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import NodeLike
-from ml_pipeline_engine.logs import logger_node as logger
-
 
 NodeResultT = t.TypeVar('NodeResultT')
 
