@@ -64,21 +64,14 @@ def get_callable_run_method(node: NodeLike) -> t.Callable:
 
 def run_node_default(node: NodeLike[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
-    Запуск получения дефолтного значения узла
+    Get default value from the node
     """
     return get_instance(node).get_default(**kwargs)
 
 
 async def run_node(node: NodeLike[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
-    Функция для запуска узла.
-    Запуск учитывает наличие тега для декларирования запуска узлов.
-
-    Правила запуска узла:
-        1. Если узел корутина, то запускается в текущем потоке.
-           Ожидается, что если мы запускаем корутину, то под капотом не будет сложных вычислений.
-        2. Если узел не корутина, то смотрим в теги и выбираем между процессом или потоком
-        3. Если узел не корутина и тегов нет, то исполняем в потоке
+    Run a node in a specific way according to the node's tags
     """
 
     run_method = get_callable_run_method(node)
@@ -123,16 +116,15 @@ def build_node(
     **target_dependencies: t.Any,
 ) -> t.Type[NodeLike]:
     """
-    Функция создает новый узел графа на основе generic-узлов.
-    НЕ generic узел отличается тем, что целевой метод начинает зависеть от конкретных узлов
+    Build new node that inherits all properties from the basic node.
 
     Args:
-        node: Класс ноды
-        class_name: Название класса узла
-        node_name: Название ноды для соблюдения протокола
-        atts: Дополнительные атрибуты нового объекта
-        dependencies_default: Дефолтные значения для зависимостей
-        **target_dependencies: Целевые зависимости generic-зависимостей
+        node: Basic node class
+        class_name: Title for the new class node
+        node_name: Title for the node
+        atts: Any additional attrs for the new class
+        dependencies_default: Default kwargs for the run method
+        **target_dependencies: Main dependencies like other nodes
     """
 
     if not inspect.isclass(node):

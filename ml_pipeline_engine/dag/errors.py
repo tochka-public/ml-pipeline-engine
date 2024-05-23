@@ -8,3 +8,7 @@ class OneOfDoesNotHaveResultError(BaseDagError):
 
 class OneOfSubgraphDagError(BaseDagError):
     pass
+
+
+class RecurrentSubgraphDoesNotHaveResultError(BaseDagError):
+    pass

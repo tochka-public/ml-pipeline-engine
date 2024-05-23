@@ -9,18 +9,19 @@ from dataclasses import field
 import networkx as nx
 from cachetools import cachedmethod
 from cachetools.keys import hashkey
+
 from ml_pipeline_engine.dag.enums import EdgeField
 from ml_pipeline_engine.dag.enums import NodeField
-from ml_pipeline_engine.dag.errors import OneOfDoesNotHaveResultError, OneOfSubgraphDagError
+from ml_pipeline_engine.dag.errors import OneOfDoesNotHaveResultError, RecurrentSubgraphDoesNotHaveResultError
+from ml_pipeline_engine.dag.errors import OneOfSubgraphDagError
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.graph import get_connected_subgraph
-from ml_pipeline_engine.node.retrying import NodeRetryPolicy
-from ml_pipeline_engine.node.errors import DefaultMethodDoesNotExistError
 from ml_pipeline_engine.dag.storage import DAGNodeStorage
 from ml_pipeline_engine.logs import logger_manager as logger
 from ml_pipeline_engine.logs import logger_manager_lock as lock_logger
 from ml_pipeline_engine.node import run_node
 from ml_pipeline_engine.node import run_node_default
+from ml_pipeline_engine.node.retrying import NodeRetryPolicy
 from ml_pipeline_engine.types import CaseResult
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import DAGRunManagerLike
@@ -28,7 +29,6 @@ from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import NodeResultT
 from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import Recurrent
-
 
 _EventDictT = t.Dict[t.Any, asyncio.Event]
 _EventConditionT = t.Dict[t.Any, asyncio.Condition]
@@ -288,8 +288,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     async def _execute_node(
         self,
         node_id: NodeId,
-        force_default: bool = False,
         is_under_oneof: bool = False,
+        force_default: bool = False,
     ) -> t.Union[NodeResultT, t.Any]:
         """
         Execute node and save metadata
@@ -332,7 +332,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     async def __execute_node(
         self,
         node_id: NodeId,
-        force_default: bool,
+        force_default: bool = False,
         **kwargs: t.Any,
     ) -> t.Union[NodeResultT, t.Any]:
         """
@@ -340,7 +340,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         Args:
             node_id: Node id
-            force_default: Use default result or raise an exception if there isn't default method
+            force_default: If the node should return default result
             **kwargs: Key value args for the node
         """
 
@@ -351,19 +351,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         n_attempts = 1
         while True:
             try:
-                logger.debug('Start execution node_id=%s', node_id)
-
                 if force_default:
-                    if node.use_default:
-                        return run_node_default(node, **kwargs)
+                    return run_node_default(node, **kwargs)
 
-                    raise DefaultMethodDoesNotExistError
+                logger.debug('Start execution node_id=%s', node_id)
+                result = await run_node(**kwargs, node=node, node_id=node_id)
 
-                else:
-                    result = await run_node(**kwargs, node=node, node_id=node_id)
-                    logger.debug('Finish the node execution, node_id=%s', node_id)
-
-                    return result
+                logger.debug('Finish the node execution, node_id=%s', node_id)
+                return result
 
             except retry_policy.exceptions as error:  # noqa: PERF203
                 logger.debug(
@@ -390,6 +385,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     return run_node_default(node, **kwargs)
 
                 raise
+
 
     def _get_node_order(self, dag: DiGraph) -> t.List[NodeId]:
         """
@@ -463,7 +459,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
     async def _run_dag(self, dag: DiGraph, is_under_oneof: bool, dag_output_node: t.Optional[NodeId] = None) -> t.Any:
         """
-        Run subgraph
+        Run the dag.
         """
 
         logger.debug('Start DAG execution, dag=%s', str(dag))
@@ -491,8 +487,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             if is_under_oneof:
                 for local_task in local_tasks:
 
-                    # If we have an error in previous nodes, we don't need to continue OneOf subgraph.
-                    # It means the next subgraph will be executed.
+                    # If we have an error in previous nodes, we don't need to continue running OneOf subgraph.
+                    # It means the next subgraph in OneOf will be executed.
                     if self._node_storage.exists_node_error(local_task.get_name()):
 
                         self._stop_coro_tasks(local_tasks)
@@ -569,9 +565,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         self,
         node_id: NodeId,
         output_node_id: NodeId,
-        force_default: bool = False,
         is_under_oneof: bool = False,
         is_last_node: bool = False,
+        force_default: bool = False,
     ) -> None:
         """
         Method runs the node and according to the execution result orchestrates the node's locks
@@ -591,8 +587,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         try:
             result = await self._execute_node(
                 node_id,
-                force_default=force_default,
                 is_under_oneof=is_under_oneof,
+                force_default=force_default,
             )
 
             if isinstance(result, Recurrent):
@@ -706,8 +702,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 break
 
         else:
+            node = self.dag.node_map[node_id]
 
-            if isinstance(node_result, Recurrent):
+            if isinstance(node_result, Recurrent) and node.use_default:
                 logger.debug(
                     'Attempts to run a recurrent subgraph have been exceeded. '
                     'Will be used the default value start_node=%s, dest_node=%s',
@@ -722,6 +719,13 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     output_node_id=node_id,
                     is_under_oneof=is_under_oneof,
                     force_default=True,
+                )
+
+            else:
+                raise RecurrentSubgraphDoesNotHaveResultError(
+                    start_from_node_id,
+                    node_id,
+                    node_result,
                 )
 
         logger.debug(
