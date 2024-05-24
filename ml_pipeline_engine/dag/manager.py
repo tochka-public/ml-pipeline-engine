@@ -197,11 +197,13 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 if self._is_switch(pred_node_id):
                     kwargs[kwarg_name] = self._node_storage.get_node_result(
                         self._node_storage.get_switch_result(pred_node_id).node_id,
+                        with_hidden=True,
                     )
 
                 else:
                     kwargs[kwarg_name] = self._node_storage.get_node_result(
                         pred_node_id,
+                        with_hidden=True,
                     )
 
         else:
