@@ -26,7 +26,7 @@ class FlDataSourceGeneric(DataSource):
     name = 'source'
 
     def collect(self, **__: t.Any) -> t.Type[Exception]:
-        raise Exception('kek')
+        raise Exception
 
 
 FlDataSource = build_node(
