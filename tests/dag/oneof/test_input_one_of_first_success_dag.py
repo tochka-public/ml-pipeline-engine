@@ -4,7 +4,6 @@ from ml_pipeline_engine.base_nodes.datasources import DataSource
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
-from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 
@@ -31,7 +30,6 @@ class ErrorDataSource(DataSource):
     name = 'some_data_source_second'
     title = 'SomeDataSource'
 
-    @guard_datasource_error()
     def collect(self, _: Input(SomeInput)) -> int:
         raise Exception
 

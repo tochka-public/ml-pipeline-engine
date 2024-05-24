@@ -3,12 +3,13 @@ from collections import UserDict
 from dataclasses import dataclass
 from dataclasses import field
 
-from ml_pipeline_engine.types import DAGNodeStorageLike
-from ml_pipeline_engine.types import HiddenDictLike
 from ml_pipeline_engine.types import NodeId
 
 
-class HiddenDict(UserDict, HiddenDictLike):
+class HiddenDict(UserDict):
+    """
+    Dict object that can hide some keys until they are set again
+    """
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         super().__init__(*args, **kwargs)
@@ -41,7 +42,11 @@ class HiddenDict(UserDict, HiddenDictLike):
 
 
 @dataclass
-class DAGNodeStorage(DAGNodeStorageLike):
+class DAGNodeStorage:
+    """
+    A container for all information about node results
+    """
+
     node_results: HiddenDict = field(default_factory=HiddenDict)
     processed_nodes: HiddenDict = field(default_factory=HiddenDict)
     switch_results: HiddenDict = field(default_factory=HiddenDict)
@@ -59,6 +64,9 @@ class DAGNodeStorage(DAGNodeStorageLike):
 
     def exists_node_result(self, node_id: NodeId, with_hidden: bool = False) -> bool:
         return self.node_results.exists(node_id, with_hidden)
+
+    def exists_node_error(self, node_id: NodeId, with_hidden: bool = False) -> bool:
+        return isinstance(self.node_results.get(node_id, with_hidden), BaseException)
 
     def set_switch_result(self, node_id: NodeId, data: t.Any) -> t.Any:
         self.switch_results.set(node_id, data)
@@ -84,17 +92,7 @@ class DAGNodeStorage(DAGNodeStorageLike):
     def exists_active_rec_subgraph(self, source: NodeId, dest: NodeId) -> bool:
         return self.processed_nodes.exists((source, dest))
 
-    def set_node_in_waiting_list(self, node_id: NodeId) -> None:
-        self.waiting_list.set(node_id, 1)
-
-    def exists_node_in_waiting_list(self, node_id: NodeId, with_hidden: bool = False) -> bool:
-        return self.waiting_list.exists(node_id, with_hidden)
-
-    def hide_node_in_waiting_list(self, node_id: NodeId) -> None:
-        self.waiting_list.hide(node_id)
-
     def hide_last_execution(self, *node_ids: NodeId) -> None:
         for node_id in node_ids:
             self.hide_processed_node(node_id)
             self.hide_node_result(node_id)
-            self.hide_node_in_waiting_list(node_id)

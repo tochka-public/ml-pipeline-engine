@@ -7,7 +7,7 @@ from ml_pipeline_engine.types import RetryPolicyLike
 
 
 @dataclass(frozen=True)
-class DagRetryPolicy(RetryPolicyLike):
+class NodeRetryPolicy(RetryPolicyLike):
     node: NodeLike
 
     @property
@@ -21,7 +21,3 @@ class DagRetryPolicy(RetryPolicyLike):
     @property
     def exceptions(self) -> Tuple[Type[Exception], ...]:
         return self.node.exceptions or (Exception,)
-
-    @property
-    def use_default(self) -> bool:
-        return self.node.use_default

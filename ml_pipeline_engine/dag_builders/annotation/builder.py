@@ -39,7 +39,7 @@ NodeResultT = t.TypeVar('NodeResultT')
 
 class AnnotationDAGBuilder:
     def __init__(self) -> None:
-        self._dag = DiGraph()
+        self._dag = DiGraph(name='main-graph')
         self._node_map: t.Dict[NodeId, NodeLike] = dict()
         self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
         self._synthetic_nodes: t.List[NodeId] = []
@@ -192,28 +192,21 @@ class AnnotationDAGBuilder:
                 if isinstance(input_mark, InputOneOfMark):
                     first_node_in_pool = input_mark.nodes[0]
                     synthetic_node_id = generate_node_id(NodeType.input_one_of.value, get_node_id(first_node_in_pool))
-                    self._dag.add_node(synthetic_node_id, **{NodeField.is_first_success: True})
+
+                    node_id_list = [get_node_id(node) for node in input_mark.nodes]
+
+                    self._dag.add_node(
+                        synthetic_node_id, **{NodeField.is_oneof_head: True, NodeField.oneof_nodes: node_id_list},
+                    )
                     self._dag.add_edge(get_node_id(input_node), synthetic_node_id)
 
-                    node_list = input_mark.nodes
-                    for idx, node in enumerate(node_list):
-                        self._add_node_to_map(node)
-                        self._dag.add_node(get_node_id(node), **{NodeField.is_first_success_pool: True})
+                    for idx, node_id in enumerate(node_id_list):
 
-                        if idx + 1 < len(node_list):
-                            self._dag.add_edge(
-                                get_node_id(node),
-                                get_node_id(node_list[idx + 1]),
-                                **{EdgeField.is_first_success: get_node_id(first_node_in_pool)},
-                            )
-                        else:
-                            self._dag.add_edge(
-                                get_node_id(node),
-                                synthetic_node_id,
-                                **{EdgeField.is_first_success: get_node_id(first_node_in_pool)},
-                            )
+                        self._add_node_to_map(input_mark.nodes[idx])
+                        self._dag.add_node(node_id, **{NodeField.is_oneof_child: True})
+                        self._dag.add_edge(node_id, synthetic_node_id)
 
-                        _set_visited(node)
+                        _set_visited(input_mark.nodes[idx])
 
                     self._synthetic_nodes.append(synthetic_node_id)
                     self._dag.add_edge(
@@ -279,13 +272,6 @@ class AnnotationDAGBuilder:
                 raise errors.IncorrectParamsRecurrentNode(
                     f'В {method} отсутствует системный параметр "additional_data" для получения данных от узла, '
                     'который может перезапустить подграф',
-                )
-
-            dest_node = self._node_map[dest]
-            if not dest_node.use_default:
-                raise errors.IncorrectParamsRecurrentNode(
-                    f'Для участия в рекуррентном подграфе {dest_node} должен устанавливать параметр use_default=True. '
-                    'Дополнительно должен быть переопределен метод get_default()',
                 )
 
     def _validate_graph(self) -> None:
