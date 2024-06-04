@@ -7,7 +7,6 @@ from ml_pipeline_engine.dag import DAG
 from ml_pipeline_engine.dag import EdgeField
 from ml_pipeline_engine.dag import NodeField
 from ml_pipeline_engine.dag.graph import DiGraph
-from ml_pipeline_engine.dag.graph import get_connected_subgraph
 from ml_pipeline_engine.dag_builders.annotation import errors
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGenericMark
 from ml_pipeline_engine.dag_builders.annotation.marks import InputMark
@@ -165,7 +164,7 @@ class AnnotationDAGBuilder:
                 self._add_node_pair_to_dag(get_node_id(input_node), get_node_id(current_node))
                 _set_visited(input_node)
 
-            for kwarg_name, input_mark in input_marks_map:
+            for idx, (kwarg_name, input_mark) in enumerate(input_marks_map):
 
                 if isinstance(input_mark, RecurrentSubGraphMark):
                     self._add_node_to_map(input_mark.dest_node)
@@ -190,8 +189,10 @@ class AnnotationDAGBuilder:
                     _set_visited(input_mark.dest_node)
 
                 if isinstance(input_mark, InputOneOfMark):
-                    first_node_in_pool = input_mark.nodes[0]
-                    synthetic_node_id = generate_node_id(NodeType.input_one_of.value, get_node_id(first_node_in_pool))
+                    synthetic_node_id = generate_node_id(
+                        f'{NodeType.input_one_of.value}__{idx}_',
+                        get_node_id(current_node),
+                    )
 
                     node_id_list = [get_node_id(node) for node in input_mark.nodes]
 
@@ -200,13 +201,14 @@ class AnnotationDAGBuilder:
                     )
                     self._dag.add_edge(get_node_id(input_node), synthetic_node_id)
 
-                    for idx, node_id in enumerate(node_id_list):
+                    for node_idx, node_id in enumerate(node_id_list):
+                        node = input_mark.nodes[node_idx]
 
-                        self._add_node_to_map(input_mark.nodes[idx])
+                        self._add_node_to_map(node)
                         self._dag.add_node(node_id, **{NodeField.is_oneof_child: True})
                         self._dag.add_edge(node_id, synthetic_node_id)
 
-                        _set_visited(input_mark.nodes[idx])
+                        _set_visited(node)
 
                     self._synthetic_nodes.append(synthetic_node_id)
                     self._dag.add_edge(
@@ -243,19 +245,14 @@ class AnnotationDAGBuilder:
         Валидация узлов из рекуррентных подграфов
         """
 
-        for source, dest in self._recurrent_sub_graphs:
-            for node_id in get_connected_subgraph(self._dag, source, dest):
+        for _, dest in self._recurrent_sub_graphs:
+            node = self._node_map[dest]
 
-                if node_id in self._synthetic_nodes:
-                    continue
-
-                node = self._node_map[node_id]
-
-                if RecurrentProtocol not in inspect.getmro(node):
-                    raise errors.IncorrectRecurrentMixinClass(
-                        f'{node} не может быть узлом в рекуррентном подграфе, '
-                        f'так как не унаследован от {RecurrentProtocol}',
-                    )
+            if RecurrentProtocol not in inspect.getmro(node):
+                raise errors.IncorrectRecurrentMixinClass(
+                    f'{dest} не может быть узлом в рекуррентном подграфе, '
+                    f'так как не унаследован от {RecurrentProtocol}',
+                )
 
     def _validate_recurrent_nodes_params(self) -> None:
         """

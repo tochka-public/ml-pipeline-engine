@@ -13,7 +13,6 @@ from cachetools.keys import hashkey
 from ml_pipeline_engine.dag.enums import EdgeField
 from ml_pipeline_engine.dag.enums import NodeField
 from ml_pipeline_engine.dag.errors import OneOfDoesNotHaveResultError
-from ml_pipeline_engine.dag.errors import OneOfSubgraphDagError
 from ml_pipeline_engine.dag.errors import RecurrentSubgraphDoesNotHaveResultError
 from ml_pipeline_engine.dag.graph import DiGraph
 from ml_pipeline_engine.dag.graph import get_connected_subgraph
@@ -52,6 +51,12 @@ class DAGConcurrentManagerLock:
     @property
     def events(self) -> _EventDictT:
         return self.event_lock_store
+
+    async def wait_for_event(self, event_name: str) -> None:
+        await self.events[event_name].wait()
+
+    def unlock_event(self, event_name: str) -> None:
+        self.events[event_name].set()
 
     async def wait_for_condition(self, condition_name: t.Any, condition: t.Callable) -> None:
         cond = self.conditions[condition_name]
@@ -93,19 +98,21 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
     _lock_manager: DAGConcurrentManagerLock = field(init=False)
     _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
     _coro_tasks: t.Set[asyncio.Task] = field(default_factory=set)
-    _run_method_alias: str = 'run'
+    _alias_run_method: str = 'run'
+    _alias_oneof: str = 'oneof'
 
     def __post_init__(self) -> None:
         self._lock_manager = DAGConcurrentManagerLock(self.dag.node_map.keys())
 
     @staticmethod
-    def _stop_coro_tasks(coro_tasks: t.Iterable[asyncio.Task]) -> None:
+    def _stop_coro_tasks(*coro_tasks: asyncio.Task) -> None:
         """
         Stop running the coro tasks
         """
 
         for coro_task in coro_tasks:
-            if coro_task.done():
+
+            if coro_task.done() or coro_task.cancelled():
                 continue
 
             coro_task.cancel()
@@ -144,28 +151,21 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     self._get_reduced_dag(self.dag.input_node, self.dag.output_node),
                     is_under_oneof=False,
                 ),
-                self._run_method_alias,
+                self._alias_run_method,
             )
 
             await self._lock_manager.wait_for_condition(
-                self._run_method_alias,
-                self._has_dag_result,
+                self._alias_run_method,
+                lambda: (
+                    bool(self._get_first_error_in_tasks(self._coro_tasks))
+                    or self._node_storage.exists_node_result(self.dag.output_node)
+                ),
             )
 
             return self._get_dag_result()
 
         finally:
-            self._stop_coro_tasks(self._coro_tasks)
-
-    def _has_dag_result(self) -> bool:
-        """
-        Check if the dag has a result or an error
-        """
-
-        return (
-            bool(self._get_first_error_in_tasks(self._coro_tasks))
-            or self._node_storage.exists_node_result(self.dag.output_node)
-        )
+            self._stop_coro_tasks(*self._coro_tasks)
 
     def _get_dag_result(self) -> NodeResultT:
         """
@@ -301,8 +301,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         if self._node_storage.exists_processed_node(node_id):
             logger.debug('Node %s has been executed. Stop new execution', node_id)
 
-            event_lock = self._lock_manager.events[node_id]
-            await event_lock.wait()
+            await self._lock_manager.wait_for_event(node_id)
 
             return self._node_storage.get_node_result(node_id)
 
@@ -459,7 +458,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         logger.debug('The node can be executed node_id=%s', node_id)
         return True
 
-    async def _run_dag(self, dag: DiGraph, is_under_oneof: bool, dag_output_node: t.Optional[NodeId] = None) -> t.Any:
+    async def _run_dag(
+        self,
+        dag: DiGraph,
+        is_under_oneof: bool = False,
+        dag_output_node: t.Optional[NodeId] = None,
+    ) -> t.Any:
         """
         Run the dag.
         """
@@ -486,15 +490,10 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 functools.partial(self._is_ready_to_execute, dag, node_id),
             )
 
-            if is_under_oneof:
-                for local_task in local_tasks:
-
-                    # If we have an error in previous nodes, we don't need to continue running OneOf subgraph.
-                    # It means the next subgraph in OneOf will be executed.
-                    if self._node_storage.exists_node_error(local_task.get_name()):
-
-                        self._stop_coro_tasks(local_tasks)
-                        raise OneOfSubgraphDagError
+            if is_under_oneof and self.__has_subgraph_error(dag):
+                logger.debug('An error has been found in the %s', dag)
+                self._stop_coro_tasks(*local_tasks)
+                return None
 
             if self._is_switch(node_id):
                 coro_to_run = self._run_switch(node_id, is_under_oneof)
@@ -512,12 +511,25 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             local_tasks.append(self._create_task(coro_to_run, name=node_id))
 
+        logger.debug('Await for an output node output_node=%s', dag_output_node)
+
         await self._lock_manager.wait_for_condition(
             dag_output_node,
             functools.partial(self._node_storage.exists_node_result, dag_output_node),
         )
 
+        logger.debug('DAG %s has been finished', dag)
+
         return self._node_storage.get_node_result(dag_output_node, with_hidden=True)
+
+    def __has_subgraph_error(self, dag: DiGraph) -> bool:
+        """
+        Check if the subgraph has an error
+        """
+        return any([
+            self._node_storage.exists_node_error(oneof_sub_node_id)
+            for oneof_sub_node_id in dag.nodes
+        ])
 
     async def _run_oneof(self, node_id: NodeId) -> t.Any:
         """
@@ -526,23 +538,36 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         logger.debug('Prepare OneOf DAG node_id=%s', node_id)
 
-        for subgraph_node_id in self.dag.graph.nodes[node_id][NodeField.oneof_nodes]:
-            logger.debug(
-                'Prepare OneOf subgraph to start target_node_id=%s, subgraph_node_id=%s',
-                node_id,
+        for idx, subgraph_node_id in enumerate(self.dag.graph.nodes[node_id][NodeField.oneof_nodes]):
+            name = f'Oneof-subgraph[{idx}]: {subgraph_node_id} --> {node_id}'
+
+            logger.debug('Prepare %s to start', name)
+
+            oneof_dag = self._get_reduced_dag_input_one_of(
+                self.dag.input_node,
                 subgraph_node_id,
             )
 
-            with suppress(OneOfSubgraphDagError):
-
-                return await self._run_dag(
+            self._create_task(
+                name=name,
+                coro=self._run_dag(
+                    dag=oneof_dag,
                     dag_output_node=node_id,
                     is_under_oneof=True,
-                    dag=self._get_reduced_dag_input_one_of(
-                        self.dag.input_node,
-                        subgraph_node_id,
-                    ),
-                )
+                ),
+            )
+
+            await self._lock_manager.wait_for_condition(
+                f'{self._alias_oneof}-{node_id}',
+                lambda: (
+                    self.__has_subgraph_error(oneof_dag)  # noqa: B023
+                    or self._node_storage.exists_node_result(node_id)
+                ),
+            )
+
+            if not self.__has_subgraph_error(oneof_dag):
+                logger.debug('The %s has been succeeded', name)
+                return
 
         raise OneOfDoesNotHaveResultError(node_id)
 
@@ -595,10 +620,15 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             if isinstance(result, Recurrent):
                 self._create_task(
-                    self._run_recurrent_subgraph(
-                        node_id, node_result=result, is_under_oneof=is_under_oneof,
+                    name=f'rec-{node_id}',
+                    coro=self._run_recurrent_subgraph(
+                        node_id,
+                        node_result=result,
+                        is_under_oneof=is_under_oneof,
+                        # This is needed to handle synthetic nodes in OneOf subgraph.
+                        # Otherwise, the subgraph will not find the correct output node.
+                        dag_output_node=output_node_id if is_under_oneof else None,
                     ),
-                    f'recurrent-subgraph-dest-{node_id}',
                 )
 
                 # We shouldn't unlock the node's descendants if we have to perform recurrent subgraph.
@@ -617,6 +647,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 await self.ctx.save_node_result(node, result)
 
         finally:
+            if is_under_oneof:
+                await self._lock_manager.unlock_condition(f'{self._alias_oneof}-{output_node_id}')
+
             if not to_unlock_descendants:
                 logger.debug('Skip unlocking the descendants of the node, node_id=%s', node_id)
                 self.__unlock_execution_lock(node_id)
@@ -643,7 +676,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Unlock the main method in order to return the main DAG result
         """
 
-        await self._lock_manager.unlock_condition(self._run_method_alias)
+        await self._lock_manager.unlock_condition(self._alias_run_method)
 
     def __unlock_execution_lock(self, node_id: NodeId) -> None:
         """
@@ -651,14 +684,21 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         """
 
         lock_logger.debug('Unlock execution for %s if there is any concurrent execution', node_id)
-        self._lock_manager.events[node_id].set()
+        self._lock_manager.unlock_event(node_id)
 
-    async def _run_recurrent_subgraph(self, node_id: NodeId, node_result: Recurrent, is_under_oneof: bool) -> None:
+    async def _run_recurrent_subgraph(
+        self,
+        node_id: NodeId,
+        node_result: Recurrent,
+        is_under_oneof: bool,
+        dag_output_node: t.Optional[NodeId],
+    ) -> None:
         """
         Run a recurrent subgraph with
 
         Args:
             node_id: Node id as the end of the subgraph
+            dag_output_node: Precalculated output node
             node_result: Previous subgraph's result
             is_under_oneof: If the subgraph is performing under the OneOf subgraph
         """
@@ -678,29 +718,31 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         )
 
         recurrent_subgraph = get_connected_subgraph(
-            self.dag.graph, start_from_node_id, node_id, is_recurrent=True,
+            self.dag.graph, start_from_node_id, node_id, is_recurrent=True, is_oneof=is_under_oneof,
         )
 
         for current_iter in range(max_iterations):
-            logger.debug(
-                'Executing the %s attempt of the recurrent subgraph start_node=%s, dest_node=%s',
-                current_iter,
-                start_from_node_id,
-                node_id,
-            )
+            name = f'Recurrent-subgraph[attempt={current_iter}] {start_from_node_id} --> {node_id}'
+            logger.debug('Executing the %s', name)
+
             start_node = self.dag.graph.nodes[start_from_node_id]
             start_node[NodeField.additional_data] = node_result.data
 
-            node_result = await self._run_dag(dag=recurrent_subgraph, is_under_oneof=is_under_oneof)
-
-            logger.debug(
-                'Getting the result of %s attempt of the recurrent subgraph start_node=%s, dest_node=%s',
-                current_iter,
-                start_from_node_id,
-                node_id,
+            node_result = await self._run_dag(
+                dag=recurrent_subgraph,
+                dag_output_node=dag_output_node,
+                is_under_oneof=is_under_oneof,
             )
 
-            if not isinstance(node_result, Recurrent):
+            is_rec_res = isinstance(node_result, Recurrent)
+            has_errors = self.__has_subgraph_error(recurrent_subgraph)
+
+            if has_errors:
+                logger.debug('The subgraph should be stopped. There is an error in %s', name)
+                return
+
+            if not is_rec_res and not has_errors:
+                logger.debug('The subgraph should be stopped. The result has been processed for the subgraph %s', name)
                 break
 
         else:
@@ -729,12 +771,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     node_id,
                     node_result,
                 )
-
-        logger.debug(
-            'Finish the recurrent subgraph for nodes start_node=%s, dest_node=%s',
-            start_from_node_id,
-            node_id,
-        )
 
         self._node_storage.delete_active_rec_subgraph(start_from_node_id, node_id)
 

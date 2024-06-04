@@ -14,6 +14,8 @@ class DiGraph(nx.DiGraph):
         self.is_recurrent = is_recurrent
         self.is_oneof = is_oneof
 
+
+
     def __hash__(self) -> int:
         return hash(tuple(sorted(itertools.chain(*self.nodes.keys(), *self.edges.keys()))))
 
