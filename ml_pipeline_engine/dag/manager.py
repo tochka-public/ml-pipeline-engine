@@ -545,16 +545,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         logger.debug('Prepare OneOf DAG node_id=%s', node_id)
 
-        oneof_nodes = self.dag.graph.nodes[node_id][NodeField.oneof_nodes]
-
-        for idx, subgraph_node_id in enumerate(oneof_nodes):
+        for idx, subgraph_node_id in enumerate(self.dag.graph.nodes[node_id][NodeField.oneof_nodes]):
 
             oneof_dag = self._get_reduced_dag_input_one_of(
                 source=self.dag.input_node,
                 dest=subgraph_node_id,
             )
 
-            logger.debug('Prepare %s to start. OneOf result node %s', oneof_dag, node_id)
+            logger.debug('Prepare [%s]%s to start. OneOf result node %s', idx, oneof_dag, node_id)
 
             self._create_task(coro=self._run_dag(dag=oneof_dag), name=str(oneof_dag))
 
@@ -563,8 +561,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 lambda: (
                     self.__has_subgraph_error(oneof_dag)  # noqa: B023
                     or self._node_storage.exists_result_type(
-                        subgraph_node_id,
-                        exclude_type=(Recurrent,)
+                        subgraph_node_id,  # noqa: B023
+                        exclude_type=(Recurrent,),
                     )
                 ),
             )

@@ -3,12 +3,14 @@ import typing as t
 from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
 from ml_pipeline_engine.context.dag import DAGPipelineContext
+from ml_pipeline_engine.dag_builders.annotation.marks import GenericInput
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
-from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf, GenericInput
+from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.node.enums import NodeTag
 from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import Recurrent
 
 
 class MainProducer(ProcessorBase):
@@ -22,7 +24,6 @@ class Producer(ProcessorBase):
     tags = (NodeTag.non_async,)
 
     def process(self, num: Input(MainProducer), additional_data: t.Any = None) -> t.Any:
-
         if additional_data:
             return additional_data + 1
 
@@ -34,19 +35,18 @@ class ProcessLikeFactory(RecurrentProcessor):
     tags = (NodeTag.non_async,)
     kind = None
 
-    def process(self, something: GenericInput(t.Type[ProcessorBase])):
+    def process(self, something: GenericInput(t.Type[ProcessorBase])) -> t.Union[Recurrent, int]:
 
         if self.kind is None:
             raise Exception
 
-        elif self.kind == 'first':
+        if self.kind == 'first':
             return self.next_iteration(100_000)
 
-        elif self.kind == 'second':
+        if self.kind == 'second':
             return self.next_iteration(200_000)
 
-        else:
-            return something + 3
+        return something + 3
 
 
 class ProxyNodeGeneric(ProcessorBase):
@@ -98,7 +98,7 @@ class JustAnotherNode(ProcessorBase):
     tags = (NodeTag.non_async,)
 
     def process(self, third_process: Input(proxy_third_process)) -> int:
-        return third_process + 1  # noqa
+        return third_process + 1
 
 
 class OneOfGathering(ProcessorBase):
@@ -123,9 +123,8 @@ class Result(ProcessorBase):
 
 
 async def test_dag(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
-    caplog_debug,
+        pipeline_context: t.Callable[..., DAGPipelineContext],
+        build_dag: t.Callable[..., DAGLike],
 ) -> None:
     dag = build_dag(input_node=MainProducer, output_node=Result)
     assert await dag.run(pipeline_context(num=3)) == 200_005
