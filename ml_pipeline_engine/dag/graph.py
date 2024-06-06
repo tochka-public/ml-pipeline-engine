@@ -14,8 +14,17 @@ class DiGraph(nx.DiGraph):
         self.is_recurrent = is_recurrent
         self.is_oneof = is_oneof
 
+        self.source = None
+        self.dest = None
+
+        self.__hash_value = None
+
     def __hash__(self) -> int:
-        return hash(tuple(sorted(itertools.chain(*self.nodes.keys(), *self.edges.keys()))))
+        if self.__hash_value is not None:
+            return self.__hash_value
+
+        self.__hash_value = hash(tuple(sorted(itertools.chain(*self.nodes.keys(), *self.edges.keys()))))
+        return self.__hash_value
 
 
 def get_connected_subgraph(
@@ -33,8 +42,11 @@ def get_connected_subgraph(
         return t.cast(DiGraph, dag)
 
     subgraph: DiGraph = dag.subgraph({node_id for path in nx.all_simple_paths(dag, source, dest) for node_id in path})
+
     subgraph.is_recurrent = is_recurrent
     subgraph.is_oneof = is_oneof
+    subgraph.source = source
+    subgraph.dest = dest
     subgraph.name = f'{source} —> {dest}, rec={is_recurrent}, oneof={is_oneof}'
 
     return subgraph

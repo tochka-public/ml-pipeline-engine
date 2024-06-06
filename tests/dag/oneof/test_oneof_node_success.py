@@ -40,5 +40,6 @@ class OneOfNode(ProcessorBase):
 async def test_dag(
     pipeline_context: t.Callable[..., DAGPipelineContext],
     build_dag: t.Callable[..., DAGLike],
+    caplog_debug
 ) -> None:
     assert await build_dag(input_node=PassNumber, output_node=OneOfNode).run(pipeline_context(num=3)) == 11
