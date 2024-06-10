@@ -724,14 +724,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             node_result = await self._run_dag(dag=recurrent_subgraph)
 
-            is_rec_res = isinstance(node_result, Recurrent)
+            is_rec_result = isinstance(node_result, Recurrent)
             has_errors = self.__has_subgraph_error(recurrent_subgraph)
 
             if has_errors:
                 logger.debug('The subgraph should be stopped. There is an error in %s', name)
                 return
 
-            if not is_rec_res and not has_errors:
+            if not is_rec_result and not has_errors:
                 logger.debug('The subgraph should be stopped. The result has been processed for the subgraph %s', name)
                 break
 
