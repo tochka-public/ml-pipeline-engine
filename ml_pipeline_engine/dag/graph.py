@@ -20,7 +20,7 @@ class DiGraph(nx.DiGraph):
         self.__hash_value = None
 
     def __hash__(self) -> int:
-        if self.__hash_value is not None:
+        if self.__hash_value is None:
             self.__hash_value = hash(tuple(sorted(itertools.chain(*self.nodes.keys(), *self.edges.keys()))))
 
         return self.__hash_value
