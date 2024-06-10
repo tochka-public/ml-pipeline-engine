@@ -9,6 +9,7 @@ from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import EventManagerLike
 from ml_pipeline_engine.types import ModelName
 from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import PipelineChartLike
 from ml_pipeline_engine.types import PipelineId
 from ml_pipeline_engine.types import PipelineResult
 
@@ -30,7 +31,7 @@ class PipelineChartBase:
 
 
 @dataclass(frozen=True, repr=False)
-class PipelineChart(PipelineChartBase):
+class PipelineChart(PipelineChartBase, PipelineChartLike):
     """
     Основная реализация определения пайплайна ML-модели
     """

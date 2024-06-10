@@ -57,22 +57,15 @@ class RecurrentProtocol(t.Protocol):
         """
 
 
-class NodeProtocol(t.Protocol):
+class NodeBase(RetryProtocol, TagProtocol, t.Protocol[NodeResultT]):
     """
-    Узел графа модели
+    Basic node interface
     """
-
     RUN_METHOD_ALIAS = 'process'
 
     node_type: t.ClassVar[str] = None
     name: t.ClassVar[str] = None
     verbose_name: t.ClassVar[str] = None
-
-
-class NodeBase(NodeProtocol, RetryProtocol, TagProtocol, t.Protocol[NodeResultT]):
-    """
-    Basic node interface
-    """
 
     process: t.Union[
         t.Callable[..., NodeResultT],

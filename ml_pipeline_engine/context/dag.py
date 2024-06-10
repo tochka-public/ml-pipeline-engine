@@ -9,10 +9,11 @@ from ml_pipeline_engine.types import EventManagerLike
 from ml_pipeline_engine.types import ModelName
 from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import PipelineChartLike
+from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import PipelineId
 
 
-class DAGPipelineContext(EventSourceMixin):
+class DAGPipelineContext(EventSourceMixin, PipelineContextLike):
     """
     Контекст выполнения пайплайна ML-модели
     """
