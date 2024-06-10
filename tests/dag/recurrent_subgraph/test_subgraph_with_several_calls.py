@@ -38,10 +38,6 @@ class JustPassNum(RecurrentProcessor):
 
 
 class DoubleNumber(RecurrentProcessor):
-    use_default = True
-
-    def get_default(self) -> t.Any:
-        ...
 
     async def process(self, num: Input(JustPassNum)) -> t.Union[Recurrent, float]:
 

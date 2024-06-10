@@ -5,7 +5,6 @@ import pytest
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
-from ml_pipeline_engine.decorators import guard_datasource_error
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.types import DAGLike
 
@@ -23,7 +22,6 @@ class SomeInput(ProcessorBase):
 class ErrorDataSource(ProcessorBase):
     name = 'some_data_source'
 
-    @guard_datasource_error()
     def process(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 
@@ -31,7 +29,6 @@ class ErrorDataSource(ProcessorBase):
 class ErrorDataSourceSecond(ProcessorBase):
     name = 'some_data_source_second'
 
-    @guard_datasource_error()
     def process(self, _: Input(SomeInput)) -> t.Type[Exception]:
         raise Exception
 

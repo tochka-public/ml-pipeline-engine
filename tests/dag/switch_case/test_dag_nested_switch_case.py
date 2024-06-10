@@ -84,5 +84,6 @@ async def test_dag_nested_switch_case(
     expect: float,
     pipeline_context: t.Callable[..., DAGPipelineContext],
     build_dag: t.Callable[..., DAGLike],
+    caplog_debug: pytest.LogCaptureFixture,
 ) -> None:
     assert await build_dag(input_node=Ident, output_node=CaseNode).run(pipeline_context(num=input_num)) == expect

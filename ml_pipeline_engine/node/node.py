@@ -6,6 +6,7 @@ import uuid
 
 from ulid import ULID
 
+from ml_pipeline_engine.logs import logger_node as logger
 from ml_pipeline_engine.module_loading import get_instance
 from ml_pipeline_engine.node.enums import NodeTag
 from ml_pipeline_engine.node.errors import ClassExpectedError
@@ -54,21 +55,14 @@ def get_callable_run_method(node: NodeBase) -> t.Callable:
 
 def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
-    Запуск получения дефолтного значения узла
+    Get default value from the node
     """
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeBase[NodeResultT], *args: t.Any, **kwargs: t.Any) -> t.Type[NodeResultT]:
+async def run_node(node: NodeBase[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
-    Функция для запуска узла.
-    Запуск учитывает наличие тега для декларирования запуска узлов.
-
-    Правила запуска узла:
-        1. Если узел корутина, то запускается в текущем потоке.
-           Ожидается, что если мы запускаем корутину, то под капотом не будет сложных вычислений.
-        2. Если узел не корутина, то смотрим в теги и выбираем между процессом или потоком
-        3. Если узел не корутина и тегов нет, то исполняем в потоке
+    Run a node in a specific way according to the node's tags
     """
 
     run_method = get_callable_run_method(node)
@@ -76,9 +70,11 @@ async def run_node(node: NodeBase[NodeResultT], *args: t.Any, **kwargs: t.Any) -
     tags = node.tags or ()
 
     if inspect.iscoroutinefunction(run_method):
+        logger.debug('The node will be executed as coroutine function in the loop, node_id=%s', node_id)
         result = await run_method(*args, **kwargs)
 
     elif NodeTag.non_async in tags:
+        logger.debug('The node will be executed as sync function, node_id=%s', node_id)
         result = run_method(*args, **kwargs)
 
     else:
@@ -86,6 +82,12 @@ async def run_node(node: NodeBase[NodeResultT], *args: t.Any, **kwargs: t.Any) -
             process_pool_registry.get_pool_executor()
             if NodeTag.process in tags
             else threads_pool_registry.get_pool_executor()
+        )
+
+        logger.debug(
+            'The node will be executed using the executor, executor=%s, node_id=%s',
+            executor.__class__.__name__,
+            node_id,
         )
 
         result = await loop.run_in_executor(
@@ -101,20 +103,21 @@ def build_node(
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
     atts: t.Optional[t.Dict[str, t.Any]] = None,
+    attrs: t.Optional[t.Dict[str, t.Any]] = None,
     dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
     **target_dependencies: t.Any,
 ) -> t.Type[NodeBase]:
     """
-    Функция создает новый узел графа на основе generic-узлов.
-    НЕ generic узел отличается тем, что целевой метод начинает зависеть от конкретных узлов
+    Build new node that inherits all properties from the basic node.
 
     Args:
-        node: Класс ноды
-        class_name: Название класса узла
-        node_name: Название ноды для соблюдения протокола
-        atts: Дополнительные атрибуты нового объекта
-        dependencies_default: Дефолтные значения для зависимостей
-        **target_dependencies: Целевые зависимости generic-зависимостей
+        node: Basic node class
+        class_name: Title for the new class node
+        node_name: Title for the node
+        atts: Any additional attrs for the new class (Deprecated because it's a typo)
+        attrs: Any additional attrs for the new class
+        dependencies_default: Default kwargs for the run method
+        **target_dependencies: Main dependencies like other nodes
     """
 
     if not inspect.isclass(node):
@@ -145,7 +148,7 @@ def build_node(
             '__module__': __name__,
             '__generic_class__': node,
             'name': node_name or node.name,
-            **(atts or {}),
+            **(attrs or atts or {}),
         },
     )
 
