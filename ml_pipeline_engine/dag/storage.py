@@ -65,8 +65,26 @@ class DAGNodeStorage:
     def exists_node_result(self, node_id: NodeId, with_hidden: bool = False) -> bool:
         return self.node_results.exists(node_id, with_hidden)
 
+    def copy_node_result(self, from_node_id: NodeId, to_node_id: NodeId) -> None:
+        self.set_node_result(to_node_id, self.get_node_result(from_node_id, with_hidden=True))
+
     def exists_node_error(self, node_id: NodeId, with_hidden: bool = False) -> bool:
-        return isinstance(self.node_results.get(node_id, with_hidden), BaseException)
+        return self.exists_result_type(node_id, (BaseException,), with_hidden=with_hidden)
+
+    def exists_result_type(
+        self,
+        node_id: NodeId,
+        target_type: t.Tuple[t.Any, ...] = (object,),
+        exclude_type: t.Tuple[t.Any, ...] = (),
+        exclude_none: bool = True,
+        with_hidden: bool = False,
+    ) -> bool:
+        result = self.node_results.get(node_id, with_hidden)
+
+        if exclude_none and result is None:
+            return False
+
+        return isinstance(result, target_type) and not isinstance(result, exclude_type)
 
     def set_switch_result(self, node_id: NodeId, data: t.Any) -> t.Any:
         self.switch_results.set(node_id, data)

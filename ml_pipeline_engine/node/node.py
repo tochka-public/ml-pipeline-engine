@@ -111,6 +111,7 @@ def build_node(
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
     atts: t.Optional[t.Dict[str, t.Any]] = None,
+    attrs: t.Optional[t.Dict[str, t.Any]] = None,
     dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
     **target_dependencies: t.Any,
 ) -> t.Type[NodeLike]:
@@ -121,7 +122,8 @@ def build_node(
         node: Basic node class
         class_name: Title for the new class node
         node_name: Title for the node
-        atts: Any additional attrs for the new class
+        atts: Any additional attrs for the new class (Deprecated because it's a typo)
+        attrs: Any additional attrs for the new class
         dependencies_default: Default kwargs for the run method
         **target_dependencies: Main dependencies like other nodes
     """
@@ -154,7 +156,7 @@ def build_node(
             '__module__': __name__,
             '__generic_class__': node,
             'name': node_name or node.name,
-            **(atts or {}),
+            **(attrs or atts or {}),
         },
     )
 

@@ -10,6 +10,7 @@ class NodeType(str, enum.Enum):
     generic = 'generic'
     switch = 'switch'
     input_one_of = 'input_one_of'
+    recurrent = 'recurrent'
 
     @classmethod
     def is_generic(cls, value: str) -> bool:
