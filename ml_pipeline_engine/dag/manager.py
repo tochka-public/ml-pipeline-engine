@@ -534,8 +534,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Check if the subgraph has an error
         """
         return any([
-            self._node_storage.exists_node_error(oneof_sub_node_id)
-            for oneof_sub_node_id in dag.nodes
+            self._node_storage.exists_node_error(node_id)
+            for node_id in dag.nodes
         ])
 
     async def _run_oneof(self, node_id: NodeId) -> t.Any:
