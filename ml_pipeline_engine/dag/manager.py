@@ -612,6 +612,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         in order to unlock all dependencies and itself
 
         Args:
+            dag: A DAG that started the method
             node_id: Node id to execute
             force_default: If the node should be executed with default result
         """
@@ -698,6 +699,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Run a recurrent subgraph with
 
         Args:
+            dag: A DAG that started the rec subgraph
             node_id: Node id as the end of the subgraph
             node_result: Previous subgraph's result
         """
