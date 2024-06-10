@@ -51,4 +51,4 @@ async def test_dag(
     build_dag: t.Callable[..., DAGLike],
 ) -> None:
     with pytest.raises(Exception, match='AnErrorFromPassNum'):
-        assert await build_dag(input_node=InputNumber, output_node=ANode).run(pipeline_context(num=3)) == 11
+        assert await build_dag(input_node=InputNumber, output_node=ANode).run(pipeline_context(num=3))
