@@ -65,7 +65,7 @@ def create_proxy_recurrent_node(name_prefix: str) -> t.Type[ProxyNodeGeneric]:
         ProcessLikeFactory,
         node_name=f'{name_prefix}__{ProcessLikeFactory.name}',
         something=Input(Producer),
-        atts=dict(
+        attrs=dict(
             kind=name_prefix,
         ),
     )
