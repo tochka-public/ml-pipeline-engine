@@ -46,6 +46,6 @@ async def test_dag(
     caplog_debug: pytest.LogCaptureFixture,
 ) -> None:
     with pytest.raises(OneOfDoesNotHaveResultError, match='error-oneof-node'):
-        assert await build_dag(input_node=PassNumber, output_node=OneOfNode).run(pipeline_context(num=3)) == 11
+        assert await build_dag(input_node=PassNumber, output_node=OneOfNode).run(pipeline_context(num=3))
 
     assert all(f'Error {i}' in str(caplog_debug.messages) for i in (1, 2, 3))
