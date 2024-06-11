@@ -1,0 +1,17 @@
+name: 🪲 Bug report
+description: 'Report a bug or unexpected behavior'
+labels: [bug]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Please provide as much detail as possible to make understanding and solving your problem as quick as possible. 🙏
+        - What happens?
+        - What were you expecting to happen?
+        - What are the steps to reproduce this issue?
+        - Any logs, error output, etc?
+    validations:
+      required: true
