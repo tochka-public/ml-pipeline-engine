@@ -2,60 +2,60 @@ import typing as t
 from dataclasses import dataclass
 
 from ml_pipeline_engine.types import CaseLabel
-from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeBase
 
 NodeResultT = t.TypeVar('NodeResultT')
 
 
 @dataclass(frozen=True)
 class InputGenericMark:
-    node: NodeLike[t.Any]
+    node: NodeBase[t.Any]
 
 
 @dataclass(frozen=True)
 class InputMark:
-    node: NodeLike[t.Any]
+    node: NodeBase[t.Any]
 
 
 @dataclass(frozen=True)
 class InputOneOfMark:
-    nodes: t.List[NodeLike[t.Any]]
+    nodes: t.List[NodeBase[t.Any]]
 
 
-def InputOneOf(nodes: t.List[NodeLike[NodeResultT]]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
+def InputOneOf(nodes: t.List[NodeBase[NodeResultT]]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     """
     Принимает список нод, возвращает результат первой успешно выполненной ноды
     """
     return t.cast(t.Any, InputOneOfMark(nodes))
 
 
-def InputGeneric(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
+def InputGeneric(node: NodeBase[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     return t.cast(t.Any, InputGenericMark(node))
 
 
-def Input(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
+def Input(node: NodeBase[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     return t.cast(t.Any, InputMark(node))
 
 
 @dataclass(frozen=True)
 class GenericInputMark:
-    node: NodeLike[t.Any]
+    node: NodeBase[t.Any]
 
 
-def GenericInput(node: NodeLike[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
+def GenericInput(node: NodeBase[NodeResultT]) -> t.Type[NodeResultT]:  # noqa:  N802,RUF100
     return t.cast(t.Any, GenericInputMark(node))
 
 
 @dataclass(frozen=True)
 class SwitchCaseMark:
-    switch: NodeLike[t.Any]
-    cases: t.List[t.Tuple[str, NodeLike]]
+    switch: NodeBase[t.Any]
+    cases: t.List[t.Tuple[str, NodeBase]]
     name: str
 
 
 def SwitchCase(  # noqa:  N802,RUF100
-    switch: NodeLike[t.Any],
-    cases: t.List[t.Tuple[CaseLabel, NodeLike[NodeResultT]]],
+    switch: NodeBase[t.Any],
+    cases: t.List[t.Tuple[CaseLabel, NodeBase[NodeResultT]]],
     name: t.Optional[str] = None,
 ) -> t.Type[NodeResultT]:
     return t.cast(t.Any, SwitchCaseMark(switch, cases, name))
@@ -63,14 +63,14 @@ def SwitchCase(  # noqa:  N802,RUF100
 
 @dataclass(frozen=True)
 class RecurrentSubGraphMark:
-    start_node: NodeLike[NodeResultT]
-    dest_node: NodeLike[NodeResultT]
+    start_node: NodeBase[NodeResultT]
+    dest_node: NodeBase[NodeResultT]
     max_iterations: int
 
 
 def RecurrentSubGraph(  # noqa:  N802,RUF100
-    start_node: t.Type[NodeLike[NodeResultT]],
-    dest_node: t.Type[NodeLike[NodeResultT]],
+    start_node: t.Type[NodeBase[NodeResultT]],
+    dest_node: t.Type[NodeBase[NodeResultT]],
     max_iterations: int,
 ) -> t.Type[NodeResultT]:
     """

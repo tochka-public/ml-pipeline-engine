@@ -1,8 +1,8 @@
 import pytest
 
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.dag_builders.annotation import build_dag_single
+from ml_pipeline_engine.node import ProcessorBase
 
 
 async def test_pipeline_chart_run_success(model_name_op: str) -> None:

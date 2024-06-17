@@ -3,6 +3,7 @@ import typing as t
 from ml_pipeline_engine.node.enums import NodeType
 from ml_pipeline_engine.types import AdditionalDataT
 from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import NodeResultT
 from ml_pipeline_engine.types import Recurrent
 from ml_pipeline_engine.types import RecurrentProtocol
 
@@ -14,7 +15,7 @@ class ProcessorBase(NodeBase):
 
     node_type = NodeType.processor.value
 
-    def process(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+    def process(self, *args: t.Any, **kwargs: t.Any) -> NodeResultT:
         raise NotImplementedError('Method process() is not implemented')
 
 

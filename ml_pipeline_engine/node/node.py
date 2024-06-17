@@ -15,7 +15,6 @@ from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import NodeLike
 
 NodeResultT = t.TypeVar('NodeResultT')
 
@@ -28,7 +27,7 @@ def generate_node_id(prefix: str, name: t.Optional[str] = None) -> str:
     return f'{prefix}__{name if name is not None else uuid.uuid4().hex[-8:]}'
 
 
-def get_node_id(node: NodeLike) -> NodeId:
+def get_node_id(node: NodeBase) -> NodeId:
     node_type = node.node_type if getattr(node, 'node_type', None) else 'node'
 
     if getattr(node, 'name', None):
@@ -39,36 +38,24 @@ def get_node_id(node: NodeLike) -> NodeId:
     return '__'.join([node_type, node_name])
 
 
-def get_run_method(node: NodeLike) -> t.Optional[str]:
-    run_method = None
+def get_callable_run_method(node: NodeBase) -> t.Callable:
+    run_method = NodeBase.RUN_METHOD_ALIAS
 
-    for method in NodeBase.RUN_METHOD_ALIASES:
-        if callable(getattr(node, method, None)):
-            if run_method is not None:
-                raise AssertionError(f'Node should have only one run method. {run_method} + {method} detected')
-            run_method = method
-
-    return run_method
-
-
-def get_callable_run_method(node: NodeLike) -> t.Callable:
-    run_method_name = get_run_method(node)
-
-    if run_method_name is not None:
+    if callable(getattr(node, run_method, None)):
         node = get_instance(node)
-        return getattr(node, run_method_name)
+        return getattr(node, run_method)
 
     return node
 
 
-def run_node_default(node: NodeLike[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
+def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Get default value from the node
     """
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeLike[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
+async def run_node(node: NodeBase[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Run a node in a specific way according to the node's tags
     """
@@ -107,14 +94,14 @@ async def run_node(node: NodeLike[NodeResultT], *args: t.Any, node_id: NodeId, *
 
 
 def build_node(
-    node: NodeLike,
+    node: NodeBase,
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
     atts: t.Optional[t.Dict[str, t.Any]] = None,
     attrs: t.Optional[t.Dict[str, t.Any]] = None,
     dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
     **target_dependencies: t.Any,
-) -> t.Type[NodeLike]:
+) -> t.Type[NodeBase]:
     """
     Build new node that inherits all properties from the basic node.
 
@@ -131,10 +118,10 @@ def build_node(
     if not inspect.isclass(node):
         raise ClassExpectedError('Для создания узла ожидается объекта класса')
 
-    run_method = get_run_method(node)
-    if not run_method:
+    run_method = NodeBase.RUN_METHOD_ALIAS
+    if not callable(getattr(node, run_method, None)):
         raise RunMethodExpectedError(
-            f'Ожидается наличие хотя бы одного run-метода. methods={NodeBase.RUN_METHOD_ALIASES}',
+            f'Missing method for node execution. Expected name={run_method}',
         )
 
     if inspect.iscoroutinefunction(getattr(node, run_method)):

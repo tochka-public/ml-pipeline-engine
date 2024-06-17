@@ -8,8 +8,8 @@ from ml_pipeline_engine import const
 from ml_pipeline_engine.node import get_callable_run_method
 from ml_pipeline_engine.node.enums import NodeType
 from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import NodeLike
 from ml_pipeline_engine.visualization import schema
 from ml_pipeline_engine.visualization.utils import copy_resources
 
@@ -23,14 +23,14 @@ class GraphConfigImpl:
     def __init__(self, dag: DAGLike) -> None:
         self._dag = dag
 
-    def _get_node(self, node_id: NodeId) -> t.Type[NodeLike]:
+    def _get_node(self, node_id: NodeId) -> t.Type[NodeBase]:
         """
         Get a node object. Sometimes it can be None if we work with an artificial node
         """
         return self._dag.node_map.get(node_id)
 
     @staticmethod
-    def _get_node_relative_path(node: t.Type[NodeLike]) -> str:
+    def _get_node_relative_path(node: t.Type[NodeBase]) -> str:
         """
         Generate relative path for a node
         """

@@ -21,7 +21,6 @@ from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import NodeLike
 from ml_pipeline_engine.types import RecurrentProtocol
 
 __all__ = [
@@ -39,7 +38,7 @@ NodeResultT = t.TypeVar('NodeResultT')
 class AnnotationDAGBuilder:
     def __init__(self) -> None:
         self._dag = DiGraph(name='main-graph')
-        self._node_map: t.Dict[NodeId, NodeLike] = dict()
+        self._node_map: t.Dict[NodeId, NodeBase] = dict()
         self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
         self._synthetic_nodes: t.List[NodeId] = []
 
@@ -80,7 +79,7 @@ class AnnotationDAGBuilder:
                 f'У объекта не существует корректного базового класса, пригодного для графа. node={node}',
             )
 
-    def validate_node(self, node: NodeLike) -> None:
+    def validate_node(self, node: NodeBase) -> None:
         """
         Валидация ноды по разным правилам
         """
@@ -89,7 +88,7 @@ class AnnotationDAGBuilder:
         self._check_annotations(node)
 
     @staticmethod
-    def _get_input_marks_map(node: NodeLike) -> t.List[NodeInputSpec]:
+    def _get_input_marks_map(node: NodeBase) -> t.List[NodeInputSpec]:
         """
         Получение меток зависимостей для входных kwarg-ов узла
         """
@@ -112,7 +111,7 @@ class AnnotationDAGBuilder:
 
         return inputs
 
-    def _add_node_to_map(self, node: NodeLike) -> None:
+    def _add_node_to_map(self, node: NodeBase) -> None:
         """
         Добавление узла в мэппинг "Имя узла -> Класс/функция узла"
         """
@@ -137,7 +136,7 @@ class AnnotationDAGBuilder:
         self._dag.add_node(node_id, **{NodeField.is_switch: True})
         self._dag.add_edge(switch_decide_node_id, node_id, **{EdgeField.is_switch: True})
 
-    def _traverse_breadth_first_to_dag(self, input_node: NodeLike, output_node: NodeLike):  # noqa
+    def _traverse_breadth_first_to_dag(self, input_node: NodeBase, output_node: NodeBase):  # noqa
         """
         Выполнить обход зависимостей классов/функций узлов, построить граф
         """
@@ -145,7 +144,7 @@ class AnnotationDAGBuilder:
         visited = {output_node}
         stack = deque([output_node])
 
-        def _set_visited(node: NodeLike) -> None:
+        def _set_visited(node: NodeBase) -> None:
             if node in visited:
                 return
 
@@ -299,7 +298,7 @@ class AnnotationDAGBuilder:
 
         return is_process_pool_needed, is_thread_pool_needed
 
-    def build(self, input_node: NodeLike, output_node: NodeLike = None) -> DAGLike:
+    def build(self, input_node: NodeBase, output_node: NodeBase = None) -> DAGLike:
         """
         Построить граф путем сборки зависимостей по аннотациям типа (меткам входов)
         """
@@ -327,8 +326,8 @@ class AnnotationDAGBuilder:
 
 
 def build_dag(
-    input_node: NodeLike[t.Any],
-    output_node: NodeLike[NodeResultT],
+    input_node: NodeBase[t.Any],
+    output_node: NodeBase[NodeResultT],
 ) -> DAGLike[NodeResultT]:
     """
     Построить граф путем сборки зависимостей по аннотациям типа (меткам входов)
@@ -347,7 +346,9 @@ def build_dag(
     )
 
 
-def build_dag_single(node: NodeLike[NodeResultT]) -> DAGLike[NodeResultT]:
+def build_dag_single(
+    node: NodeBase[NodeResultT],
+) -> DAGLike[NodeResultT]:
     """
     Построить граф из одного узла
 
@@ -357,4 +358,7 @@ def build_dag_single(node: NodeLike[NodeResultT]) -> DAGLike[NodeResultT]:
     Returns:
         Граф
     """
-    return AnnotationDAGBuilder().build(input_node=node, output_node=None)
+    return (
+        AnnotationDAGBuilder()
+        .build(input_node=node, output_node=None)
+    )

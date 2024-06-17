@@ -5,28 +5,16 @@
 ## Table of Contents
 
 - [Usage](#usage)
-  - [Что нужно, чтобы сделать свой пайплайн?](#что-нужно-чтобы-сделать-свой-пайплайн)
-  - [Поддерживаемые типы узлов](#поддерживаемые-типы-узлов)
 - [Development](#development)
     - [Environment setup](#environment-setup)
 
 
 ## Usage
-### Что нужно, чтобы сделать свой пайплайн?
 
-1. Написать классы узлов
-2. Связать узлы посредством указания зависимости
+To create a pipeline:
+1. Define classes that represent nodes
+2. Connect nodes by defining the parent node(-s) or no parent for each node
 
-
-### Поддерживаемые типы узлов
-
-[Протоколы](ml_pipeline_engine/types.py)
-
-1. [DataSource](ml_pipeline_engine/base_nodes/datasources.py)
-2. [FeatureBase](ml_pipeline_engine/base_nodes/feature.py)
-3. [MLModelBase](ml_pipeline_engine/base_nodes/ml_model.py)
-4. [ProcessorBase](ml_pipeline_engine/base_nodes/processors.py)
-5. [FeatureVectorizerBase](ml_pipeline_engine/base_nodes/vectorizer.py)
 
 Примеры использования описаны в файле [docs/usage_examples.md](docs/usage_examples.md)
 
