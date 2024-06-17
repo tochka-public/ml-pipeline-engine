@@ -3,7 +3,6 @@ from uuid import UUID
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.node import get_node_id
-from ml_pipeline_engine.node import get_run_method
 from ml_pipeline_engine.node import run_node
 
 
@@ -26,5 +25,4 @@ async def test_run_method() -> None:
         def process(x: int) -> int:
             return x
 
-    assert get_run_method(SomeNode) == 'process'
     assert await run_node(SomeNode, x=10, node_id='an_example') == 10

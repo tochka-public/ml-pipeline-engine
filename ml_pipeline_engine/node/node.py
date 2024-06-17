@@ -38,17 +38,12 @@ def get_node_id(node: NodeBase) -> NodeId:
     return '__'.join([node_type, node_name])
 
 
-def get_run_method(node: NodeBase) -> t.Optional[str]:
-    run_method = NodeBase.RUN_METHOD_ALIAS
-    return run_method if callable(getattr(node, run_method, None)) else None
-
-
 def get_callable_run_method(node: NodeBase) -> t.Callable:
-    run_method_name = get_run_method(node)
+    run_method = NodeBase.RUN_METHOD_ALIAS
 
-    if run_method_name is not None:
+    if callable(getattr(node, run_method, None)):
         node = get_instance(node)
-        return getattr(node, run_method_name)
+        return getattr(node, run_method)
 
     return node
 
@@ -123,10 +118,10 @@ def build_node(
     if not inspect.isclass(node):
         raise ClassExpectedError('Для создания узла ожидается объекта класса')
 
-    run_method = get_run_method(node)
-    if not run_method:
+    run_method = NodeBase.RUN_METHOD_ALIAS
+    if not callable(getattr(node, run_method, None)):
         raise RunMethodExpectedError(
-            f'Missing method for node execution. Expected name={NodeBase.RUN_METHOD_ALIAS}',
+            f'Missing method for node execution. Expected name={run_method}',
         )
 
     if inspect.iscoroutinefunction(getattr(node, run_method)):
