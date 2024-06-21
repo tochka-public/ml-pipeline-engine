@@ -4,8 +4,6 @@ import inspect
 import typing as t
 import uuid
 
-from ulid import ULID
-
 from ml_pipeline_engine.logs import logger_node as logger
 from ml_pipeline_engine.module_loading import get_instance
 from ml_pipeline_engine.node.enums import NodeTag
@@ -21,7 +19,7 @@ NodeResultT = t.TypeVar('NodeResultT')
 
 
 def generate_pipeline_id() -> uuid.UUID:
-    return ULID().to_uuid()
+    return uuid.uuid4()
 
 
 def generate_node_id(prefix: str, name: t.Optional[str] = None) -> str:
