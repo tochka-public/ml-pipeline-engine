@@ -161,7 +161,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             )
 
             return self._get_dag_result()
-
+        except Exception as ex:
+            logger.error('DAG run raised error', exc_info=ex)
+            raise
         finally:
             self._stop_coro_tasks(*self._coro_tasks)
 
