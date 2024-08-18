@@ -48,22 +48,21 @@ class AnnotationDAGBuilder:
         Проверка наличия аннотаций типов у переданного объекта.
         В случае, если есть хотя бы один не типизированный параметр, будет ошибка.
         """
+        run_method = get_callable_run_method(obj)
 
-        obj = get_callable_run_method(obj)
-
-        annotations = getattr(obj, '__annotations__', None)
+        annotations = getattr(run_method, '__annotations__', None)
         parameters = [
             (name, bool(parameter.empty))
-            for name, parameter in inspect.signature(obj).parameters.items()
+            for name, parameter in inspect.signature(run_method).parameters.items()
             if name not in ('self', 'args', 'kwargs')
         ]
 
         if not annotations and parameters:
-            raise errors.UndefinedAnnotation(f'Невозможно найти аннотации типов. obj={obj}')
+            raise errors.UndefinedAnnotation(f'Невозможно найти аннотации типов. obj={run_method}')
 
         for name, is_empty in parameters:
             if is_empty and name not in annotations:
-                raise errors.UndefinedParamAnnotation(f'Не указан тип для параметра name={name}, obj={obj}')
+                raise errors.UndefinedParamAnnotation(f'Не указан тип для параметра name={name}, obj={run_method}')
 
     @staticmethod
     def _check_base_class(node: t.Any) -> None:

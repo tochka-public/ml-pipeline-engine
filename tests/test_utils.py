@@ -1,9 +1,15 @@
+import typing as t
 from uuid import UUID
+
+import pytest
 
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.node import run_node
+from ml_pipeline_engine.node.errors import RunMethodExpectedError
+from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import NodeBase
 
 
 def test_generate_pipeline_id() -> None:
@@ -26,3 +32,20 @@ async def test_run_method() -> None:
             return x
 
     assert await run_node(SomeNode, x=10, node_id='an_example') == 10
+
+
+async def test_build_graph__error_no_process_method(
+    build_dag: t.Callable[..., DAGLike],
+) -> None:
+    class SomeNode(NodeBase):
+        @staticmethod
+        def process(x: int) -> int:
+            return x
+
+    class AnotherNode(NodeBase):
+        @staticmethod
+        def not_process(x: int) -> int:
+            return x
+
+    with pytest.raises(RunMethodExpectedError):
+        build_dag(input_node=SomeNode, output_node=AnotherNode)

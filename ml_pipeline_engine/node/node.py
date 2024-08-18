@@ -41,11 +41,11 @@ def get_node_id(node: NodeBase) -> NodeId:
 def get_callable_run_method(node: NodeBase) -> t.Callable:
     run_method = NodeBase.RUN_METHOD_ALIAS
 
-    if callable(getattr(node, run_method, None)):
-        node = get_instance(node)
-        return getattr(node, run_method)
+    if not callable(getattr(node, run_method, None)):
+        raise RunMethodExpectedError(f'Missing method for node execution. Expected name={run_method}')
 
-    return node
+    node = get_instance(node)
+    return getattr(node, run_method)
 
 
 def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
