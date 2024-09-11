@@ -39,13 +39,11 @@ def get_node_id(node: NodeBase) -> NodeId:
 
 
 def get_callable_run_method(node: NodeBase) -> t.Callable:
-    run_method = NodeBase.RUN_METHOD_ALIAS
-
-    if not callable(getattr(node, run_method, None)):
-        raise RunMethodExpectedError(f'Missing method for node execution. Expected name={run_method}')
+    if not callable(getattr(node, 'process', None)):
+        raise RunMethodExpectedError('Missing method for node execution')
 
     node = get_instance(node)
-    return getattr(node, run_method)
+    return node.process
 
 
 def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
@@ -118,20 +116,17 @@ def build_node(
     if not inspect.isclass(node):
         raise ClassExpectedError('Для создания узла ожидается объекта класса')
 
-    run_method = NodeBase.RUN_METHOD_ALIAS
-    if not callable(getattr(node, run_method, None)):
-        raise RunMethodExpectedError(
-            f'Missing method for node execution. Expected name={run_method}',
-        )
+    process_method = getattr(node, 'process', None)
+    if not callable(process_method):
+        raise RunMethodExpectedError('Missing method for node execution')
 
-    if inspect.iscoroutinefunction(getattr(node, run_method)):
-
+    if inspect.iscoroutinefunction(process_method):
         async def class_method(*args: t.Any, **kwargs: t.Any) -> t.Any:
-            return await getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
+            return await process_method(*args, **kwargs, **(dependencies_default or {}))
 
     else:
         def class_method(*args: t.Any, **kwargs: t.Any) -> t.Any:
-            return getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
+            return process_method(*args, **kwargs, **(dependencies_default or {}))
 
     class_name = class_name or f'Generic{node.__name__}'
     created_node = type(
@@ -139,7 +134,7 @@ def build_node(
         (node,),
         {
             # Меняем на lambda-функцию, чтобы убить ссылку на метод родительского класса.
-            run_method: class_method,
+            'process': class_method,
             '__module__': __name__,
             '__generic_class__': node,
             'name': node_name or node.name,
@@ -147,7 +142,7 @@ def build_node(
         },
     )
 
-    method = getattr(created_node, run_method)
+    method = created_node.process
     method.__annotations__.update(target_dependencies)
 
     globals()[class_name] = created_node
