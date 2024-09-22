@@ -1,12 +1,12 @@
 import typing as t
 
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
-from ml_pipeline_engine.base_nodes.processors import RecurrentProcessor
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import GenericInput
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
+from ml_pipeline_engine.node import ProcessorBase
+from ml_pipeline_engine.node import RecurrentProcessor
 from ml_pipeline_engine.node import build_node
 from ml_pipeline_engine.node.enums import NodeTag
 from ml_pipeline_engine.types import DAGLike

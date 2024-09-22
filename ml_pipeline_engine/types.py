@@ -5,12 +5,6 @@ from uuid import UUID
 
 import networkx as nx
 
-ProcessorResultT = t.TypeVar('ProcessorResultT')
-DataSourceResultT = t.TypeVar('DataSourceResultT')
-FeatureResultT = t.TypeVar('FeatureResultT')
-FeatureVectorizerResultT = t.TypeVar('FeatureVectorizerResultT')
-MLModelResultT = t.TypeVar('MLModelResultT')
-
 NodeResultT = t.TypeVar('NodeResultT')
 AdditionalDataT = t.TypeVar('AdditionalDataT', bound=t.Any)
 
@@ -63,91 +57,18 @@ class RecurrentProtocol(t.Protocol):
         """
 
 
-class NodeProtocol(t.Protocol):
+class NodeBase(RetryProtocol, TagProtocol, t.Protocol[NodeResultT]):
     """
-    Узел графа модели
+    Basic node interface
     """
-
-    RUN_METHOD_ALIASES = (
-        'process',
-        'extract',
-        'collect',
-        'vectorize',
-        'predict',
-    )
-
     node_type: t.ClassVar[str] = None
     name: t.ClassVar[str] = None
-    title: t.ClassVar[str] = None  # TODO: Remove it in the future
     verbose_name: t.ClassVar[str] = None
 
-
-class NodeBase(NodeProtocol, RetryProtocol, TagProtocol):
-    pass
-
-
-class ProcessorLike(RetryProtocol, TagProtocol, t.Protocol[ProcessorResultT]):
-    """
-    Узел общего назначения
-    """
-
     process: t.Union[
-        t.Callable[..., ProcessorResultT],
-        t.Callable[..., t.Awaitable[ProcessorResultT]],
+        t.Callable[..., NodeResultT],
+        t.Callable[..., t.Awaitable[NodeResultT]],
     ]
-
-
-class DataSourceLike(RetryProtocol, TagProtocol, t.Protocol[DataSourceResultT]):
-    """
-    Источник данных
-    """
-
-    collect: t.Union[
-        t.Callable[..., DataSourceResultT],
-        t.Callable[..., t.Awaitable[DataSourceResultT]],
-    ]
-
-
-class FeatureLike(RetryProtocol, TagProtocol, t.Protocol[FeatureResultT]):
-    """
-    Фича
-    """
-
-    extract: t.Union[
-        t.Callable[..., FeatureResultT],
-        t.Callable[..., t.Awaitable[FeatureResultT]],
-    ]
-
-
-class FeatureVectorizerLike(RetryProtocol, TagProtocol, t.Protocol[FeatureVectorizerResultT]):
-    """
-    Векторизатор фичей
-    """
-
-    vectorize: t.Union[
-        t.Callable[..., FeatureVectorizerResultT],
-        t.Callable[..., t.Awaitable[FeatureVectorizerResultT]],
-    ]
-
-
-class MLModelLike(RetryProtocol, TagProtocol, t.Protocol[MLModelResultT]):
-    """
-    ML-модель
-    """
-
-    predict: t.Union[
-        t.Callable[..., MLModelResultT],
-        t.Callable[..., t.Awaitable[MLModelResultT]],
-    ]
-
-
-NodeLike = t.Union[
-    t.Type[ProcessorLike[NodeResultT]],
-    t.Type[DataSourceLike[NodeResultT]],
-    t.Type[FeatureLike[NodeResultT]],
-    t.Type[FeatureVectorizerLike[NodeResultT]],
-    t.Type[MLModelLike[NodeResultT]],
-]
 
 
 @dataclass(frozen=True)
@@ -183,7 +104,7 @@ class PipelineChartLike(t.Protocol[NodeResultT]):
     """
 
     model_name: ModelName
-    entrypoint: t.Optional[t.Union[NodeLike[NodeResultT], 'DAGLike[NodeResultT]']]
+    entrypoint: t.Optional[t.Union[NodeBase[NodeResultT], 'DAGLike[NodeResultT]']]
     event_managers: t.List[t.Type['EventManagerLike']]
     artifact_store: t.Optional[t.Type['ArtifactStoreLike']]
 
@@ -286,7 +207,7 @@ class DAGCacheManagerLike(t.Protocol):
 
 
 class RetryPolicyLike(t.Protocol):
-    node: NodeLike
+    node: NodeBase
 
     @property
     @abc.abstractmethod
@@ -325,7 +246,7 @@ class DAGLike(t.Protocol[NodeResultT]):
     graph: nx.DiGraph
     input_node: NodeId
     output_node: NodeId
-    node_map: t.Dict[NodeId, NodeLike]
+    node_map: t.Dict[NodeId, NodeBase]
     run_manager: DAGRunManagerLike
     retry_policy: RetryPolicyLike
     is_process_pool_needed: bool

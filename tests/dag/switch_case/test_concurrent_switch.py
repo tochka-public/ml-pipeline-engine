@@ -2,10 +2,10 @@ import typing as t
 
 import pytest
 
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
+from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.types import DAGLike
 
 

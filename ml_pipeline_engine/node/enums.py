@@ -2,11 +2,7 @@ import enum
 
 
 class NodeType(str, enum.Enum):
-    datasource = 'datasource'
-    feature = 'feature'
-    ml_model = 'ml_model'
     processor = 'processor'
-    vectorizer = 'vectorizer'
     generic = 'generic'
     switch = 'switch'
     input_one_of = 'input_one_of'

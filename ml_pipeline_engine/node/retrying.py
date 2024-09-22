@@ -2,13 +2,13 @@ from dataclasses import dataclass
 from typing import Tuple
 from typing import Type
 
-from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import RetryPolicyLike
 
 
 @dataclass(frozen=True)
 class NodeRetryPolicy(RetryPolicyLike):
-    node: NodeLike
+    node: NodeBase
 
     @property
     def delay(self) -> int:

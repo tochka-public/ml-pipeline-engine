@@ -2,10 +2,9 @@ import typing as t
 
 import pytest_mock
 
-from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
+from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.types import DAGLike
 
 
@@ -27,10 +26,10 @@ class ExternalDatasource:
         return 0.1
 
 
-class SomeNode(DataSource):
+class SomeNode(ProcessorBase):
     exceptions = (BaseExecutionError,)
 
-    def collect(self) -> float:
+    def process(self) -> float:
         return ExternalDatasource().external_func()
 
 
@@ -55,7 +54,7 @@ async def test_dag_retry(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
 
-    collect_spy = mocker.spy(SomeNode, 'collect')
+    collect_spy = mocker.spy(SomeNode, 'process')
     external_func_patch = mocker.patch.object(
         ExternalDatasource,
         'external_func',

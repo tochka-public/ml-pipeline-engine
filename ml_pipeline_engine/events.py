@@ -2,22 +2,7 @@ import typing as t
 
 from ml_pipeline_engine.types import EventManagerLike
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import PipelineResult
-
-
-class EventManagerBase:
-    async def on_pipeline_start(self, ctx: PipelineContextLike) -> None:
-        ...
-
-    async def on_pipeline_complete(self, ctx: PipelineContextLike, result: PipelineResult) -> None:
-        ...
-
-    async def on_node_start(self, ctx: PipelineContextLike, node_id: NodeId) -> None:
-        ...
-
-    async def on_node_complete(self, ctx: PipelineContextLike, node_id: NodeId, error: t.Optional[Exception]) -> None:
-        ...
 
 
 class EventSourceMixin:

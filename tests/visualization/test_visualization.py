@@ -8,21 +8,20 @@ from unittest.mock import ANY
 import pytest
 from click.testing import CliRunner
 
-from ml_pipeline_engine.base_nodes.datasources import DataSource
-from ml_pipeline_engine.base_nodes.processors import ProcessorBase
 from ml_pipeline_engine.cli import build_static
 from ml_pipeline_engine.dag_builders.annotation.builder import build_dag
 from ml_pipeline_engine.dag_builders.annotation.marks import GenericInput
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
+from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import build_node
 
 
-class InvertNumber(DataSource):
+class InvertNumber(ProcessorBase):
     name = 'invert_number'
     verbose_name = 'Invert!'
 
-    def collect(self, num: float) -> float:
+    def process(self, num: float) -> float:
         return -num
 
 
@@ -154,21 +153,17 @@ async def test_basic(call_func: t.Callable) -> None:
                     'target': 'processor__double_number',
                 },
                 {
-                    'id': 'datasource__invert_number->processor__add_const',
-                    'source': 'datasource__invert_number',
+                    'id': 'processor__invert_number->processor__add_const',
+                    'source': 'processor__invert_number',
                     'target': 'processor__add_const',
                 },
                 {
-                    'id': 'datasource__invert_number->processor__tests_visualization_test_visualization_SwitchNode',
-                    'source': 'datasource__invert_number',
+                    'id': 'processor__invert_number->processor__tests_visualization_test_visualization_SwitchNode',
+                    'source': 'processor__invert_number',
                     'target': 'processor__tests_visualization_test_visualization_SwitchNode',
                 },
             ],
             'node_types': {
-                'datasource': {
-                    'hex_bgr_color': None,
-                    'name': 'datasource',
-                },
                 'processor': {
                     'hex_bgr_color': None,
                     'name': 'processor',
@@ -188,7 +183,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L60',
+                        'code_source': 'tests/visualization/test_visualization.py#L59',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,
@@ -200,7 +195,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L55',
+                        'code_source': 'tests/visualization/test_visualization.py#L54',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,
@@ -212,7 +207,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L73',
+                        'code_source': 'tests/visualization/test_visualization.py#L72',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,
@@ -224,7 +219,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L45',  # Line for the real source!
+                        'code_source': 'tests/visualization/test_visualization.py#L44',  # Line for the real source!
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'another_feature',
                         'verbose_name': None,
@@ -236,7 +231,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L37',
+                        'code_source': 'tests/visualization/test_visualization.py#L36',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'double_number',
                         'verbose_name': 'Double!',
@@ -248,7 +243,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L29',
+                        'code_source': 'tests/visualization/test_visualization.py#L28',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'add_const',
                         'verbose_name': 'Add!',
@@ -260,15 +255,15 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L21',
-                        'doc': 'Базовый класс для источников данных',
+                        'code_source': 'tests/visualization/test_visualization.py#L20',
+                        'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': 'invert_number',
                         'verbose_name': 'Invert!',
                     },
-                    'id': 'datasource__invert_number',
+                    'id': 'processor__invert_number',
                     'is_generic': False,
                     'is_virtual': False,
-                    'type': 'datasource',
+                    'type': 'processor',
                 },
             ],
         }

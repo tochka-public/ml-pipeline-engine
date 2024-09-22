@@ -8,13 +8,14 @@ from ml_pipeline_engine.types import ArtifactStoreLike
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import EventManagerLike
 from ml_pipeline_engine.types import ModelName
-from ml_pipeline_engine.types import NodeLike
+from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import PipelineChartLike
 from ml_pipeline_engine.types import PipelineId
 from ml_pipeline_engine.types import PipelineResult
 
 NodeResultT = t.TypeVar('NodeResultT')
 
-Entrypoint = t.Optional[t.Union[NodeLike[NodeResultT], DAGLike[NodeResultT]]]
+Entrypoint = t.Optional[t.Union[NodeBase[NodeResultT], DAGLike[NodeResultT]]]
 
 
 @dataclass(frozen=True, repr=False)
@@ -30,7 +31,7 @@ class PipelineChartBase:
 
 
 @dataclass(frozen=True, repr=False)
-class PipelineChart(PipelineChartBase):
+class PipelineChart(PipelineChartBase, PipelineChartLike):
     """
     Основная реализация определения пайплайна ML-модели
     """

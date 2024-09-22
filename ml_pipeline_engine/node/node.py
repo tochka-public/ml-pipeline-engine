@@ -13,7 +13,6 @@ from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.types import NodeLike
 
 NodeResultT = t.TypeVar('NodeResultT')
 
@@ -26,7 +25,7 @@ def generate_node_id(prefix: str, name: t.Optional[str] = None) -> str:
     return f'{prefix}__{name if name is not None else uuid.uuid4().hex[-8:]}'
 
 
-def get_node_id(node: NodeLike) -> NodeId:
+def get_node_id(node: NodeBase) -> NodeId:
     node_type = node.node_type if getattr(node, 'node_type', None) else 'node'
 
     if getattr(node, 'name', None):
@@ -37,36 +36,22 @@ def get_node_id(node: NodeLike) -> NodeId:
     return '__'.join([node_type, node_name])
 
 
-def get_run_method(node: NodeLike) -> t.Optional[str]:
-    run_method = None
+def get_callable_run_method(node: NodeBase) -> t.Callable:
+    if not callable(getattr(node, 'process', None)):
+        raise RunMethodExpectedError('Missing method for node execution')
 
-    for method in NodeBase.RUN_METHOD_ALIASES:
-        if callable(getattr(node, method, None)):
-            if run_method is not None:
-                raise AssertionError(f'Node should have only one run method. {run_method} + {method} detected')
-            run_method = method
-
-    return run_method
+    node = get_instance(node)
+    return node.process
 
 
-def get_callable_run_method(node: NodeLike) -> t.Callable:
-    run_method_name = get_run_method(node)
-
-    if run_method_name is not None:
-        node = get_instance(node)
-        return getattr(node, run_method_name)
-
-    return node
-
-
-def run_node_default(node: NodeLike[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
+def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Get default value from the node
     """
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeLike[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
+async def run_node(node: NodeBase[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Run a node in a specific way according to the node's tags
     """
@@ -105,14 +90,14 @@ async def run_node(node: NodeLike[NodeResultT], *args: t.Any, node_id: NodeId, *
 
 
 def build_node(
-    node: NodeLike,
+    node: NodeBase,
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
     atts: t.Optional[t.Dict[str, t.Any]] = None,
     attrs: t.Optional[t.Dict[str, t.Any]] = None,
     dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
     **target_dependencies: t.Any,
-) -> t.Type[NodeLike]:
+) -> t.Type[NodeBase]:
     """
     Build new node that inherits all properties from the basic node.
 
@@ -129,20 +114,17 @@ def build_node(
     if not inspect.isclass(node):
         raise ClassExpectedError('Для создания узла ожидается объекта класса')
 
-    run_method = get_run_method(node)
-    if not run_method:
-        raise RunMethodExpectedError(
-            f'Ожидается наличие хотя бы одного run-метода. methods={NodeBase.RUN_METHOD_ALIASES}',
-        )
+    process_method = getattr(node, 'process', None)
+    if not callable(process_method):
+        raise RunMethodExpectedError('Missing method for node execution')
 
-    if inspect.iscoroutinefunction(getattr(node, run_method)):
-
+    if inspect.iscoroutinefunction(process_method):
         async def class_method(*args: t.Any, **kwargs: t.Any) -> t.Any:
-            return await getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
+            return await process_method(*args, **kwargs, **(dependencies_default or {}))
 
     else:
         def class_method(*args: t.Any, **kwargs: t.Any) -> t.Any:
-            return getattr(node, run_method)(*args, **kwargs, **(dependencies_default or {}))
+            return process_method(*args, **kwargs, **(dependencies_default or {}))
 
     class_name = class_name or f'Generic{node.__name__}'
     created_node = type(
@@ -150,7 +132,7 @@ def build_node(
         (node,),
         {
             # Меняем на lambda-функцию, чтобы убить ссылку на метод родительского класса.
-            run_method: class_method,
+            'process': class_method,
             '__module__': __name__,
             '__generic_class__': node,
             'name': node_name or node.name,
@@ -158,7 +140,7 @@ def build_node(
         },
     )
 
-    method = getattr(created_node, run_method)
+    method = created_node.process
     method.__annotations__.update(target_dependencies)
 
     globals()[class_name] = created_node
