@@ -4,14 +4,15 @@ import pathlib
 import typing as t
 import warnings
 
+from ml_pipeline_viewer.visualization import schema
+from ml_pipeline_viewer.visualization.utils import copy_resources
+
 from ml_pipeline_engine import const
 from ml_pipeline_engine.node import get_callable_run_method
 from ml_pipeline_engine.node.enums import NodeType
 from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
-from ml_pipeline_engine.visualization import schema
-from ml_pipeline_engine.visualization.utils import copy_resources
 
 _HexColorT = t.TypeVar('_HexColorT', bound=str)
 _NodeTypeT = t.TypeVar('_NodeTypeT', bound=t.Union[str, NodeType])
@@ -165,7 +166,7 @@ def build_static(config: schema.GraphConfig, target_dir: pathlib.Path) -> None:
     """
 
     copy_resources(
-        const.LIB_ANCHOR, 'visualization', 'viewer',
+        const.VISUALIZATION_LIB_ANCHOR, 'visualization', 'viewer',
         target_dir=str(target_dir),
     )
 

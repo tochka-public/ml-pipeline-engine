@@ -26,7 +26,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "BUILD_PATH='../ml_pipeline_engine/visualization/viewer' react-scripts build",
+    "build": "BUILD_PATH='visualization/viewer' react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
