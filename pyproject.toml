@@ -9,6 +9,15 @@ authors = [
 repository = "https://github.com/tochka-public/ml-pipeline-engine"
 homepage = "https://github.com/tochka-public/ml-pipeline-engine"
 description = "Фреймворк для работы с пайплайном ML моделей"
+packages = [
+  { include = "ml_pipeline_engine" },
+  { include = "ml_pipeline_viewer" },
+]
+exclude = [
+  "ml_pipeline_viewer/public",
+  "ml_pipeline_viewer/src",
+  "ml_pipeline_viewer/*.json",
+]
 license = "MIT"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -27,7 +36,7 @@ cachetools = "^5.3.3"
 click = "^8.1.7"
 
 [tool.poetry.scripts]
-ml_pipeline_engine = "ml_pipeline_engine.cli:main"
+ml_pipeline_engine = "ml_pipeline_viewer.cli:main"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=4.0.0"
