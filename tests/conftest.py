@@ -6,12 +6,11 @@ import typing as t
 import pytest
 
 from ml_pipeline_engine import logs
-from ml_pipeline_engine.chart import NullPipelineChart
-from ml_pipeline_engine.context.dag import DAGPipelineContext
+from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.dag_builders.annotation import build_dag as build_dag_base
 from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 def pytest_sessionstart(session):  # noqa
@@ -51,20 +50,12 @@ def model_name_op() -> str:
 
 
 @pytest.fixture
-def build_dag() -> t.Callable[..., DAGLike]:
+def build_chart() -> t.Callable[..., PipelineChartLike]:
 
-    def wrap(*args: t.Any, **kwargs: t.Any) -> DAGLike:
-        return build_dag_base(*args, **kwargs)
-
-    return wrap
-
-
-@pytest.fixture
-def pipeline_context(model_name_op: str) -> t.Callable[..., DAGPipelineContext]:
-    def wrapper(**input_kwargs: t.Any) -> DAGPipelineContext:
-        return DAGPipelineContext(
-            chart=NullPipelineChart(model_name_op),
-            input_kwargs=input_kwargs,
+    def wrap(*args: t.Any, **kwargs: t.Any) -> PipelineChartLike:
+        return PipelineChart(
+            'no op',
+            build_dag_base(*args, **kwargs),
         )
 
-    return wrapper
+    return wrap

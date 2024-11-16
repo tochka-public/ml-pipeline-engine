@@ -1,12 +1,11 @@
 import typing as t
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import build_node
-from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class SomeInput(ProcessorBase):
@@ -82,14 +81,15 @@ class AnotherMlModel(ProcessorBase):
 
 
 async def test_reusable_nodes(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
 
     # Проверяем корректность первого графа
-    some_dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
-    assert await some_dag.run(pipeline_context(base_num=10, other_num=5)) == 1.76
+    chart = build_chart(input_node=SomeInput, output_node=SomeMLModel)
+    result = await chart.run(input_kwargs=dict(base_num=10, other_num=5))
+    assert result.value == 1.76
 
     # Проверяем корректность второго графа
-    some_dag = build_dag(input_node=SomeInput, output_node=AnotherMlModel)
-    assert await some_dag.run(pipeline_context(base_num=10, other_num=5)) == 1_000.6
+    chart = build_chart(input_node=SomeInput, output_node=AnotherMlModel)
+    result = await chart.run(input_kwargs=dict(base_num=10, other_num=5))
+    assert result.value == 1_000.6

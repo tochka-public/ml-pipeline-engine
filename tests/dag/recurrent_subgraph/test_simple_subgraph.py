@@ -3,13 +3,12 @@ import typing as t
 from tests.helpers import FactoryMocker
 from tests.helpers import call_object
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import RecurrentProcessor
 from ml_pipeline_engine.types import AdditionalDataT
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 from ml_pipeline_engine.types import Recurrent
 
 invert_process_mocker = FactoryMocker()
@@ -66,10 +65,11 @@ class AddNumbers(ProcessorBase):
 
 
 async def test_dag(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
-    assert await build_dag(input_node=InvertNumber, output_node=AddNumbers).run(pipeline_context(num=3.0)) == -8.8
+    chart = build_chart(input_node=InvertNumber, output_node=AddNumbers)
+    result = await chart.run(input_kwargs=dict(num=3))
+    assert result.value == -8.8
 
     assert invert_process_mocker.mock.process.mock_calls == [
         call_object(num=3.0),

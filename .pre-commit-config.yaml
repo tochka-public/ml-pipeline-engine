@@ -1,10 +1,10 @@
 repos:
   - repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v1.6.0
+    rev: v2.0.4
     hooks:
       - id: autopep8
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v5.0.0
     hooks:
       - id: check-docstring-first
       - id: check-merge-conflict
@@ -15,7 +15,7 @@ repos:
         args: [ '--branch', 'master' ]
       - id: trailing-whitespace
   - repo: https://github.com/PyCQA/flake8
-    rev: 5.0.4
+    rev: 7.1.1
     hooks:
       - id: flake8
         args: [ '--max-line-length', '120' ]

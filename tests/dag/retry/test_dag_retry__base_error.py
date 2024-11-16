@@ -3,10 +3,9 @@ import typing as t
 import pytest
 import pytest_mock
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class SomeNode(ProcessorBase):
@@ -32,13 +31,14 @@ class DoubleNumber(ProcessorBase):
 
 
 async def test_dag_retry__base_error(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     collect_spy = mocker.spy(SomeNode, 'process')
 
+    chart = build_chart(input_node=InvertNumber, output_node=DoubleNumber)
+
     with pytest.raises(BaseException, match='CustomError'):
-        assert await build_dag(input_node=InvertNumber, output_node=DoubleNumber).run(pipeline_context(num=2.5))
+        await chart.run(input_kwargs=dict(num=2.5))
 
     assert collect_spy.call_count == 1

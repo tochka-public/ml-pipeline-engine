@@ -2,14 +2,13 @@ import typing as t
 
 import pytest_mock
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputGeneric
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import build_node
-from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class SomeInput(ProcessorBase):
@@ -61,12 +60,13 @@ class SomeMLModel(ProcessorBase):
 
 
 async def test_fail_node(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     extract_patch = mocker.patch.object(SomeFeatureGeneric, 'process')
-    dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
 
-    assert await dag.run(pipeline_context(base_num=10)) == 777_777
+    chart = build_chart(input_node=SomeInput, output_node=SomeMLModel)
+    result = await chart.run(input_kwargs=dict(base_num=10))
+    assert result.value == 777_777
+
     assert extract_patch.call_count == 0

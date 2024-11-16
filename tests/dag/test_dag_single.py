@@ -1,6 +1,4 @@
-import typing as t
-
-from ml_pipeline_engine.context.dag import DAGPipelineContext
+from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.dag_builders.annotation import build_dag_single
 from ml_pipeline_engine.node import ProcessorBase
 
@@ -10,7 +8,11 @@ class DoubleNumber(ProcessorBase):
         return num * 2
 
 
-async def test_basic(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-) -> None:
-    assert await build_dag_single(DoubleNumber).run(pipeline_context(num=2.5)) == 5.0
+async def test_basic() -> None:
+    chart = PipelineChart(
+        'pipeline_name',
+        build_dag_single(DoubleNumber),
+    )
+    result = await chart.run(input_kwargs=dict(num=2.5))
+    assert result.value == 5.0
+    assert result.error is None
