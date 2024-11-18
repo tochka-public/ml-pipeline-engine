@@ -188,24 +188,6 @@ class ArtifactStoreLike(t.Protocol):
         ...
 
 
-class DAGCacheManagerLike(t.Protocol):
-    """
-    Менеджер локального кэша DAG
-    """
-
-    @abc.abstractmethod
-    def save(self, node_id: NodeId, data: t.Any) -> t.Any:
-        ...
-
-    @abc.abstractmethod
-    def load(self, node_id: NodeId) -> t.Any:
-        ...
-
-    @abc.abstractmethod
-    def exists(self, node_id: NodeId) -> bool:
-        ...
-
-
 class RetryPolicyLike(t.Protocol):
     node: NodeBase
 

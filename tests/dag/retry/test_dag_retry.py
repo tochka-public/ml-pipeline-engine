@@ -2,10 +2,9 @@ import typing as t
 
 import pytest_mock
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class BaseExecutionError(Exception):
@@ -49,8 +48,7 @@ class DoubleNumber(ProcessorBase):
 
 
 async def test_dag_retry(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
     mocker: pytest_mock.MockerFixture,
 ) -> None:
 
@@ -65,6 +63,11 @@ async def test_dag_retry(
         ],
     )
 
-    assert await build_dag(input_node=InvertNumber, output_node=DoubleNumber).run(pipeline_context(num=2.5)) == -4.8
+    chart = build_chart(input_node=InvertNumber, output_node=DoubleNumber)
+    result = await chart.run(input_kwargs=dict(num=2.5))
+
+    assert result.value == -4.8
+    assert result.error is None
+
     assert external_func_patch.call_count == 3
     assert collect_spy.call_count == 3

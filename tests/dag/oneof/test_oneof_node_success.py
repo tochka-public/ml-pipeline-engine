@@ -1,10 +1,9 @@
 import typing as t
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class PassNumber(ProcessorBase):
@@ -38,7 +37,8 @@ class OneOfNode(ProcessorBase):
 
 
 async def test_dag(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
-    assert await build_dag(input_node=PassNumber, output_node=OneOfNode).run(pipeline_context(num=3)) == 11
+    chart = build_chart(input_node=PassNumber, output_node=OneOfNode)
+    result = await chart.run(input_kwargs=dict(num=3))
+    assert result.value == 11

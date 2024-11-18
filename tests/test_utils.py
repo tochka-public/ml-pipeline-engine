@@ -8,8 +8,8 @@ from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.node import run_node
 from ml_pipeline_engine.node.errors import RunMethodExpectedError
-from ml_pipeline_engine.types import DAGLike
 from ml_pipeline_engine.types import NodeBase
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 def test_generate_pipeline_id() -> None:
@@ -35,7 +35,7 @@ async def test_run_method() -> None:
 
 
 async def test_build_graph__error_no_process_method(
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
     class SomeNode(NodeBase):
         @staticmethod
@@ -48,4 +48,4 @@ async def test_build_graph__error_no_process_method(
             return x
 
     with pytest.raises(RunMethodExpectedError):
-        build_dag(input_node=SomeNode, output_node=AnotherNode)
+        build_chart(input_node=SomeNode, output_node=AnotherNode)

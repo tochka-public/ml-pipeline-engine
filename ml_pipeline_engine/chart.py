@@ -69,22 +69,3 @@ class PipelineChart(PipelineChartBase, PipelineChartLike):
             await ctx.emit_on_pipeline_complete(result=result)
 
             return result
-
-
-@dataclass(frozen=True, repr=False)
-class NullPipelineChart(PipelineChartBase):
-    """
-    Пустая реализация определения пайплайна ML-модели
-
-    Для обратной совместимости контекста со старым кодом моделей
-    """
-
-    entrypoint: Entrypoint = None
-
-    def run(
-        self,
-        pipeline_id: t.Optional[PipelineId] = None,
-        input_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
-        meta: t.Optional[t.Dict[str, t.Any]] = None,
-    ) -> NodeResultT:
-        raise NotImplementedError('Unable to run this kind of pipeline')

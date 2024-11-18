@@ -2,11 +2,10 @@ import typing as t
 
 import pytest
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class Ident(ProcessorBase):
@@ -88,7 +87,10 @@ class Out(ProcessorBase):
 async def test_dag_switch_case(
     input_num: float,
     expect: float,
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
-    assert await build_dag(input_node=Ident, output_node=Out).run(pipeline_context(num=input_num)) == expect
+    chart = build_chart(input_node=Ident, output_node=Out)
+    result = await chart.run(input_kwargs=dict(num=input_num))
+
+    assert result.value == expect
+    assert result.error is None

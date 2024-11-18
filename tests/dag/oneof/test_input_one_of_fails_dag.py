@@ -1,12 +1,9 @@
 import typing as t
 
-import pytest
-
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class SomeInput(ProcessorBase):
@@ -69,9 +66,10 @@ class SomeMLModel(ProcessorBase):
 
 
 async def test_input_one_of_fails_dag(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
+    chart = build_chart(input_node=SomeInput, output_node=SomeMLModel)
+    result = await chart.run(input_kwargs=dict(base_num=10, other_num=5))
 
-    with pytest.raises(TypeError):
-        await build_dag(input_node=SomeInput, output_node=SomeMLModel).run(pipeline_context(base_num=10, other_num=5))
+    assert result.error.__class__ == TypeError
+    assert result.value is None

@@ -2,13 +2,12 @@ import typing as t
 
 import pytest_mock
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node.enums import NodeTag
 from ml_pipeline_engine.parallelism import processes
 from ml_pipeline_engine.parallelism import threads
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class SomeInput(ProcessorBase):
@@ -53,15 +52,17 @@ class SomeMLModel(ProcessorBase):
 
 
 async def test_tags__with_thread_process(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
     mocker: pytest_mock.MockerFixture,
 ) -> None:
     threads_get_pool_executor = mocker.spy(threads.PoolExecutorRegistry, 'get_pool_executor')
     processes_get_pool_executor = mocker.spy(processes.PoolExecutorRegistry, 'get_pool_executor')
 
-    dag = build_dag(input_node=SomeInput, output_node=SomeMLModel)
-    assert await dag.run(pipeline_context(base_num=10, other_num=5)) == 1.75
+    chart = build_chart(input_node=SomeInput, output_node=SomeMLModel)
+    result = await chart.run(input_kwargs=dict(base_num=10, other_num=5))
+
+    assert result.error is None
+    assert result.value == 1.75
 
     assert threads_get_pool_executor.call_count == 1
     assert processes_get_pool_executor.call_count == 2

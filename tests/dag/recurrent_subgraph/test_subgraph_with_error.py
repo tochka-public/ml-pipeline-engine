@@ -1,14 +1,11 @@
 import typing as t
 
-import pytest
-
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import RecurrentSubGraph
 from ml_pipeline_engine.node import ProcessorBase
 from ml_pipeline_engine.node import RecurrentProcessor
 from ml_pipeline_engine.types import AdditionalDataT
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 from ml_pipeline_engine.types import Recurrent
 
 
@@ -47,8 +44,11 @@ class ANode(ProcessorBase):
 
 
 async def test_dag(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
 ) -> None:
-    with pytest.raises(Exception, match='AnErrorFromPassNum'):
-        assert await build_dag(input_node=InputNumber, output_node=ANode).run(pipeline_context(num=3))
+    chart = build_chart(input_node=InputNumber, output_node=ANode)
+    result = await chart.run(input_kwargs=dict(num=3))
+
+    assert result.error.__class__ == Exception
+    assert result.error.args == ('AnErrorFromPassNum', )
+    assert result.value is None

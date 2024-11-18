@@ -2,11 +2,10 @@ import typing as t
 
 import pytest
 
-from ml_pipeline_engine.context.dag import DAGPipelineContext
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import SwitchCase
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import PipelineChartLike
 
 
 class Ident(ProcessorBase):
@@ -74,11 +73,14 @@ class Out(ProcessorBase):
 
 
 async def test_dag_concurrent_switch_cases(
-    pipeline_context: t.Callable[..., DAGPipelineContext],
-    build_dag: t.Callable[..., DAGLike],
+    build_chart: t.Callable[..., PipelineChartLike],
     caplog_debug: pytest.LogCaptureFixture,
 ) -> None:
-    assert await build_dag(input_node=Ident, output_node=Out).run(pipeline_context(num=1)) == 3
+    chart = build_chart(input_node=Ident, output_node=Out)
+    result = await chart.run(input_kwargs=dict(num=1))
+
+    assert result.value == 3
+    assert result.error is None
 
     assert (
         'Node processor__tests_dag_switch_case_test_concurrent_switch_ThirdSwitchNode '
