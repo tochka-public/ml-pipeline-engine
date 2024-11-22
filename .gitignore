@@ -8,3 +8,4 @@ dist/
 .pytest_cache
 /public
 /build
+.venv/

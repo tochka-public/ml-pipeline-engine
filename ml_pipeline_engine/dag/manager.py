@@ -278,10 +278,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         """
         Get the subgraph for the OneOf subgraph
         """
-
-        return get_connected_subgraph(
-            nx.subgraph_view(self.dag.graph), source, dest, is_oneof=True,
-        )
+        path_nodes = nx.shortest_path(self.dag.graph, source=source, target=dest)
+        subdag_nodes = set(path_nodes)
+        
+        # Build subgraph including only nodes along the path
+        subdag = self.dag.graph.subgraph(subdag_nodes)
+        return get_connected_subgraph(subdag, source, dest, is_oneof=True)
 
     def _add_case_result(self, switch_node_id: NodeId) -> None:
         """
@@ -544,7 +546,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         """
         Run OneOf subgraph. Returns the first non-error result or specific error
         """
-
         logger.debug('Prepare OneOf DAG node_id=%s', node_id)
 
         for idx, subgraph_node_id in enumerate(self.dag.graph.nodes[node_id][NodeField.oneof_nodes]):
@@ -571,10 +572,10 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             if not self.__has_subgraph_error(oneof_dag):
 
-                # The node_id is a synthetic node and cannot be executed anywhere. Hence, we should copy the
-                # result of the last successful subgraph and unlock everything related to the synthetic node.
+                # Copy the result of the successful subgraph to the synthetic node
                 self._node_storage.copy_node_result(subgraph_node_id, node_id)
 
+                # Unlock the synthetic node and its descendants
                 await self.__unlock_itself(node_id)
                 await self.__unlock_descendants(node_id)
                 await self.__unlock_run_method()
@@ -582,9 +583,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 logger.debug('The %s has been succeeded', oneof_dag)
                 return
 
-        await self.__raise_exc(
-            OneOfDoesNotHaveResultError(node_id),
-        )
+        # All branches have errors
+        error = OneOfDoesNotHaveResultError(node_id)
+        self._node_storage.set_node_result(node_id, error)
+
+        # Unlock the synthetic node and its descendants
+        await self.__unlock_itself(node_id)
+        await self.__unlock_descendants(node_id)
+        await self.__unlock_run_method()
 
     async def _run_switch(self, dag: DiGraph, node_id: NodeId) -> t.Any:
         """
