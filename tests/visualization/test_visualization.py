@@ -111,7 +111,7 @@ async def test_basic(call_func: t.Callable) -> None:
 
         call_func(target)()
 
-        saved_config = (target / 'data.js').read_text()
+        saved_config = (target / 'data.js').read_text('utf-8')
         saved_config = json.loads(saved_config.replace('window.__GRAPH_DATA__ = ', ''))
 
         assert saved_config == {

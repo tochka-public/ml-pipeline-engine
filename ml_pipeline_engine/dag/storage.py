@@ -52,9 +52,20 @@ class DAGNodeStorage:
     switch_results: HiddenDict = field(default_factory=HiddenDict)
     recurrent_subgraph: HiddenDict = field(default_factory=HiddenDict)
     waiting_list: HiddenDict = field(default_factory=HiddenDict)
+    node_unhandled_errors: HiddenDict = field(default_factory=HiddenDict)
 
     def set_node_result(self, node_id: NodeId, data: t.Any) -> None:
         self.node_results.set(node_id, data)
+
+    def set_node_unhandled_error(self, node_id: NodeId, data: t.Any) -> None:
+        self.node_unhandled_errors.set(node_id, data)
+
+    def get_node_unhandled_error(self, node_id: NodeId, with_hidden: bool = False) -> t.Any:
+        return self.node_unhandled_errors.get(node_id, with_hidden)
+
+    def exists_node_unhandled_error(self, node_id: NodeId, with_hidden: bool = False) -> bool:
+        unhandled_error = self.get_node_unhandled_error(node_id, with_hidden)
+        return isinstance(unhandled_error, Exception)
 
     def get_node_result(self, node_id: NodeId, with_hidden: bool = False) -> t.Any:
         return self.node_results.get(node_id, with_hidden)

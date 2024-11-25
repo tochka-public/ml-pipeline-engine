@@ -238,10 +238,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         dest: NodeId,
         is_recurrent: bool = False,
         is_oneof: bool = False,
+        graph=None,
     ) -> DiGraph:
         """
         Get filtered and connected subgraph
         """
+
+        if graph is None:
+            graph = self.dag.graph
 
         def _filter(u: str, v: str) -> bool:
             """
@@ -251,7 +255,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 u - Node
                 v - Node Edge
             """
-            return not self.dag.graph.edges[u, v].get(EdgeField.case_branch)
+            return not graph.edges[u, v].get(EdgeField.case_branch)
 
         def _filter_node(u: str) -> bool:
             """
@@ -260,10 +264,10 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             Args:
                 u -  Node
             """
-            return not self.dag.graph.nodes[u].get(NodeField.is_oneof_child)
+            return not graph.nodes[u].get(NodeField.is_oneof_child)
 
         return get_connected_subgraph(
-            dag=nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node),
+            dag=nx.subgraph_view(graph, filter_edge=_filter, filter_node=_filter_node),
             source=source,
             dest=dest,
             is_recurrent=is_recurrent,
@@ -278,11 +282,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         """
         Get the subgraph for the OneOf subgraph
         """
-        path_nodes = nx.shortest_path(self.dag.graph, source=source, target=dest)
-        subdag_nodes = set(path_nodes)
-        
-        # Build subgraph including only nodes along the path
-        subdag = self.dag.graph.subgraph(subdag_nodes)
+        # Get all ancestors of dest (nodes required to compute dest)
+        subdag_nodes = nx.ancestors(self.dag.graph, dest)
+        subdag_nodes.add(dest)
+        # Build subgraph including only these nodes
+        subdag = self.dag.graph.subgraph(subdag_nodes).copy()
+        # Return connected subgraph
+        attrs = {dest: {NodeField.is_oneof_child: False}}
+        nx.set_node_attributes(subdag, attrs)
         return get_connected_subgraph(subdag, source, dest, is_oneof=True)
 
     def _add_case_result(self, switch_node_id: NodeId) -> None:
@@ -328,6 +335,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         try:
             logger.info('Preparing node for the execution, node_id=%s', node_id)
+
+            if self._node_storage.exists_node_unhandled_error(node_id):
+                raise self._node_storage.get_node_unhandled_error(node_id)
 
             result = await self.__execute_node(
                 node_id=node_id,
@@ -557,6 +567,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             logger.debug('Prepare [%s]%s to start. OneOf result node %s', idx, oneof_dag, node_id)
 
+            oneof_dag = self._get_reduced_dag(source=self.dag.input_node,
+                                              dest=subgraph_node_id, graph=oneof_dag, is_oneof=True)
+
             self._create_task(coro=self._run_dag(dag=oneof_dag), name=str(oneof_dag))
 
             await self._lock_manager.wait_for_condition(
@@ -591,6 +604,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         await self.__unlock_itself(node_id)
         await self.__unlock_descendants(node_id)
         await self.__unlock_run_method()
+
+        successors = tuple(self.dag.graph.successors(node_id))
+        self._node_storage.set_node_unhandled_error(successors[0], error)
 
     async def _run_switch(self, dag: DiGraph, node_id: NodeId) -> t.Any:
         """
