@@ -11,5 +11,5 @@ export const GlobalStyle = createGlobalStyle`
     margin: 0;
     min-width: 1200px;
   }
-  
+
 `
