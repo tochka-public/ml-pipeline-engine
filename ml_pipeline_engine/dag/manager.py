@@ -270,19 +270,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             is_oneof=is_oneof,
         )
 
-    def _get_reduced_dag_input_one_of(
-        self,
-        source: NodeId,
-        dest: NodeId,
-    ) -> DiGraph:
-        """
-        Get the subgraph for the OneOf subgraph
-        """
-
-        return get_connected_subgraph(
-            nx.subgraph_view(self.dag.graph), source, dest, is_oneof=True,
-        )
-
     def _add_case_result(self, switch_node_id: NodeId) -> None:
         """
         Save the switch branch
@@ -549,9 +536,12 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         for idx, subgraph_node_id in enumerate(self.dag.graph.nodes[node_id][NodeField.oneof_nodes]):
 
-            oneof_dag = self._get_reduced_dag_input_one_of(
+            self.dag.graph.nodes[subgraph_node_id][NodeField.is_oneof_child] = False
+
+            oneof_dag = self._get_reduced_dag(
                 source=self.dag.input_node,
                 dest=subgraph_node_id,
+                is_oneof=True,
             )
 
             logger.debug('Prepare [%s]%s to start. OneOf result node %s', idx, oneof_dag, node_id)
