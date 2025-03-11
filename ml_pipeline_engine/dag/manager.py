@@ -262,6 +262,9 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             """
             return not self.dag.graph.nodes[u].get(NodeField.is_oneof_child)
 
+        if is_oneof:
+            self.dag.graph.nodes[dest][NodeField.is_oneof_child] = False
+
         return get_connected_subgraph(
             dag=nx.subgraph_view(self.dag.graph, filter_edge=_filter, filter_node=_filter_node),
             source=source,
@@ -535,8 +538,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         logger.debug('Prepare OneOf DAG node_id=%s', node_id)
 
         for idx, subgraph_node_id in enumerate(self.dag.graph.nodes[node_id][NodeField.oneof_nodes]):
-
-            self.dag.graph.nodes[subgraph_node_id][NodeField.is_oneof_child] = False
 
             oneof_dag = self._get_reduced_dag(
                 source=self.dag.input_node,
