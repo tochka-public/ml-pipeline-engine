@@ -238,6 +238,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         dest: NodeId,
         is_recurrent: bool = False,
         is_oneof: bool = False,
+        is_nested_oneof: bool = False,
     ) -> DiGraph:
         """
         Get filtered and connected subgraph
@@ -271,6 +272,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             dest=dest,
             is_recurrent=is_recurrent,
             is_oneof=is_oneof,
+            is_nested_oneof=is_nested_oneof,
         )
 
     def _add_case_result(self, switch_node_id: NodeId) -> None:
@@ -502,7 +504,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 coro_to_run = self._run_switch(dag, node_id)
 
             elif self._is_head_of_oneof(node_id):
-                coro_to_run = self._run_oneof(node_id)
+                coro_to_run = self._run_oneof(dag, node_id)
 
             else:
                 coro_to_run = self._run_node(
@@ -530,7 +532,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             for node_id in dag.nodes
         ])
 
-    async def _run_oneof(self, node_id: NodeId) -> t.Any:
+    async def _run_oneof(self, dag: DiGraph, node_id: NodeId) -> t.Any:
         """
         Run OneOf subgraph. Returns the first non-error result or specific error
         """
@@ -543,6 +545,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 source=self.dag.input_node,
                 dest=subgraph_node_id,
                 is_oneof=True,
+                is_nested_oneof=True,
             )
 
             logger.debug('Prepare [%s]%s to start. OneOf result node %s', idx, oneof_dag, node_id)
@@ -573,9 +576,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 logger.debug('The %s has been succeeded', oneof_dag)
                 return
 
-        await self.__raise_exc(
-            OneOfDoesNotHaveResultError(node_id),
-        )
+        if dag.is_nested_oneof:
+            self._node_storage.set_node_result(node_id, OneOfDoesNotHaveResultError(node_id))
+            await self.__unlock_itself(node_id)
+            await self.__unlock_descendants(node_id)
+        else:
+            await self.__raise_exc(
+                OneOfDoesNotHaveResultError(node_id),
+            )
 
     async def _run_switch(self, dag: DiGraph, node_id: NodeId) -> t.Any:
         """
