@@ -8,11 +8,18 @@ from ml_pipeline_engine.types import NodeId
 
 class DiGraph(nx.DiGraph):
 
-    def __init__(self, is_recurrent: bool = False, is_oneof: bool = False, **kwargs: t.Any) -> None:
+    def __init__(
+        self,
+        is_recurrent: bool = False,
+        is_oneof: bool = False,
+        is_nested_oneof: bool = False,
+        **kwargs: t.Any,
+    ) -> None:
         super().__init__(**kwargs)
 
         self.is_recurrent = is_recurrent
         self.is_oneof = is_oneof
+        self.is_nested_oneof = is_nested_oneof
 
         self.source = None
         self.dest = None
@@ -32,6 +39,7 @@ def get_connected_subgraph(
     dest: NodeId,
     is_recurrent: bool = False,
     is_oneof: bool = False,
+    is_nested_oneof: bool = False,
 ) -> DiGraph:
     """
     Get a connected subgraph between two nodes
@@ -44,8 +52,9 @@ def get_connected_subgraph(
 
     subgraph.is_recurrent = is_recurrent
     subgraph.is_oneof = is_oneof
+    subgraph.is_nested_oneof = is_nested_oneof
     subgraph.source = source
     subgraph.dest = dest
-    subgraph.name = f'{source} —> {dest}, rec={is_recurrent}, oneof={is_oneof}'
+    subgraph.name = f'{source} —> {dest}, rec={is_recurrent}, oneof={is_oneof}, nested_oneof={is_nested_oneof}'
 
     return subgraph
