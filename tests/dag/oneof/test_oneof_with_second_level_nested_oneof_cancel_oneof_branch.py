@@ -6,13 +6,12 @@ from tests.helpers import call_object
 from ml_pipeline_engine.dag_builders.annotation.marks import Input
 from ml_pipeline_engine.dag_builders.annotation.marks import InputOneOf
 from ml_pipeline_engine.node import ProcessorBase
-from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import PipelineChartLike
 
 case_oneof_node_mocker = FactoryMocker()
 
 
-class StartNode(NodeBase):
+class StartNode(ProcessorBase):
     name = 'start_node'
 
     @case_oneof_node_mocker
@@ -36,7 +35,7 @@ class SecondDataSourceWithError(ProcessorBase):
         raise Exception
 
 
-class FeatureWithSecondLevelInputOneOfNotForCalling(NodeBase):
+class FeatureWithSecondLevelInputOneOfNotForCalling(ProcessorBase):
     name = 'feature_with_second_level_input_one_of_not_for_calling'
 
     @case_oneof_node_mocker
@@ -54,7 +53,7 @@ class IntermediateOneOfFeatureNotForCalling(ProcessorBase):
         return inp + 1
 
 
-class FallbackFeature(NodeBase):
+class FallbackFeature(ProcessorBase):
     name = 'fallback_feature'
 
     @case_oneof_node_mocker
@@ -62,7 +61,7 @@ class FallbackFeature(NodeBase):
         return 100000000
 
 
-class Summary(NodeBase):
+class Summary(ProcessorBase):
     name = 'summary_with_first_level_input_one_of'
 
     @case_oneof_node_mocker
@@ -70,7 +69,7 @@ class Summary(NodeBase):
         return feature_value + 1
 
 
-class FinishNode(NodeBase):
+class FinishNode(ProcessorBase):
     name = 'finish_node'
 
     @case_oneof_node_mocker
