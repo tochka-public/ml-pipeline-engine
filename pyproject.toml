@@ -39,7 +39,7 @@ click = "^8.1.7"
 [tool.poetry.scripts]
 ml_pipeline_engine = "ml_pipeline_viewer.cli:main"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = ">=4.0.0"
 pytest-mock = ">=3.10.0"
 pre-commit = ">=2.0.0"
