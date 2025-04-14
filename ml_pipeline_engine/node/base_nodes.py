@@ -1,3 +1,4 @@
+import abc
 import typing as t
 
 from ml_pipeline_engine.node.enums import NodeType
@@ -15,8 +16,8 @@ class ProcessorBase(NodeBase):
 
     node_type = NodeType.processor.value
 
-    def process(self, *args: t.Any, **kwargs: t.Any) -> NodeResultT:
-        raise NotImplementedError('Method process() is not implemented')
+    @abc.abstractmethod
+    def process(self, *args: t.Any, **kwargs: t.Any) -> NodeResultT: ...
 
 
 class RecurrentProcessor(ProcessorBase, RecurrentProtocol):
