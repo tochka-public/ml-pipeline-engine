@@ -21,6 +21,9 @@ def test_get_id() -> None:
         node_type = 'some-node-type'
         name = 'some-node'
 
+        def process(self) -> None:  # implementation of abstract method
+            pass
+
     assert get_node_id(SomeNode) == 'some-node-type__some-node'
     assert get_node_id(type(SomeNode())) == 'some-node-type__some-node'
 
