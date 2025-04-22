@@ -98,7 +98,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-See additional usage examples here: [docs/usage_examples.md](docs/usage_examples.md)
+See additional usage examples in docs: [docs/examples/](docs/examples/).
 
 ## Development
 
