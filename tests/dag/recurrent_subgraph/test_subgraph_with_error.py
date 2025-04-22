@@ -49,6 +49,6 @@ async def test_dag(
     chart = build_chart(input_node=InputNumber, output_node=ANode)
     result = await chart.run(input_kwargs=dict(num=3))
 
-    assert result.error.__class__ == Exception
-    assert result.error.args == ('AnErrorFromPassNum', )
+    assert isinstance(result.error, Exception)
+    assert result.error.args == ('AnErrorFromPassNum',)
     assert result.value is None

@@ -1,8 +1,4 @@
 repos:
-  - repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v2.0.4
-    hooks:
-      - id: autopep8
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -14,19 +10,10 @@ repos:
       - id: no-commit-to-branch
         args: [ '--branch', 'master' ]
       - id: trailing-whitespace
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.6
     hooks:
-      - id: flake8
-        args: [ '--max-line-length', '120' ]
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-  - repo: local
-    hooks:
-      - id: check-with-ruff
-        name: check-with-ruff
-        entry: bash -c 'ruff check --output-format=full --show-fixes .'
-        language: system
-        types: [python]
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+        args: ["--preview"]

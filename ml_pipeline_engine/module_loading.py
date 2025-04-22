@@ -3,8 +3,8 @@ import typing as t
 from importlib import import_module
 
 __all__ = [
-    'import_string',
     'get_instance',
+    'import_string',
 ]
 
 

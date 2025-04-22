@@ -115,7 +115,7 @@ Go to the project directory
 cd ml-pipeline-engine
 ```
 
-Use `Python>=3.8` and the package manager [poetry](https://python-poetry.org/docs/#installing-manually) to install ml-pipeline-engine dependencies
+Use `Python>=3.9` and the package manager [poetry](https://python-poetry.org/docs/#installing-manually) to install ml-pipeline-engine dependencies
 
 ```bash
 poetry install --no-root
