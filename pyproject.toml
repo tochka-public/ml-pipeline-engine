@@ -56,18 +56,6 @@ addopts = "-s -vv"
 requires = ["setuptools >= 69.0"]  # nice
 build-backend = "setuptools.build_meta"
 
-[tool.autopep8]
-max_line_length = 120
-
-[tool.isort]
-combine_as_imports = false
-force_single_line = true
-force_to_top = ["ml_pipeline_engine"]
-known_local_folder = ["ml_pipeline_engine"]
-no_lines_before = ["future", "standard-library"]
-profile = "black"
-line_length=120
-
 [tool.ruff]
 line-length = 120
 target-version = 'py39'
