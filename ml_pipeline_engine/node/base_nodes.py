@@ -9,7 +9,7 @@ from ml_pipeline_engine.types import Recurrent
 from ml_pipeline_engine.types import RecurrentProtocol
 
 
-class ProcessorBase(NodeBase):
+class ProcessorBase(NodeBase[NodeResultT]):
     """
     Базовый класс для обработчиков общего назначения
     """
@@ -25,5 +25,5 @@ class RecurrentProcessor(ProcessorBase, RecurrentProtocol):
     Узел процессора, который может быть исполнен в рекуррентном подграфе
     """
 
-    def next_iteration(self, data: AdditionalDataT) -> Recurrent:
+    def next_iteration(self, data: t.Optional[AdditionalDataT]) -> Recurrent:
         return Recurrent(data=data)

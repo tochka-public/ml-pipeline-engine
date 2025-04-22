@@ -21,20 +21,19 @@ class DiGraph(nx.DiGraph):
         self.is_oneof = is_oneof
         self.is_nested_oneof = is_nested_oneof
 
-        self.source = None
-        self.dest = None
+        self.source: t.Optional[NodeId] = None
+        self.dest: t.Optional[NodeId] = None
 
-        self.__hash_value = None
+        self.__hash_value: t.Optional[int] = None
 
     def __hash__(self) -> int:
         if self.__hash_value is None:
             self.__hash_value = hash(tuple(sorted(itertools.chain(*self.nodes.keys(), *self.edges.keys()))))
-
         return self.__hash_value
 
 
 def get_connected_subgraph(
-    dag: nx.Graph,
+    dag: nx.DiGraph,
     source: NodeId,
     dest: NodeId,
     is_recurrent: bool = False,
@@ -48,11 +47,15 @@ def get_connected_subgraph(
     if len(dag) == 1:
         return t.cast(DiGraph, dag)
 
-    subgraph: DiGraph = dag.subgraph({node_id for path in nx.all_simple_paths(dag, source, dest) for node_id in path})
+    nodes = {node_id for path in nx.all_simple_paths(dag, source, dest) for node_id in path}
+    subgraph = DiGraph(
+        is_recurrent=is_recurrent,
+        is_oneof=is_oneof,
+        is_nested_oneof=is_nested_oneof,
+    )
+    subgraph.add_nodes_from((n, dag.nodes[n]) for n in nodes)
+    subgraph.add_edges_from((u, v, dag.edges[u, v]) for u, v in dag.edges if u in nodes and v in nodes)
 
-    subgraph.is_recurrent = is_recurrent
-    subgraph.is_oneof = is_oneof
-    subgraph.is_nested_oneof = is_nested_oneof
     subgraph.source = source
     subgraph.dest = dest
     subgraph.name = f'{source} —> {dest}, rec={is_recurrent}, oneof={is_oneof}, nested_oneof={is_nested_oneof}'

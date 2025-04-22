@@ -30,8 +30,8 @@ from ml_pipeline_engine.types import NodeResultT
 from ml_pipeline_engine.types import PipelineContextLike
 from ml_pipeline_engine.types import Recurrent
 
-_EventDictT = t.Dict[t.Any, asyncio.Event]
-_ConditionT = t.Dict[t.Any, asyncio.Condition]
+_EventDictT = dict[t.Any, asyncio.Event]
+_ConditionT = dict[t.Any, asyncio.Condition]
 
 
 @dataclass
@@ -79,13 +79,13 @@ class DAGConcurrentManagerLock:
             condition.notify_all()
 
 
-def cache_key(prefix: str, _: t.Any, *args: t.Any, **kwargs: t.Any) -> t.Type[tuple]:
+def cache_key(prefix: str, _: t.Any, *args: t.Any, **kwargs: t.Any) -> tuple:
     """Custom func key generation excluding 'self'."""
     return hashkey(*args, prefix, **kwargs)
 
 
 @dataclass
-class DAGRunConcurrentManager(DAGRunManagerLike):
+class DAGRunConcurrentManager(DAGRunManagerLike, t.Generic[NodeResultT]):
     """
     Дефолтный менеджер запуска графов.
     Производит конкурентное исполнение узлов.
@@ -96,7 +96,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
     _node_storage: DAGNodeStorage = field(default_factory=DAGNodeStorage)
     _lock_manager: DAGConcurrentManagerLock = field(init=False)
-    _memorization_store: t.Dict[t.Any, t.Any] = field(default_factory=dict)
+    _memorization_store: dict[t.Any, t.Any] = field(default_factory=dict)
     _coro_tasks: t.Set[asyncio.Task] = field(default_factory=set)
     _alias_run_method: str = 'run'
 
@@ -117,7 +117,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             logger.debug('Task %s has been cancelled', coro_task.get_name())
 
     @staticmethod
-    def _get_first_error_in_tasks(coro_tasks: t.Iterable[asyncio.Task]) -> t.Optional[t.Type[Exception]]:
+    def _get_first_error_in_tasks(coro_tasks: t.Iterable[asyncio.Task]) -> t.Optional[BaseException]:
         """
         Check if there is an error in the coro tasks and return the first one
         """
@@ -179,7 +179,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return self._node_storage.get_node_result(self.dag.output_node, with_hidden=True)
 
-    def _get_node_kwargs(self, node_id: NodeId) -> t.Dict[str, t.Any]:
+    def _get_node_kwargs(self, node_id: NodeId) -> dict[str, t.Any]:
         """
         Get the node's dependencies that are needed to run the node
         """
@@ -292,7 +292,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         self._node_storage.set_switch_result(
             switch_node_id,
-            CaseResult(label=selected_branch_label, node_id=branch_nodes[selected_branch_label]),
+            CaseResult(label=str(selected_branch_label), node_id=branch_nodes[selected_branch_label]),
         )
 
     async def _execute_node(
@@ -394,7 +394,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 raise
 
-    def _get_node_order(self, dag: DiGraph) -> t.List[NodeId]:
+    def _get_node_order(self, dag: DiGraph) -> list[NodeId]:
         """
         Calculate the order for nodes according to the dag's type
         """
@@ -416,7 +416,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         return current_dag.intersection(node_predecessors)
 
-    def _get_predecessors(self, dag: DiGraph, node_id: NodeId) -> t.List[NodeId]:
+    def _get_predecessors(self, dag: DiGraph, node_id: NodeId) -> list[NodeId]:
         """
         Get the node's predecessors
         """
@@ -475,7 +475,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         if len(list_node_ids) == 0:
             return None
 
-        local_tasks = []
+        local_tasks: list[asyncio.Task] = []
 
         for node_id in list_node_ids:
             await self._lock_manager.wait_for_condition(
@@ -510,7 +510,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
         await self._lock_manager.wait_for_condition(
             dag.dest,
-            functools.partial(self._node_storage.exists_node_result, dag.dest),
+            functools.partial(self._node_storage.exists_node_result, dag.dest),  # type: ignore[arg-type]
         )
 
         return self._node_storage.get_node_result(dag.dest, with_hidden=True)
@@ -693,12 +693,16 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         """
 
         start_from_node_id = self.dag.graph.nodes[node_id].get(NodeField.start_node)
+        if not isinstance(start_from_node_id, str):
+            raise ValueError(f'Invalid start_node {start_from_node_id} for node {node_id}')
 
         if self._node_storage.exists_active_rec_subgraph(start_from_node_id, node_id):
             return
 
         self._node_storage.set_active_rec_subgraph(start_from_node_id, node_id)
         max_iterations = self.dag.graph.nodes[node_id].get(NodeField.max_iterations)
+        if not isinstance(max_iterations, int):
+            raise ValueError(f'Invalid max_iterations {max_iterations} for node {node_id}')
 
         recurrent_subgraph = get_connected_subgraph(
             self.dag.graph,

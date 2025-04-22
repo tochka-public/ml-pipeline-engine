@@ -6,7 +6,7 @@ from ml_pipeline_engine.types import PipelineResult
 
 
 class EventSourceMixin:
-    _get_event_managers: t.Callable[..., t.List[t.Type[EventManagerLike]]]
+    _get_event_managers: t.Callable[..., list[EventManagerLike]]
 
     async def _emit(self, event_name: str, **kwargs: t.Any) -> None:
         for mgr in self._get_event_managers():
@@ -18,7 +18,7 @@ class EventSourceMixin:
     async def emit_on_node_start(self, node_id: NodeId) -> None:
         await self._emit('on_node_start', node_id=node_id)
 
-    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[Exception]) -> None:
+    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[BaseException]) -> None:
         await self._emit('on_node_complete', node_id=node_id, error=error)
 
     async def emit_on_pipeline_start(self) -> None:

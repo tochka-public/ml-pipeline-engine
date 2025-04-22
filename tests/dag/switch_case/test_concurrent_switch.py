@@ -24,6 +24,7 @@ class ThirdSwitchCase(ProcessorBase):
 
 
 ThirdSwitch = SwitchCase(
+    name='third_switch',
     switch=ThirdSwitchCase,
     cases=[
         ('ident', ThirdSwitchNode),
@@ -42,6 +43,7 @@ class FirstSwitchCase(ProcessorBase):
 
 
 FirstSwitch = SwitchCase(
+    name='first_switch',
     switch=FirstSwitchCase,
     cases=[
         ('ident', IdentSub),
@@ -60,6 +62,7 @@ class SecondSwitchCase(ProcessorBase):
 
 
 SecondSwitch = SwitchCase(
+    name='second_switch',
     switch=SecondSwitchCase,
     cases=[
         ('double', DoubleNumber),

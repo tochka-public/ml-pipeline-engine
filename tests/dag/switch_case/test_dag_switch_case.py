@@ -55,6 +55,7 @@ class DoubleNumber(ProcessorBase):
 
 
 SomeSwitchCase = SwitchCase(
+    name='some_switch_case',
     switch=SwitchNode,
     cases=[
         ('const', ConstNoInput),

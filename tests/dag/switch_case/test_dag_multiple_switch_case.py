@@ -36,6 +36,7 @@ class FirstSwitchNode(ProcessorBase):
 
 
 FirstSwitchCase = SwitchCase(
+    name='first_switch',
     switch=FirstSwitchNode,
     cases=[
         ('invert', Invert),
@@ -57,6 +58,7 @@ class SecondSwitchNode(ProcessorBase):
 
 
 SecondSwitchCase = SwitchCase(
+    name='second_switch',
     switch=SecondSwitchNode,
     cases=[
         ('double', DoubleNumber),

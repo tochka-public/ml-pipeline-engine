@@ -43,6 +43,7 @@ class TripleNumber(ProcessorBase):
 
 
 NestedSwitchCase = SwitchCase(
+    name='nested_switch_case',
     switch=NestedSwitchNode,
     cases=[
         ('double', DoubleNumber),
@@ -57,6 +58,7 @@ class NestedCaseNode(ProcessorBase):
 
 
 SomeSwitchCase = SwitchCase(
+    name='some_switch_case',
     switch=SwitchNode,
     cases=[
         ('invert', Invert),

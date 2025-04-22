@@ -1,0 +1,55 @@
+# This workflow will install ruff and uses it to lint all files.
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#using-ruff-to-lint-code
+
+name: lint
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - LICENSE
+      - AUTHORS
+      - README.md
+
+jobs:
+  lint:
+    name: Lint with ruff and mypy
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout changes
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: 1.8.5
+
+      - name: Setup a local virtual environment
+        run: |
+          poetry config virtualenvs.create true --local
+          poetry config virtualenvs.in-project true --local
+
+      - uses: actions/cache@v3
+        name: Define a cache for the virtual environment based on the dependencies lock file
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-root
+
+      - name: Lint with Ruff
+        run: |
+          poetry run ruff check --output-format=github --show-fixes .
+
+      - name: Lint with mypy
+        run: |
+          poetry run mypy ml_pipeline_engine

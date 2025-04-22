@@ -6,16 +6,16 @@ from ml_pipeline_engine.context import dag as dag_ctx
 from ml_pipeline_engine.node import generate_pipeline_id
 from ml_pipeline_engine.types import ArtifactStoreLike
 from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import DigraphT
 from ml_pipeline_engine.types import EventManagerLike
 from ml_pipeline_engine.types import ModelName
-from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import PipelineChartLike
 from ml_pipeline_engine.types import PipelineId
 from ml_pipeline_engine.types import PipelineResult
 
 NodeResultT = t.TypeVar('NodeResultT')
 
-Entrypoint = t.Optional[t.Union[NodeBase[NodeResultT], DAGLike[NodeResultT]]]
+Entrypoint = t.Optional[DAGLike[NodeResultT, DigraphT]]
 
 
 @dataclass(frozen=True, repr=False)
@@ -27,7 +27,7 @@ class PipelineChartBase:
     model_name: ModelName
     entrypoint: Entrypoint
     artifact_store: t.Optional[t.Type[ArtifactStoreLike]] = None
-    event_managers: t.List[t.Type[EventManagerLike]] = field(default_factory=list)
+    event_managers: list[t.Type[EventManagerLike]] = field(default_factory=list)
 
 
 @dataclass(frozen=True, repr=False)
@@ -39,8 +39,8 @@ class PipelineChart(PipelineChartBase, PipelineChartLike):
     async def run(
         self,
         pipeline_id: t.Optional[PipelineId] = None,
-        input_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
-        meta: t.Optional[t.Dict[str, t.Any]] = None,
+        input_kwargs: t.Optional[dict[str, t.Any]] = None,
+        meta: t.Optional[dict[str, t.Any]] = None,
     ) -> PipelineResult[NodeResultT]:
         input_kwargs = input_kwargs if input_kwargs is not None else {}
         pipeline_id = pipeline_id if pipeline_id is not None else generate_pipeline_id()
@@ -55,6 +55,7 @@ class PipelineChart(PipelineChartBase, PipelineChartLike):
         await ctx.emit_on_pipeline_start()
 
         try:
+            assert self.entrypoint is not None
             result = PipelineResult(
                 value=await self.entrypoint.run(ctx),
                 pipeline_id=pipeline_id,

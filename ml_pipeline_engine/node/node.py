@@ -25,33 +25,39 @@ def generate_node_id(prefix: str, name: t.Optional[str] = None) -> str:
     return f'{prefix}__{name if name is not None else uuid.uuid4().hex[-8:]}'
 
 
-def get_node_id(node: NodeBase) -> NodeId:
-    node_type = node.node_type if getattr(node, 'node_type', None) else 'node'
-
-    if getattr(node, 'name', None):
-        node_name = node.name
+def get_node_id(node: t.Union[t.Type[NodeBase], NodeBase]) -> NodeId:
+    if (node_type_value := getattr(node, 'node_type', None)) is None:
+        node_type = 'node'
     else:
+        node_type = node_type_value
+
+    if (name := getattr(node, 'name', None)) is None:
         node_name = f'{node.__module__}_{getattr(node, "__name__", node.__class__.__name__)}'.replace('.', '_')
+    else:
+        node_name = name
 
     return '__'.join([node_type, node_name])
 
 
-def get_callable_run_method(node: NodeBase) -> t.Callable:
+def get_callable_run_method(node: t.Type[NodeBase]) -> t.Callable:
     if not callable(getattr(node, 'process', None)):
         raise RunMethodExpectedError('Missing method for node execution')
-
-    node = get_instance(node)
-    return node.process
+    return get_instance(node).process
 
 
-def run_node_default(node: NodeBase[NodeResultT], **kwargs: t.Any) -> t.Type[NodeResultT]:
+def run_node_default(node: t.Type[NodeBase[NodeResultT]], **kwargs: t.Any) -> t.Type[NodeResultT]:
     """
     Get default value from the node
     """
     return get_instance(node).get_default(**kwargs)
 
 
-async def run_node(node: NodeBase[NodeResultT], *args: t.Any, node_id: NodeId, **kwargs: t.Any) -> t.Type[NodeResultT]:
+async def run_node(
+    node: t.Type[NodeBase[NodeResultT]],
+    *args: t.Any,
+    node_id: NodeId,
+    **kwargs: t.Any,
+) -> t.Type[NodeResultT]:
     """
     Run a node in a specific way according to the node's tags
     """
@@ -93,9 +99,9 @@ def build_node(
     node: NodeBase,
     node_name: t.Optional[str] = None,
     class_name: t.Optional[str] = None,
-    atts: t.Optional[t.Dict[str, t.Any]] = None,
-    attrs: t.Optional[t.Dict[str, t.Any]] = None,
-    dependencies_default: t.Optional[t.Dict[str, t.Any]] = None,
+    atts: t.Optional[dict[str, t.Any]] = None,
+    attrs: t.Optional[dict[str, t.Any]] = None,
+    dependencies_default: t.Optional[dict[str, t.Any]] = None,
     **target_dependencies: t.Any,
 ) -> t.Type[NodeBase]:
     """
