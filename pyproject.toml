@@ -143,3 +143,4 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 disallow_untyped_defs = true
 disallow_untyped_calls = true
+exclude = ["ml_pipeline_viewer", "tests", "docs"]
