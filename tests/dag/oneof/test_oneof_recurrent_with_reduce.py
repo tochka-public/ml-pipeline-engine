@@ -1,5 +1,4 @@
 import typing as t
-from types import NoneType
 
 import pytest
 
@@ -80,8 +79,8 @@ def build_chain_nodes(chain_name: str) -> Input:
 @pytest.mark.parametrize(
     'chart_input, attempts, error_type',
     (
-        ({'1st': 'ok', '2nd': 'ok'}, 0, NoneType),
-        ({'1st': 'retry:1', '2nd': 'retry:2'}, 3, NoneType),
+        ({'1st': 'ok', '2nd': 'ok'}, 0, type(None)),
+        ({'1st': 'retry:1', '2nd': 'retry:2'}, 3, type(None)),
         ({'1st': 'fail', '2nd': 'ok'}, 0, OneOfDoesNotHaveResultError),
         ({'1st': 'ok', '2nd': 'fail'}, 0, OneOfDoesNotHaveResultError),
         ({'1st': 'retry:3', '2nd': 'ok'}, 3, OneOfDoesNotHaveResultError),
