@@ -37,7 +37,6 @@ async def test_dag_retry__error(
     build_chart: t.Callable[..., PipelineChartLike],
     mocker: pytest_mock.MockerFixture,
 ) -> None:
-
     collect_spy = mocker.spy(SomeNode, 'process')
     external_func_patch = mocker.patch.object(
         ExternalDatasource,
@@ -52,7 +51,7 @@ async def test_dag_retry__error(
     chart = build_chart(input_node=InvertNumber, output_node=DoubleNumber)
     result = await chart.run(input_kwargs=dict(num=2.5))
 
-    assert result.error.__class__ == Exception
+    assert isinstance(result.error, Exception)
     assert result.error.args == ('CustomError',)
     assert result.value is None
 

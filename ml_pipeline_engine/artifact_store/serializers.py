@@ -5,6 +5,8 @@ import typing as t
 from abc import ABC
 from abc import abstractmethod
 
+from anyio import AsyncFile
+
 from ml_pipeline_engine.artifact_store.enums import DataFormat
 
 SerializableObjectT = t.Any
@@ -16,24 +18,27 @@ class SerializerInitializationError(Exception):
 
 class Serializer(ABC):
     @abstractmethod
-    def dump(self, obj: SerializableObjectT, fp: t.IO) -> None:
-        ...
+    async def dump(self, obj: SerializableObjectT, fp: t.Union[t.IO, AsyncFile]) -> None: ...
 
     @abstractmethod
-    def load(self, fp: t.IO) -> SerializableObjectT:
-        ...
+    async def load(self, fp: t.Union[t.IO, AsyncFile]) -> SerializableObjectT: ...
 
     @abstractmethod
-    def get_default_io(self) -> t.IO:
-        ...
+    def get_default_io(self) -> t.IO: ...
 
 
 class PickleSerializer(Serializer):
-    def dump(self, obj: SerializableObjectT, fp: t.IO) -> None:
+    async def dump(self, obj: SerializableObjectT, fp: t.Union[t.IO, AsyncFile]) -> None:
+        if isinstance(fp, AsyncFile):
+            await fp.write(pickle.dumps(obj))
+            return
         pickle.dump(obj, fp)
         fp.seek(0)
 
-    def load(self, fp: t.IO) -> SerializableObjectT:
+    async def load(self, fp: t.Union[t.IO, AsyncFile]) -> SerializableObjectT:
+        if isinstance(fp, AsyncFile):
+            content = await fp.read()
+            return pickle.loads(content)
         fp.seek(0)
         return pickle.load(fp)
 
@@ -42,11 +47,17 @@ class PickleSerializer(Serializer):
 
 
 class JSONSerializer(Serializer):
-    def dump(self, obj: SerializableObjectT, fp: t.IO) -> None:
+    async def dump(self, obj: SerializableObjectT, fp: t.Union[t.IO, AsyncFile]) -> None:
+        if isinstance(fp, AsyncFile):
+            await fp.write(json.dumps(obj, indent=4, ensure_ascii=False))
+            return
         json.dump(obj, fp, indent=4, ensure_ascii=False)
         fp.seek(0)
 
-    def load(self, fp: t.IO) -> SerializableObjectT:
+    async def load(self, fp: t.Union[t.IO, AsyncFile]) -> SerializableObjectT:
+        if isinstance(fp, AsyncFile):
+            content = await fp.read()
+            return json.loads(content)
         fp.seek(0)
         return json.load(fp)
 

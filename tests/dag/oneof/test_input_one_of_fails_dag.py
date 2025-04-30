@@ -71,5 +71,5 @@ async def test_input_one_of_fails_dag(
     chart = build_chart(input_node=SomeInput, output_node=SomeMLModel)
     result = await chart.run(input_kwargs=dict(base_num=10, other_num=5))
 
-    assert result.error.__class__ == TypeError
+    assert isinstance(result.error, TypeError)
     assert result.value is None

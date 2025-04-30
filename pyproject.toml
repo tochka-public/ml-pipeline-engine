@@ -30,11 +30,12 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.14"
 networkx = ">=3.1,<4.0"
 importlib-resources = "^6.4.0"
 cachetools = "^5.3.3"
 click = "^8.1.7"
+anyio = "^4.9.0"
 
 [tool.poetry.scripts]
 ml_pipeline_engine = "ml_pipeline_viewer.cli:main"
@@ -43,10 +44,9 @@ ml_pipeline_engine = "ml_pipeline_viewer.cli:main"
 pytest = ">=4.0.0"
 pytest-mock = ">=3.10.0"
 pre-commit = ">=2.0.0"
-flake8 = ">=3.8.3"
 pytest-cov = ">=2.11.0"
 pytest-asyncio = ">=0.18.3"
-ruff = "~0.2.0"
+ruff = "^0.11.6"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -56,26 +56,15 @@ addopts = "-s -vv"
 requires = ["setuptools >= 69.0"]  # nice
 build-backend = "setuptools.build_meta"
 
-[tool.autopep8]
-max_line_length = 120
-
-[tool.isort]
-combine_as_imports = false
-force_single_line = true
-force_to_top = ["ml_pipeline_engine"]
-known_local_folder = ["ml_pipeline_engine"]
-no_lines_before = ["future", "standard-library"]
-profile = "black"
-line_length=120
-
 [tool.ruff]
 line-length = 120
-target-version = 'py38'
+target-version = 'py39'
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.ruff.lint]
 ignore = [
-  "ANN101",  # Annotate "self" argument  (FFS)
-  "ANN102",  # Annotate "cls" argument  (FFS)
   "ANN401",  # Disallow "Any" generic
   "B008",  # Do not perform function call for default args definition
   "A003",  # bulitin shadowing for class attributes
