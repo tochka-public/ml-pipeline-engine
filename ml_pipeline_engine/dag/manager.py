@@ -497,7 +497,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
                 # We must unlock descendants because the next OneOf subgraph should start the process.
                 # Otherwise, the entire subgraph will be locked.
-                await self.__unlock_descendants(node_id)
+                await self.__unlock_descendants(node_id=node_id, dag=dag)
                 return None
 
             if self._is_switch(node_id):
@@ -570,7 +570,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 self._node_storage.copy_node_result(subgraph_node_id, node_id)
 
                 await self.__unlock_itself(node_id)
-                await self.__unlock_descendants(node_id)
+                await self.__unlock_descendants(node_id=node_id, dag=dag)
                 await self.__unlock_run_method()
 
                 logger.debug('The %s has been succeeded', oneof_dag)
@@ -579,7 +579,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         if dag.is_nested_oneof:
             self._node_storage.set_node_result(node_id, OneOfDoesNotHaveResultError(node_id))
             await self.__unlock_itself(node_id)
-            await self.__unlock_descendants(node_id)
+            await self.__unlock_descendants(node_id=node_id, dag=dag)
         else:
             await self.__raise_exc(
                 OneOfDoesNotHaveResultError(node_id),
@@ -662,7 +662,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
 
             self.__unlock_execution_lock(node_id)
 
-            await self.__unlock_descendants(node_id)
+            await self.__unlock_descendants(node_id=node_id, dag=dag)
             await self.__unlock_run_method()
 
             if node_id == dag.dest:
@@ -774,7 +774,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                     # another node could continue its process.
                     self._node_storage.set_node_result(node_id, error)
                     await self.__unlock_itself(node_id)
-                    await self.__unlock_descendants(node_id)
+                    await self.__unlock_descendants(node_id=node_id, dag=dag)
 
                 else:
                     await self.__raise_exc(error)
@@ -789,31 +789,29 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         await self.__unlock_run_method()
         raise exc
 
-    async def __unlock_descendants(self, node_id: NodeId) -> None:
+    async def __unlock_descendants(self, node_id: NodeId, dag: DiGraph) -> None:
         """
         Send a notification to the node's descendants to unlock them
         """
 
-        descendants = self.__get_descendants(node_id)
+        descendants = self.__get_descendants(node_id, dag=dag)
 
         for descendant_node_id in descendants:
             await self._lock_manager.unlock_condition(descendant_node_id)
 
-    def __get_descendants(self, node_id: NodeId) -> t.List[NodeId]:
+    def __get_descendants(self, node_id: NodeId, dag: DiGraph) -> t.Set[NodeId]:
         """
         Get all first-line the node's descendants including artificial nodes
         """
 
         logger.debug('Getting descendants for the node %s', node_id)
 
-        descendants = list(nx.descendants_at_distance(self.dag.graph, node_id, 1))
+        descendants = nx.descendants_at_distance(self.dag.graph, node_id, 1)
 
-        for idx in range(len(descendants)):
+        for descendant_node_id in set(descendants):
 
-            descendant_node_id = descendants[idx]
-
-            if self._is_switch(descendant_node_id):
-                descendants.extend(self.__get_descendants(descendant_node_id))
+            if dag.is_oneof or self._is_switch(descendant_node_id):
+                descendants.update(self.__get_descendants(descendant_node_id, dag=dag))
 
         return descendants
 
