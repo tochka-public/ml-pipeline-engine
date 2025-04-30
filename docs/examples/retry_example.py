@@ -20,7 +20,8 @@ class SomeMlModelException(Exception):
     pass
 
 
-COUNTER = 0
+CURRENT_ATTEMPTS = 1
+MAX_FAILED_ATTEMTS = 5
 
 
 class SomeMlModel(ProcessorBase):
@@ -30,10 +31,10 @@ class SomeMlModel(ProcessorBase):
     exceptions = (SomeMlModelException,)  # we will catch this particular exception and try again
 
     def process(self, _: Input(InvertNumber)) -> None:
-        global COUNTER  # noqa: PLW0603
-        if COUNTER < 4:  # noqa: PLR2004
-            COUNTER += 1
-            raise SomeMlModelException(f'Need one more attempt, {COUNTER=}')
+        global CURRENT_ATTEMPTS  # noqa: PLW0603
+        if CURRENT_ATTEMPTS < MAX_FAILED_ATTEMTS:
+            CURRENT_ATTEMPTS += 1
+            raise SomeMlModelException(f'Need one more attempt, {CURRENT_ATTEMPTS=}')
 
 
 async def main() -> None:
@@ -44,7 +45,7 @@ async def main() -> None:
         build_dag(input_node=InvertNumber, output_node=SomeMlModel),
     )
     await pipeline.run(input_kwargs={'num': 10})
-    assert COUNTER == 4  # noqa: PLR2004
+    assert CURRENT_ATTEMPTS == MAX_FAILED_ATTEMTS
 
 
 if __name__ == '__main__':
