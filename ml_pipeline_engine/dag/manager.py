@@ -308,8 +308,10 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         if self._node_storage.exists_processed_node(node_id):
             logger.debug('Node %s has been executed. Stop new execution', node_id)
 
-            await self._lock_manager.wait_for_event(node_id)
-
+            await self._lock_manager.wait_for_condition(
+                node_id,
+                functools.partial(self._node_storage.exists_node_result, node_id),
+            )
             return self._node_storage.get_node_result(node_id)
 
         self._node_storage.set_node_as_processed(node_id)
