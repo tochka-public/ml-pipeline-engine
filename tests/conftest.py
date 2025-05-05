@@ -19,7 +19,7 @@ def pytest_sessionstart(session):  # noqa
 
 
 @pytest.fixture
-def get_loggers() -> t.Tuple[logging.Logger, ...]:
+def get_loggers() -> tuple[logging.Logger, ...]:
     return (
         logs.logger_manager,
         logs.logger_decorators,
@@ -29,7 +29,7 @@ def get_loggers() -> t.Tuple[logging.Logger, ...]:
 
 
 @pytest.fixture
-def caplog_debug(caplog: pytest.LogCaptureFixture, get_loggers: t.Tuple[logging.Logger]) -> pytest.LogCaptureFixture:
+def caplog_debug(caplog: pytest.LogCaptureFixture, get_loggers: tuple[logging.Logger]) -> pytest.LogCaptureFixture:
 
     for logger in get_loggers:
         logger.addHandler(caplog.handler)

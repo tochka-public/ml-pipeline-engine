@@ -23,7 +23,7 @@ class DAG(DAGLike):
     output_node: NodeId
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
-    node_map: t.Dict[NodeId, NodeBase]
+    node_map: dict[NodeId, t.Type[NodeBase]]
     retry_policy: t.Type[RetryPolicyLike] = NodeRetryPolicy
     run_manager: t.Type[DAGRunManagerLike] = DAGRunConcurrentManager
 
@@ -40,7 +40,7 @@ class DAG(DAGLike):
     async def run(self, ctx: PipelineContextLike) -> NodeResultT:
         self._start_runtime_validation()
 
-        run_manager = self.run_manager(dag=self, ctx=ctx)
+        run_manager = self.run_manager(dag=self, ctx=ctx)  # type: ignore[call-arg]
         return await run_manager.run()
 
     def visualize(  # type: ignore
@@ -69,7 +69,12 @@ class DAG(DAGLike):
             **kwargs,
         )
 
+        if target_dir is None:
+            target_dir = pathlib.Path(__file__).resolve()
+        else:
+            target_dir = pathlib.Path(target_dir)
+
         build_static(
             config,
-            target_dir=pathlib.Path(target_dir) or pathlib.Path(__file__).resolve(),
+            target_dir=target_dir,
         )

@@ -15,7 +15,7 @@ class HiddenDict(UserDict):
         super().__init__(*args, **kwargs)
         self._hidden_keys: set = set()
 
-    def get(self, key: t.Any, with_hidden: bool = True) -> t.Any:
+    def get_with_hidden(self, key: t.Any, with_hidden: bool = True) -> t.Any:
         if with_hidden is False and key in self._hidden_keys:
             return None
 
@@ -56,8 +56,8 @@ class DAGNodeStorage:
     def set_node_result(self, node_id: NodeId, data: t.Any) -> None:
         self.node_results.set(node_id, data)
 
-    def get_node_result(self, node_id: NodeId, with_hidden: bool = False) -> t.Any:
-        return self.node_results.get(node_id, with_hidden)
+    def get_node_result(self, node_id: t.Optional[NodeId], with_hidden: bool = False) -> t.Any:
+        return self.node_results.get_with_hidden(node_id, with_hidden)
 
     def hide_node_result(self, node_id: NodeId) -> None:
         self.node_results.hide(node_id)
@@ -74,12 +74,12 @@ class DAGNodeStorage:
     def exists_result_type(
         self,
         node_id: NodeId,
-        target_type: t.Tuple[t.Any, ...] = (object,),
-        exclude_type: t.Tuple[t.Any, ...] = (),
+        target_type: tuple[t.Any, ...] = (object,),
+        exclude_type: tuple[t.Any, ...] = (),
         exclude_none: bool = True,
         with_hidden: bool = False,
     ) -> bool:
-        result = self.node_results.get(node_id, with_hidden)
+        result = self.node_results.get_with_hidden(node_id, with_hidden)
 
         if exclude_none and result is None:
             return False
@@ -90,7 +90,7 @@ class DAGNodeStorage:
         self.switch_results.set(node_id, data)
 
     def get_switch_result(self, node_id: NodeId, with_hidden: bool = False) -> t.Any:
-        return self.switch_results.get(node_id, with_hidden)
+        return self.switch_results.get_with_hidden(node_id, with_hidden)
 
     def set_node_as_processed(self, node_id: NodeId) -> None:
         self.processed_nodes.set(node_id, 1)

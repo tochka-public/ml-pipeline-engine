@@ -5,8 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 from ml_pipeline_engine.logs import logger_parallelism as logger
 
-SingletonMetaT = t.TypeVar('SingletonMetaT', bound='SingletonMeta')
-
 
 class SingletonMeta(type):
     """
@@ -15,9 +13,9 @@ class SingletonMeta(type):
     metaclass because it is best suited for this purpose.
     """
 
-    _instances: t.ClassVar[t.Dict] = {}
+    _instances: t.ClassVar[dict] = {}
 
-    def __call__(cls, *args: t.Any, **kwargs: t.Any) -> SingletonMetaT:
+    def __call__(cls, *args: t.Any, **kwargs: t.Any) -> 'SingletonMeta':
         """
         Possible changes to the value of the `__init__` argument do not affect
         the returned instance.
@@ -32,12 +30,16 @@ PoolExecutorT = t.Union[ProcessPoolExecutor, ThreadPoolExecutor]
 
 
 class PoolExecutorRegistry(metaclass=SingletonMeta):
-
     def __init__(self) -> None:
         self._pool_executor: t.Optional[PoolExecutorT] = None
 
     @abc.abstractmethod
     def is_ready(self) -> None:
+        """Check if the pool is ready and guarantees that `self._pool_executor` is not `None`.
+
+        Raises:
+            Exception: if the pool is not initialized
+        """
         ...
 
     def register_pool_executor(self, pool_executor: PoolExecutorT) -> None:
@@ -53,6 +55,7 @@ class PoolExecutorRegistry(metaclass=SingletonMeta):
 
     def get_pool_executor(self) -> PoolExecutorT:
         self.is_ready()
+        assert self._pool_executor is not None
         return self._pool_executor
 
     def shutdown(self) -> None:

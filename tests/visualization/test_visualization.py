@@ -63,6 +63,7 @@ class SwitchNode(ProcessorBase):
 
 
 SomeSwitchCase = SwitchCase(
+    name='switch_case',
     switch=SwitchNode,
     cases=[
         ('const', Const),
@@ -208,7 +209,7 @@ async def test_basic(call_func: t.Callable) -> None:
                 },
                 {
                     'data': {
-                        'code_source': 'tests/visualization/test_visualization.py#L73',
+                        'code_source': 'tests/visualization/test_visualization.py#L74',
                         'doc': 'Базовый класс для обработчиков общего назначения',
                         'name': None,
                         'verbose_name': None,

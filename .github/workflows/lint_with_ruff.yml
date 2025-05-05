@@ -29,14 +29,14 @@ jobs:
       - name: Install poetry
         uses: abatilo/actions-poetry@v4
         with:
-          poetry-version: 1.8.5
+          poetry-version: 2.1.2
 
       - name: Setup a local virtual environment
         run: |
           poetry config virtualenvs.create true --local
           poetry config virtualenvs.in-project true --local
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         name: Define a cache for the virtual environment based on the dependencies lock file
         with:
           path: ./.venv

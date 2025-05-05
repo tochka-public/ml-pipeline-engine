@@ -19,6 +19,7 @@ from ml_pipeline_engine.node import generate_node_id
 from ml_pipeline_engine.node import get_callable_run_method
 from ml_pipeline_engine.node import get_node_id
 from ml_pipeline_engine.types import DAGLike
+from ml_pipeline_engine.types import DigraphT
 from ml_pipeline_engine.types import NodeBase
 from ml_pipeline_engine.types import NodeId
 from ml_pipeline_engine.types import RecurrentProtocol
@@ -30,7 +31,7 @@ __all__ = [
 
 KwargName = str
 
-NodeInputSpec = t.Tuple[KwargName, t.Union[InputMark, SwitchCaseMark]]
+NodeInputSpec = tuple[KwargName, t.Union[InputMark, SwitchCaseMark, InputOneOfMark, RecurrentSubGraphMark]]
 
 NodeResultT = t.TypeVar('NodeResultT')
 
@@ -38,9 +39,9 @@ NodeResultT = t.TypeVar('NodeResultT')
 class AnnotationDAGBuilder:
     def __init__(self) -> None:
         self._dag = DiGraph(name='main-graph')
-        self._node_map: t.Dict[NodeId, NodeBase] = dict()
-        self._recurrent_sub_graphs: t.List[t.Tuple[NodeId, NodeId]] = []
-        self._synthetic_nodes: t.List[NodeId] = []
+        self._node_map: dict[NodeId, t.Type[NodeBase]] = dict()
+        self._recurrent_sub_graphs: list[tuple[NodeId, NodeId]] = []
+        self._synthetic_nodes: list[NodeId] = []
 
     @staticmethod
     def _check_annotations(obj: t.Any) -> None:
@@ -50,18 +51,18 @@ class AnnotationDAGBuilder:
         """
         run_method = get_callable_run_method(obj)
 
-        annotations = getattr(run_method, '__annotations__', None)
+        annotations: t.Optional[list[str]] = getattr(run_method, '__annotations__', None)
         parameters = [
             (name, bool(parameter.empty))
             for name, parameter in inspect.signature(run_method).parameters.items()
             if name not in ('self', 'args', 'kwargs')
         ]
 
-        if not annotations and parameters:
+        if annotations is None and parameters:
             raise errors.UndefinedAnnotation(f'Невозможно найти аннотации типов. obj={run_method}')
 
         for name, is_empty in parameters:
-            if is_empty and name not in annotations:
+            if is_empty and name not in annotations:  # type: ignore[operator]
                 raise errors.UndefinedParamAnnotation(f'Не указан тип для параметра name={name}, obj={run_method}')
 
     @staticmethod
@@ -78,7 +79,7 @@ class AnnotationDAGBuilder:
                 f'У объекта не существует корректного базового класса, пригодного для графа. node={node}',
             )
 
-    def validate_node(self, node: NodeBase) -> None:
+    def validate_node(self, node: t.Type[NodeBase]) -> None:
         """
         Валидация ноды по разным правилам
         """
@@ -87,20 +88,20 @@ class AnnotationDAGBuilder:
         self._check_annotations(node)
 
     @staticmethod
-    def _get_input_marks_map(node: NodeBase) -> t.List[NodeInputSpec]:
+    def _get_input_marks_map(node: t.Type[NodeBase]) -> list[NodeInputSpec]:
         """
         Получение меток зависимостей для входных kwarg-ов узла
         """
 
-        node = get_callable_run_method(node)
+        node_process_method = get_callable_run_method(node)
 
         inputs = []
-        for name, annotation in node.__annotations__.items():
+        for name, annotation in node_process_method.__annotations__.items():
 
             if isinstance(annotation, InputGenericMark):
                 raise errors.NonRedefinedGenericTypeError(
                     f'Для использования узлов общего назначения необходимо их переопределение для целевого графа. '
-                    f'param_name={name}, node={node}, ',
+                    f'param_name={name}, node={node_process_method}, ',
                 )
 
             if not isinstance(annotation, (InputMark, SwitchCaseMark, InputOneOfMark, RecurrentSubGraphMark)):
@@ -110,7 +111,7 @@ class AnnotationDAGBuilder:
 
         return inputs
 
-    def _add_node_to_map(self, node: NodeBase) -> None:
+    def _add_node_to_map(self, node: t.Type[NodeBase]) -> None:
         """
         Добавление узла в мэппинг "Имя узла -> Класс/функция узла"
         """
@@ -132,10 +133,10 @@ class AnnotationDAGBuilder:
         Добавить в граф узел типа switch
         """
 
-        self._dag.add_node(node_id, **{NodeField.is_switch: True})
-        self._dag.add_edge(switch_decide_node_id, node_id, **{EdgeField.is_switch: True})
+        self._dag.add_node(node_id, **{NodeField.is_switch.value: True})
+        self._dag.add_edge(switch_decide_node_id, node_id, **{EdgeField.is_switch.value: True})
 
-    def _traverse_breadth_first_to_dag(self, input_node: NodeBase, output_node: NodeBase):  # noqa
+    def _traverse_breadth_first_to_dag(self, input_node: t.Type[NodeBase], output_node: t.Type[NodeBase]) -> None:
         """
         Выполнить обход зависимостей классов/функций узлов, построить граф
         """
@@ -143,7 +144,7 @@ class AnnotationDAGBuilder:
         visited = {output_node}
         stack = deque([output_node])
 
-        def _set_visited(node: NodeBase) -> None:
+        def _set_visited(node: t.Type[NodeBase]) -> None:
             if node in visited:
                 return
 
@@ -169,14 +170,14 @@ class AnnotationDAGBuilder:
                     self._dag.add_node(
                         get_node_id(input_mark.dest_node),
                         **{
-                            NodeField.start_node: get_node_id(input_mark.start_node),
-                            NodeField.max_iterations: input_mark.max_iterations,
+                            NodeField.start_node.value: get_node_id(input_mark.start_node),
+                            NodeField.max_iterations.value: input_mark.max_iterations,
                         },
                     )
                     self._add_node_pair_to_dag(
                         get_node_id(input_mark.dest_node),
                         get_node_id(current_node),
-                        **{EdgeField.kwarg_name: kwarg_name},
+                        **{EdgeField.kwarg_name.value: kwarg_name},
                     )
                     self._recurrent_sub_graphs.append(
                         (
@@ -195,7 +196,8 @@ class AnnotationDAGBuilder:
                     node_id_list = [get_node_id(node) for node in input_mark.nodes]
 
                     self._dag.add_node(
-                        synthetic_node_id, **{NodeField.is_oneof_head: True, NodeField.oneof_nodes: node_id_list},
+                        synthetic_node_id,
+                        **{NodeField.is_oneof_head.value: True, NodeField.oneof_nodes.value: node_id_list},
                     )
                     self._dag.add_edge(get_node_id(input_node), synthetic_node_id)
 
@@ -203,20 +205,21 @@ class AnnotationDAGBuilder:
                         node = input_mark.nodes[node_idx]
 
                         self._add_node_to_map(node)
-                        self._dag.add_node(node_id, **{NodeField.is_oneof_child: True})
+                        self._dag.add_node(node_id, **{NodeField.is_oneof_child.value: True})
                         self._dag.add_edge(node_id, synthetic_node_id)
 
                         _set_visited(node)
 
                     self._synthetic_nodes.append(synthetic_node_id)
                     self._dag.add_edge(
-                        synthetic_node_id, get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name},
+                        synthetic_node_id, get_node_id(current_node), **{EdgeField.kwarg_name.value: kwarg_name},
                     )
 
                 if isinstance(input_mark, InputMark):
                     self._add_node_to_map(input_mark.node)
                     self._add_node_pair_to_dag(
-                        get_node_id(input_mark.node), get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name},
+                        get_node_id(input_mark.node), get_node_id(current_node),
+                        **{EdgeField.kwarg_name.value: kwarg_name},
                     )
                     _set_visited(input_mark.node)
 
@@ -231,11 +234,12 @@ class AnnotationDAGBuilder:
                     for case_branch, case_node in input_mark.cases:
                         self._add_node_to_map(case_node)
                         self._dag.add_edge(
-                            get_node_id(case_node), switch_node_id, **{EdgeField.case_branch: case_branch},
+                            get_node_id(case_node), switch_node_id, **{EdgeField.case_branch.value: case_branch},
                         )
                         _set_visited(case_node)
 
-                    self._dag.add_edge(switch_node_id, get_node_id(current_node), **{EdgeField.kwarg_name: kwarg_name})
+                    self._dag.add_edge(switch_node_id, get_node_id(current_node),
+                                       **{EdgeField.kwarg_name.value: kwarg_name})
                     self._synthetic_nodes.append(switch_node_id)
 
     def _validate_recurrent_node_base_classes(self) -> None:
@@ -277,7 +281,7 @@ class AnnotationDAGBuilder:
         self._validate_recurrent_node_base_classes()
         self._validate_recurrent_nodes_params()
 
-    def _is_executor_needed(self) -> t.Tuple[bool, bool]:
+    def _is_executor_needed(self) -> tuple[bool, bool]:
         """
         Проверяем надобность пулов для узлов
         """
@@ -297,7 +301,7 @@ class AnnotationDAGBuilder:
 
         return is_process_pool_needed, is_thread_pool_needed
 
-    def build(self, input_node: NodeBase, output_node: NodeBase = None) -> DAGLike:
+    def build(self, input_node: t.Type[NodeBase], output_node: t.Optional[t.Type[NodeBase]] = None) -> DAGLike:
         """
         Построить граф путем сборки зависимостей по аннотациям типа (меткам входов)
         """
@@ -315,7 +319,7 @@ class AnnotationDAGBuilder:
         is_process_pool_needed, is_thread_pool_needed = self._is_executor_needed()
 
         return DAG(
-            graph=self._dag.copy(),
+            graph=self._dag.copy(),  # type: ignore[arg-type]
             input_node=get_node_id(input_node),
             output_node=get_node_id(output_node),
             node_map=copy.deepcopy(self._node_map),
@@ -325,9 +329,9 @@ class AnnotationDAGBuilder:
 
 
 def build_dag(
-    input_node: NodeBase[t.Any],
-    output_node: NodeBase[NodeResultT],
-) -> DAGLike[NodeResultT]:
+    input_node: t.Type[NodeBase[t.Any]],
+    output_node: t.Type[NodeBase[NodeResultT]],
+) -> DAGLike[NodeResultT, DigraphT]:
     """
     Построить граф путем сборки зависимостей по аннотациям типа (меткам входов)
 
@@ -346,8 +350,8 @@ def build_dag(
 
 
 def build_dag_single(
-    node: NodeBase[NodeResultT],
-) -> DAGLike[NodeResultT]:
+    node: t.Type[NodeBase[NodeResultT]],
+) -> DAGLike[NodeResultT, DigraphT]:
     """
     Построить граф из одного узла
 

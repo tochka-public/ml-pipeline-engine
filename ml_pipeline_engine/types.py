@@ -4,31 +4,36 @@ from dataclasses import dataclass
 from uuid import UUID
 
 import networkx as nx
+from typing_extensions import TypeAlias
 
 NodeResultT = t.TypeVar('NodeResultT')
+NodeResultT_co = t.TypeVar('NodeResultT_co', covariant=True)
+
 AdditionalDataT = t.TypeVar('AdditionalDataT', bound=t.Any)
+
+DigraphT = t.TypeVar('DigraphT', bound=nx.DiGraph)
 
 PipelineId = t.Union[UUID, str]
 
-NodeId = str
-ModelName = str
-CaseLabel = str
-SerializationNodeKind = str
-NodeTag = str
+NodeId: TypeAlias = str
+ModelName: TypeAlias = str
+CaseLabel: TypeAlias = str
+SerializationNodeKind: TypeAlias = str
+NodeTag: TypeAlias = str
 
 
-class RetryProtocol(t.Protocol):
+class RetryProtocol(t.Protocol[NodeResultT_co]):
     """
     Протокол, описывающий свойства повторного исполнения ноды.
     Предоставляет возможность использовать дефолтное значение в случае ошибки.
     """
 
     attempts: t.ClassVar[t.Optional[int]] = None
-    delay: t.ClassVar[t.Optional[t.Union[int, float]]] = None
-    exceptions: t.ClassVar[t.Optional[t.Tuple[t.Type[BaseException], ...]]] = None
+    delay: t.ClassVar[t.Optional[float]] = None
+    exceptions: t.ClassVar[t.Optional[tuple[t.Type[BaseException], ...]]] = None
     use_default: t.ClassVar[bool] = False
 
-    def get_default(self, **kwargs: t.Any) -> NodeResultT:
+    def get_default(self, **kwargs: t.Any) -> NodeResultT_co:
         ...
 
 
@@ -37,11 +42,11 @@ class TagProtocol(t.Protocol):
     Протокол, который позволяет декларировать параметры запуска узла
     """
 
-    tags: t.ClassVar[t.Tuple[NodeTag, ...]] = ()
+    tags: t.ClassVar[tuple[NodeTag, ...]] = ()
 
 
 @dataclass
-class Recurrent:
+class Recurrent(t.Generic[AdditionalDataT]):
     data: t.Optional[AdditionalDataT]
 
 
@@ -61,14 +66,11 @@ class NodeBase(RetryProtocol, TagProtocol, t.Protocol[NodeResultT]):
     """
     Basic node interface
     """
-    node_type: t.ClassVar[str] = None
-    name: t.ClassVar[str] = None
-    verbose_name: t.ClassVar[str] = None
+    node_type: t.ClassVar[t.Optional[str]] = None
+    name: t.ClassVar[t.Optional[str]] = None
+    verbose_name: t.ClassVar[t.Optional[str]] = None
 
-    process: t.Union[
-        t.Callable[..., NodeResultT],
-        t.Callable[..., t.Awaitable[NodeResultT]],
-    ]
+    process: t.Union[t.Callable[..., NodeResultT], t.Callable[..., t.Awaitable[NodeResultT]]]
 
 
 @dataclass(frozen=True)
@@ -96,7 +98,7 @@ class CaseResult:
     node_id: NodeId
 
 
-class PipelineChartLike(t.Protocol[NodeResultT]):
+class PipelineChartLike(t.Protocol[NodeResultT, DigraphT]):
     """
     Определение пайплайна ML-модели
 
@@ -104,15 +106,15 @@ class PipelineChartLike(t.Protocol[NodeResultT]):
     """
 
     model_name: ModelName
-    entrypoint: t.Optional[t.Union[NodeBase[NodeResultT], 'DAGLike[NodeResultT]']]
-    event_managers: t.List[t.Type['EventManagerLike']]
+    entrypoint: 't.Optional[DAGLike[NodeResultT, DigraphT]]'
+    event_managers: list[t.Type['EventManagerLike']]
     artifact_store: t.Optional[t.Type['ArtifactStoreLike']]
 
     async def run(
         self,
         pipeline_id: t.Optional[PipelineId] = None,
-        input_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
-        meta: t.Optional[t.Dict[str, t.Any]] = None,
+        input_kwargs: t.Optional[dict[str, t.Any]] = None,
+        meta: t.Optional[dict[str, t.Any]] = None,
     ) -> PipelineResult[NodeResultT]:
         ...
 
@@ -127,14 +129,14 @@ class PipelineContextLike(t.Protocol):
 
     chart: PipelineChartLike
     pipeline_id: PipelineId
-    input_kwargs: t.Dict[str, t.Any]
-    meta: t.Dict[str, t.Any]
+    input_kwargs: dict[str, t.Any]
+    meta: dict[str, t.Any]
     artifact_store: 'ArtifactStoreLike'
 
     async def emit_on_node_start(self, node_id: NodeId) -> t.Any:
         ...
 
-    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[Exception]) -> t.Any:
+    async def emit_on_node_complete(self, node_id: NodeId, error: t.Optional[BaseException]) -> t.Any:
         ...
 
     async def emit_on_pipeline_start(self) -> t.Any:
@@ -151,7 +153,7 @@ class PipelineContextLike(t.Protocol):
     def model_name(self) -> ModelName:
         ...
 
-    def _get_event_managers(self) -> t.List['EventManagerLike']:
+    def _get_event_managers(self) -> list['EventManagerLike']:
         ...
 
 
@@ -173,7 +175,7 @@ class EventManagerLike(t.Protocol):
         ...
 
 
-class ArtifactStoreLike(t.Protocol):
+class ArtifactStoreLike(t.Protocol[NodeResultT_co]):
     """
     Хранилище артефактов - результатов расчета узлов
     """
@@ -184,16 +186,16 @@ class ArtifactStoreLike(t.Protocol):
     async def save(self, node_id: NodeId, data: t.Any) -> None:
         ...
 
-    async def load(self, node_id: NodeId) -> NodeResultT:
+    async def load(self, node_id: NodeId) -> NodeResultT_co:
         ...
 
 
 class RetryPolicyLike(t.Protocol):
-    node: NodeBase
+    node: t.Type[NodeBase]
 
     @property
     @abc.abstractmethod
-    def delay(self) -> int:
+    def delay(self) -> float:
         ...
 
     @property
@@ -203,11 +205,11 @@ class RetryPolicyLike(t.Protocol):
 
     @property
     @abc.abstractmethod
-    def exceptions(self) -> t.Tuple[t.Type[Exception]]:
+    def exceptions(self) -> tuple[t.Type[BaseException], ...]:
         ...
 
 
-class DAGRunManagerLike(t.Protocol):
+class DAGRunManagerLike(t.Protocol[NodeResultT_co]):
     """
     Менеджер управлением запуска графа
     """
@@ -216,26 +218,26 @@ class DAGRunManagerLike(t.Protocol):
     dag: 'DAGLike'
 
     @abc.abstractmethod
-    async def run(self) -> NodeResultT:
+    async def run(self) -> NodeResultT_co:
         ...
 
 
-class DAGLike(t.Protocol[NodeResultT]):
+class DAGLike(t.Protocol[NodeResultT_co, DigraphT]):
     """
     Граф
     """
 
-    graph: nx.DiGraph
+    graph: DigraphT
     input_node: NodeId
     output_node: NodeId
-    node_map: t.Dict[NodeId, NodeBase]
-    run_manager: DAGRunManagerLike
-    retry_policy: RetryPolicyLike
+    node_map: dict[NodeId, t.Type[NodeBase]]
+    run_manager: t.Type[DAGRunManagerLike]
+    retry_policy: t.Type[RetryPolicyLike]
     is_process_pool_needed: bool
     is_thread_pool_needed: bool
 
     @abc.abstractmethod
-    async def run(self, ctx: PipelineContextLike) -> NodeResultT:
+    async def run(self, ctx: PipelineContextLike) -> NodeResultT_co:
         ...
 
     def visualize(self, *args: t.Any, **kwargs: t.Any) -> None:

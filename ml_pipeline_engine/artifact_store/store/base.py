@@ -22,8 +22,8 @@ class ArtifactStore(metaclass=ABCMeta):
 
 class SerializedArtifactStore(ArtifactStore, metaclass=ABCMeta):
     def __init__(self, ctx: PipelineContextLike, *args: t.Any, **kwargs: t.Any) -> None:
-        super().__init__(ctx=ctx, *args, **kwargs)  # noqa: B026
+        super().__init__(ctx, *args, **kwargs)
 
     @abstractmethod
-    async def save(self, node_id: NodeId, data: t.Any, fmt: DataFormat = None) -> None:
+    async def save(self, node_id: NodeId, data: t.Any, fmt: t.Optional[DataFormat] = None) -> None:
         ...
