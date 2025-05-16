@@ -14,7 +14,6 @@ class NodeType(str, enum.Enum):
 
     @classmethod
     def by_prefix(cls, value: str) -> 'NodeType':
-
         for item in cls:
             if value.startswith(item):
                 return cls(item)
@@ -30,3 +29,4 @@ class NodeTag(str, enum.Enum):
     process = 'process'
     thread = 'thread'
     non_async = 'non_async'
+    skip_store = 'skip_store'

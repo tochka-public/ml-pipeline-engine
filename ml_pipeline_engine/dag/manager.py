@@ -19,6 +19,7 @@ from ml_pipeline_engine.dag.graph import get_connected_subgraph
 from ml_pipeline_engine.dag.storage import DAGNodeStorage
 from ml_pipeline_engine.logs import logger_manager as logger
 from ml_pipeline_engine.logs import logger_manager_lock as lock_logger
+from ml_pipeline_engine.node import NodeTag
 from ml_pipeline_engine.node import run_node
 from ml_pipeline_engine.node import run_node_default
 from ml_pipeline_engine.node.retrying import NodeRetryPolicy
@@ -230,6 +231,14 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         Checks if the node is the head of OneOf
         """
         return bool(self.dag.graph.nodes[node_id].get(NodeField.is_oneof_head))
+
+    def _is_skipped_for_storage(self, node_id: NodeId) -> bool:
+        """
+        Check if a node is tagged to skip result saving to artifact storage.
+        """
+        node = self.dag.node_map[node_id]
+        tags = node.tags or ()
+        return NodeTag.skip_store in tags
 
     def _get_reduced_dag(
         self,
@@ -635,7 +644,10 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             self._node_storage.set_node_result(node_id, result)
 
             # TODO: Needs to reorganize saving policy for artifact storage
-            await self.ctx.save_node_result(node_id, result)
+            if not self._is_skipped_for_storage(node_id):
+                await self.ctx.save_node_result(node_id, result)
+            else:
+                logger.debug('Node %s is skipped without saving result to the storage', node_id)
 
         finally:
             if not to_unlock_descendants:
@@ -802,7 +814,6 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         descendants = nx.descendants_at_distance(self.dag.graph, node_id, 1)
 
         for descendant_node_id in set(descendants):
-
             if dag.is_oneof or self._is_switch(descendant_node_id):
                 descendants.update(self.__get_descendants(descendant_node_id, dag=dag))
         return descendants
