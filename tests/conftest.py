@@ -10,6 +10,7 @@ from ml_pipeline_engine.chart import PipelineChart
 from ml_pipeline_engine.dag_builders.annotation import build_dag as build_dag_base
 from ml_pipeline_engine.parallelism import process_pool_registry
 from ml_pipeline_engine.parallelism import threads_pool_registry
+from ml_pipeline_engine.types import ArtifactStoreLike
 from ml_pipeline_engine.types import PipelineChartLike
 
 
@@ -30,7 +31,6 @@ def get_loggers() -> t.Tuple[logging.Logger, ...]:
 
 @pytest.fixture
 def caplog_debug(caplog: pytest.LogCaptureFixture, get_loggers: t.Tuple[logging.Logger]) -> pytest.LogCaptureFixture:
-
     for logger in get_loggers:
         logger.addHandler(caplog.handler)
 
@@ -51,11 +51,15 @@ def model_name_op() -> str:
 
 @pytest.fixture
 def build_chart() -> t.Callable[..., PipelineChartLike]:
-
-    def wrap(*args: t.Any, **kwargs: t.Any) -> PipelineChartLike:
+    def wrap(
+        artifact_store: t.Optional[t.Type[ArtifactStoreLike]] = None,
+        *args: t.Any,
+        **kwargs: t.Any,
+    ) -> PipelineChartLike:
         return PipelineChart(
-            'no op',
-            build_dag_base(*args, **kwargs),
+            model_name='no op',
+            entrypoint=build_dag_base(*args, **kwargs),
+            artifact_store=artifact_store,
         )
 
     return wrap
