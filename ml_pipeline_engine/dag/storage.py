@@ -28,7 +28,6 @@ class HiddenDict(UserDict):
         return key in self
 
     def set(self, key: t.Any, value: t.Any) -> None:
-
         if key in self._hidden_keys:
             self._hidden_keys.remove(key)
 
@@ -39,6 +38,10 @@ class HiddenDict(UserDict):
 
     def delete(self, key: t.Any) -> None:
         self.pop(key)
+
+    def delete_if_exists(self, key: t.Any) -> None:
+        if self.exists(key, with_hidden=False):
+            self.delete(key)
 
 
 @dataclass
@@ -51,7 +54,7 @@ class DAGNodeStorage:
     processed_nodes: HiddenDict = field(default_factory=HiddenDict)
     switch_results: HiddenDict = field(default_factory=HiddenDict)
     recurrent_subgraph: HiddenDict = field(default_factory=HiddenDict)
-    waiting_list: HiddenDict = field(default_factory=HiddenDict)
+    skipped_nodes_for_artifact_storage: HiddenDict = field(default_factory=HiddenDict)
 
     def set_node_result(self, node_id: NodeId, data: t.Any) -> None:
         self.node_results.set(node_id, data)
@@ -114,3 +117,13 @@ class DAGNodeStorage:
         for node_id in node_ids:
             self.hide_processed_node(node_id)
             self.hide_node_result(node_id)
+            self.reset_node_skipped_for_store(node_id)
+
+    def set_node_skipped_for_store(self, node_id: NodeId) -> None:
+        self.skipped_nodes_for_artifact_storage.set(node_id, 1)
+
+    def check_node_skipped_for_store(self, node_id: NodeId) -> bool:
+        return self.skipped_nodes_for_artifact_storage.exists(node_id)
+
+    def reset_node_skipped_for_store(self, node_id: NodeId) -> None:
+        self.skipped_nodes_for_artifact_storage.delete_if_exists(node_id)
