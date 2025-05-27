@@ -238,7 +238,7 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
         """
         node = self.dag.node_map[node_id]
         tags = node.tags or ()
-        return NodeTag.skip_store in tags
+        return self._node_storage.check_node_skipped_for_store(node_id) or NodeTag.skip_store in tags
 
     def _get_reduced_dag(
         self,
@@ -321,6 +321,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
                 node_id,
                 functools.partial(self._node_storage.exists_node_result, node_id),
             )
+            self._node_storage.set_node_skipped_for_store(node_id)
+
             return self._node_storage.get_node_result(node_id)
 
         self._node_storage.set_node_as_processed(node_id)
