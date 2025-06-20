@@ -127,3 +127,8 @@ class DAGNodeStorage:
 
     def reset_node_skipped_for_store(self, node_id: NodeId) -> None:
         self.skipped_nodes_for_artifact_storage.delete_if_exists(node_id)
+
+    def get_nodes_errors(self) -> dict[NodeId, t.Type[Exception]]:
+        return {
+            key: self.node_results[key] for key in self.node_results if isinstance(self.node_results[key], Exception)
+        }

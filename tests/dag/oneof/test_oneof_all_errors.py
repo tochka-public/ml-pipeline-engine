@@ -47,7 +47,17 @@ async def test_dag(
     result = await chart.run(input_kwargs=dict(num=3))
 
     assert result.error.__class__ == OneOfDoesNotHaveResultError
-    assert result.error.args == ('input_one_of__0___processor__error-oneof-node', )
+    assert str(result.error.args) == str(
+        (
+            'input_one_of__0___processor__error-oneof-node',
+            {
+                'processor__tests_dag_oneof_test_oneof_all_errors_NodeWithError1': Exception('Error 1'),
+                'processor__tests_dag_oneof_test_oneof_all_errors_NodeWithError2': Exception('Error 2'),
+                'processor__tests_dag_oneof_test_oneof_all_errors_NodeWithError3': Exception('Error 3'),
+            },
+        ),
+    )
+
     assert result.value is None
 
     assert all(f'Error {i}' in str(caplog_debug.messages) for i in (1, 2, 3))
