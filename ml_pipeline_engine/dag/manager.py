@@ -581,9 +581,8 @@ class DAGRunConcurrentManager(DAGRunManagerLike):
             await self.__unlock_itself(node_id)
             await self.__unlock_descendants(node_id=node_id, dag=dag)
         else:
-            await self.__raise_exc(
-                OneOfDoesNotHaveResultError(node_id),
-            )
+            errors: dict[NodeId, t.Type[Exception]] = self._node_storage.get_nodes_errors()
+            await self.__raise_exc(OneOfDoesNotHaveResultError(node_id, errors))
 
     async def _run_switch(self, dag: DiGraph, node_id: NodeId) -> t.Any:
         """
